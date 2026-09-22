@@ -61,7 +61,7 @@ const COMP_TIME_MIN_OVERTIME_HOURS = 4
 const CREDIT_EXPIRY_MONTHS = 3
 export const COMP_TIME_LEAVE_TYPE_ID = 'lt-comp-time'
 
-// Standard GSPI leave types, seeded once so the leave type list isn't just Compensatory Time
+// Standard GSPIS leave types, seeded once so the leave type list isn't just Compensatory Time
 // Off — annual credit counts are editable afterward via "Edit Balances" on the Leave page.
 const STANDARD_LEAVE_TYPES: LeaveType[] = [
   { id: 'lt-vacation', name: 'Vacation Leave', defaultAnnualCredits: 15, isPaid: true },
@@ -83,7 +83,7 @@ const STANDARD_LEAVE_TYPES: LeaveType[] = [
   }
 ]
 
-// GSPI official workday: 8:00 AM to 5:00 PM, plus a 15-minute grace period on the start —
+// GSPIS official workday: 8:00 AM to 5:00 PM, plus a 15-minute grace period on the start —
 // a clock-in past 8:15 AM is Late; anything at or before that is on time. An early clock-in
 // (e.g. a device that lets staff badge in at 7:00 AM) never moves this start time earlier —
 // it just means they're on premises sooner, not that their shift or overtime accounting starts
@@ -133,7 +133,7 @@ export function isAfternoonOnlyArrival(clockInIso: string): boolean {
 }
 
 /**
- * The "Hours" figure GSPI actually pays/credits for, as opposed to raw clock-out minus clock-in:
+ * The "Hours" figure GSPIS actually pays/credits for, as opposed to raw clock-out minus clock-in:
  * - The regular portion is capped to the 8:00 AM-5:00 PM window on both ends — clocking in at
  *   7:00 AM doesn't earn extra regular hours, and neither does staying past 5:00 PM (that time is
  *   added back separately, in full, as overtime below).
@@ -191,7 +191,7 @@ export function statusForHoursWorked(
  * attendance issue — either worked under 4h total, or missed the entire morning (see
  * isAfternoonOnlyArrival, which can coexist with plenty of raw hours if they worked a long
  * afternoon/evening — that's still only one of the day's two halves). Otherwise Late takes
- * priority over Present/Overtime per GSPI policy.
+ * priority over Present/Overtime per GSPIS policy.
  */
 export function combinedAttendanceStatus(
   clockIn: string,
@@ -204,7 +204,7 @@ export function combinedAttendanceStatus(
 }
 
 /**
- * GSPI HR policy: Compensatory Time Off is earned in flat brackets, not pro-rated per minute —
+ * GSPIS HR policy: Compensatory Time Off is earned in flat brackets, not pro-rated per minute —
  * under 4h overtime in a day earns nothing, 4h up to (but under) 8h earns a half day, 8h or more
  * earns a full day. So 4h30m still only earns 0.5 day, same as exactly 4h.
  */

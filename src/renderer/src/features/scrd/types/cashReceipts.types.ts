@@ -46,7 +46,7 @@ export const CASH_RECEIPT_CATEGORIES: CashReceiptCategory[] = [
 ]
 
 // A receipt row, sourced from an approved Journal Voucher's credit line (see
-// receiptVouchers.ts) — GSPI records incoming cash the same way it records outgoing cash
+// receiptVouchers.ts) — GSPIS records incoming cash the same way it records outgoing cash
 // (Vouchers), rather than through a separate, disconnected entry screen.
 export interface CashReceipt {
   id: string

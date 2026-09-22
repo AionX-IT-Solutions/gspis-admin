@@ -1,7 +1,7 @@
 {
   "name": "gspi-admin",
   "version": "1.1.5",
-  "description": "GSPI Admin — desktop admin app for the Girl Scouts of the Philippines, Ilocos Sur Council",
+  "description": "GSPIS Admin — desktop admin app for the Girl Scouts of the Philippines, Ilocos Sur Council",
   "main": "out/main/index.js",
   "scripts": {
     "dev": "node scripts/dev.js",
@@ -98,7 +98,7 @@
   },
   "build": {
     "appId": "com.gspi.admin",
-    "productName": "GSPI Admin",
+    "productName": "GSPIS Admin",
     "copyright": "Copyright © 2026 GSP Ilocos Sur Council",
     "directories": {
       "buildResources": "resources",

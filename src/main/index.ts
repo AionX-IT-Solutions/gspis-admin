@@ -23,7 +23,7 @@ process.on('uncaughtException', (err) => {
   log.error('Uncaught exception:', err)
 })
 
-log.info('GSPI Admin starting up', { version: app.getVersion(), isDev })
+log.info('GSPIS Admin starting up', { version: app.getVersion(), isDev })
 
 function broadcast(channel: string, payload: unknown): void {
   BrowserWindow.getAllWindows().forEach((win) => {
@@ -97,11 +97,11 @@ function createTray(mainWindow: BrowserWindow): void {
   const icon = nativeImage.createFromDataURL(iconDataUrl)
 
   tray = new Tray(icon)
-  tray.setToolTip('GSPI Admin')
+  tray.setToolTip('GSPIS Admin')
 
   const contextMenu = Menu.buildFromTemplate([
     {
-      label: 'Show GSPI Admin',
+      label: 'Show GSPIS Admin',
       click: () => {
         mainWindow.show()
         mainWindow.focus()

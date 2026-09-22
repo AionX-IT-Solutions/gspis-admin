@@ -1115,8 +1115,8 @@ export const manualSections: ManualSection[] = [
         key: 'devices',
         icon: <Usb size={16} />,
         summary: {
-          en: 'Connect and test the hardware GSPI Admin talks to: a barcode scanner, the Hikvision biometric terminal, and the receipt printer.',
-          tl: 'I-connect at i-test ang hardware na ginagamit ng GSPI Admin: barcode scanner, Hikvision biometric terminal, at receipt printer.'
+          en: 'Connect and test the hardware GSPIS Admin talks to: a barcode scanner, the Hikvision biometric terminal, and the receipt printer.',
+          tl: 'I-connect at i-test ang hardware na ginagamit ng GSPIS Admin: barcode scanner, Hikvision biometric terminal, at receipt printer.'
         },
         steps: {
           en: [

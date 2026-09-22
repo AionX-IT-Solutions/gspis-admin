@@ -49,7 +49,7 @@ export function useToast() {
     // Optional native OS notification
     if (opts?.native) {
       window.api?.notification
-        .show({ title: opts.nativeTitle ?? 'GSPI Admin', body: message, type })
+        .show({ title: opts.nativeTitle ?? 'GSPIS Admin', body: message, type })
         .catch(() => {})
     }
 
@@ -76,7 +76,7 @@ export function notifySecurityAlert(message: string, opts?: ToastOptions) {
   toast.warning(message, { description: opts?.description, duration: opts?.duration ?? 6000 })
   if (opts?.native) {
     window.api?.notification
-      .show({ title: opts.nativeTitle ?? 'GSPI Admin Security', body: message, type: 'warning' })
+      .show({ title: opts.nativeTitle ?? 'GSPIS Admin Security', body: message, type: 'warning' })
       .catch(() => {})
   }
   if (soundEnabled) playNotificationSound('warning')

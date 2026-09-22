@@ -31,5 +31,5 @@ vi.stubGlobal('import_meta_env', {
   MODE: 'test',
   DEV: false,
   PROD: false,
-  VITE_APP_NAME: 'GSPI Admin'
+  VITE_APP_NAME: 'GSPIS Admin'
 })

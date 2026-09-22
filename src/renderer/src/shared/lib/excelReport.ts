@@ -51,7 +51,7 @@ function centeredColumnIndex(
 }
 
 /**
- * Anchors the GSPI/Girl Scouts logo as a floating image centered above the
+ * Anchors the GSPIS/Girl Scouts logo as a floating image centered above the
  * worksheet's header, matching the PDF/Word exports' centered logo (see
  * pdfExport.ts's addHeaderLines, docxExport.ts's headerParagraphs). Those reserve
  * space by advancing a vertical cursor past the logo before any text is drawn;

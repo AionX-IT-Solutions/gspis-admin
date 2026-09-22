@@ -214,7 +214,7 @@ const tl = {
   },
   settings: {
     title: 'Mga Setting',
-    subtitle: 'I-customize ang iyong karanasan sa GSPI Admin.',
+    subtitle: 'I-customize ang iyong karanasan sa GSPIS Admin.',
     appearance: 'Hitsura',
     appearanceDesc: 'I-customize ang hitsura at pakiramdam',
     darkMode: 'Dark Mode',
@@ -311,7 +311,7 @@ const tl = {
         connectFailed: 'Hindi nakakonekta sa device',
         saveFailed: 'Hindi na-save ang settings ng device',
         apiUnavailable:
-          'Kailangan i-restart nang buo ang app para gumana ito — isara at buksan muli ang GSPI Admin, subukan ulit.'
+          'Kailangan i-restart nang buo ang app para gumana ito — isara at buksan muli ang GSPIS Admin, subukan ulit.'
       }
     },
     receiptPrinter: {
@@ -371,7 +371,7 @@ const tl = {
     privacyDesc: 'Pamahalaan ang iyong data at mga kagustuhan sa privacy',
     dataCollection: 'Usage Analytics',
     dataCollectionDesc:
-      'Tulungan na mapabuti ang GSPI Admin sa pamamagitan ng pagbabahagi ng anonymized na data',
+      'Tulungan na mapabuti ang GSPIS Admin sa pamamagitan ng pagbabahagi ng anonymized na data',
     crashReports: 'Mga Crash Report',
     crashReportsDesc:
       'Awtomatikong magpadala ng mga crash report para makatulong sa pag-aayos ng mga bug',
@@ -389,7 +389,7 @@ const tl = {
   },
   devices: {
     title: 'Mga Device',
-    subtitle: 'Ikonekta at i-test ang mga hardware na ginagamit ng GSPI Admin.'
+    subtitle: 'Ikonekta at i-test ang mga hardware na ginagamit ng GSPIS Admin.'
   },
   profile: {
     title: 'Aking Profile',
@@ -402,7 +402,7 @@ const tl = {
   },
   manual: {
     title: 'Gabay sa Paggamit',
-    subtitle: 'Paano gamitin ang bawat module sa GSPI Admin.',
+    subtitle: 'Paano gamitin ang bawat module sa GSPIS Admin.',
     searchPlaceholder: 'Maghanap sa gabay…',
     noResults: 'Walang tugmang paksa. Subukan ang ibang search.',
     tocHeading: 'Mga Nilalaman',
@@ -415,7 +415,7 @@ const tl = {
     customRoles: 'custom role(s)',
     intro: {
       title: 'Mga Unang Hakbang',
-      body: 'Ang GSPI Admin ang desktop system ng GSP Ilocos Sur Council — Business, HR, at Financial Management sa iisang lugar. May ilang bagay na totoo saan mang bahagi ng app:',
+      body: 'Ang GSPIS Admin ang desktop system ng GSP Ilocos Sur Council — Business, HR, at Financial Management sa iisang lugar. May ilang bagay na totoo saan mang bahagi ng app:',
       points: [
         'Ang mga staff account ay ginagawa ng Admin/Super Admin sa Users page — walang public sign-up. Kung hindi ka makapag-log in, magtanong sa isang Admin.',
         'Ang unang makikita mo pagkatapos mag-sign in ay depende sa iyong role: karamihan ng role ay napupunta sa Dashboard, ang Cashier ay sa Point of Sale, at ang HR ay sa Employees.',

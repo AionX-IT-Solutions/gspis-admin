@@ -214,7 +214,7 @@ const en = {
   },
   settings: {
     title: 'Settings',
-    subtitle: 'Customize your GSPI Admin experience.',
+    subtitle: 'Customize your GSPIS Admin experience.',
     appearance: 'Appearance',
     appearanceDesc: 'Customize the look and feel',
     darkMode: 'Dark Mode',
@@ -306,7 +306,7 @@ const en = {
         connectFailed: 'Failed to connect to the device',
         saveFailed: 'Failed to save device settings',
         apiUnavailable:
-          'This feature needs a full app restart to load — close and reopen GSPI Admin, then try again.'
+          'This feature needs a full app restart to load — close and reopen GSPIS Admin, then try again.'
       }
     },
     receiptPrinter: {
@@ -365,7 +365,7 @@ const en = {
     privacy: 'Privacy',
     privacyDesc: 'Manage your data and privacy preferences',
     dataCollection: 'Usage Analytics',
-    dataCollectionDesc: 'Help improve GSPI Admin by sharing anonymized usage data',
+    dataCollectionDesc: 'Help improve GSPIS Admin by sharing anonymized usage data',
     crashReports: 'Crash Reports',
     crashReportsDesc: 'Automatically send crash reports to help fix bugs',
     telemetry: 'Telemetry',
@@ -382,7 +382,7 @@ const en = {
   },
   devices: {
     title: 'Devices',
-    subtitle: 'Connect and test hardware used by GSPI Admin.'
+    subtitle: 'Connect and test hardware used by GSPIS Admin.'
   },
   profile: {
     title: 'My Profile',
@@ -395,7 +395,7 @@ const en = {
   },
   manual: {
     title: 'User Manual',
-    subtitle: 'How to use every module in GSPI Admin.',
+    subtitle: 'How to use every module in GSPIS Admin.',
     searchPlaceholder: 'Search the manual…',
     noResults: 'No matching topics. Try a different search.',
     tocHeading: 'Contents',
@@ -408,7 +408,7 @@ const en = {
     customRoles: 'custom role(s)',
     intro: {
       title: 'Getting started',
-      body: 'GSPI Admin is the desktop system for GSP Ilocos Sur Council — Business, HR, and Financial Management in one place. A handful of things are true everywhere in the app:',
+      body: 'GSPIS Admin is the desktop system for GSP Ilocos Sur Council — Business, HR, and Financial Management in one place. A handful of things are true everywhere in the app:',
       points: [
         "Staff accounts are created by an Admin/Super Admin from the Users page — there is no public sign-up. If you can't log in, ask an Admin.",
         'What you land on after signing in depends on your role: most roles land on the Dashboard, Cashiers land on Point of Sale, and HR lands on Employees.',

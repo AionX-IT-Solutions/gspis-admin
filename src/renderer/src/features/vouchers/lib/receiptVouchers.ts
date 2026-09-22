@@ -2,7 +2,7 @@ import type { CashReceipt } from '@/features/scrd/types/cashReceipts.types'
 import type { Voucher } from '../types/vouchers.types'
 
 /**
- * GSPI records incoming cash the same way it records outgoing cash: a Journal Voucher, credit
+ * GSPIS records incoming cash the same way it records outgoing cash: a Journal Voucher, credit
  * side. This is the credit-side counterpart of expenseVouchers.ts's getExpenseVouchers/
  * voucherCategory — approved Journal Vouchers only (pending/cancelled ones haven't actually
  * come in yet, and a Check Voucher is only ever a disbursement, never a receipt), flattened

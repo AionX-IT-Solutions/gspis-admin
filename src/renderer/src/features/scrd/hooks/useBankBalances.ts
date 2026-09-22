@@ -14,7 +14,7 @@ import { useDailyCollectionsStore } from '@/features/accounting/store/dailyColle
 import type { BankAccountBalance } from '../lib/scrdExcelExport'
 
 /**
- * The core "how much money does GSPI actually have" computation — opening
+ * The core "how much money does GSPIS actually have" computation — opening
  * balance plus every receipt minus every disbursement, per bank account.
  * Shared between the SCRD Summary tab (which layers session-local manual
  * income adjustments on top for its own richer breakdown — see

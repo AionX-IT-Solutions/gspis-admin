@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Check, Pencil, Plus, Receipt, Ticket, Trash2 } from 'lucide-react'
+import { Check, Pencil, Plus, Printer, Receipt, Ticket, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/shared/components/ui/Card'
 import { Button } from '@/shared/components/ui/Button'
@@ -19,6 +19,7 @@ import { RefreshButton } from '@/shared/components/ui/RefreshButton'
 import { formatCurrency, formatDate } from '@/shared/lib/utils'
 import { ExpenseSummaryModal } from '@/features/expenseSummary/components/ExpenseSummaryModal'
 import { useExpenseSummaryModal } from '@/features/expenseSummary/hooks/useExpenseSummaryModal'
+import { hasCashAdvance, cashAdvanceReimbursement } from '../lib/expenseVouchers'
 import type { Voucher, VoucherStatus, VoucherType } from '../types/vouchers.types'
 import { NewVoucherModal } from '../components/NewVoucherModal'
 import { useVouchers } from '../hooks/useVouchers'
@@ -69,6 +70,7 @@ export function Vouchers() {
     handleExportPdf,
     handleExportWord,
     handleView,
+    handlePrintReceipt,
     preview,
     previewVoucher
   } = useVouchers()
@@ -97,6 +99,43 @@ export function Vouchers() {
       render: (r) => <Badge variant={STATUS_VARIANT[r.status]}>{statusLabel(r.status)}</Badge>
     },
     {
+      key: 'cashAdvanceAmount',
+      header: t('vouchers.form.cashAdvanceAmount'),
+      align: 'right',
+      render: (r) => (r.cashAdvanceAmount !== undefined ? formatCurrency(r.cashAdvanceAmount) : '—')
+    },
+    {
+      key: 'totalAmountSpent',
+      header: t('vouchers.form.totalAmountSpent'),
+      align: 'right',
+      render: (r) => (r.totalAmountSpent !== undefined ? formatCurrency(r.totalAmountSpent) : '—')
+    },
+    {
+      key: 'amountRefunded',
+      header: t('vouchers.form.amountRefunded'),
+      align: 'right',
+      render: (r) => (r.amountRefunded ? formatCurrency(r.amountRefunded) : '—')
+    },
+    {
+      key: 'refundOrNumber',
+      header: t('vouchers.form.refundOrNumber'),
+      render: (r) => r.refundOrNumber || '—'
+    },
+    {
+      key: 'reimbursement',
+      header: t('vouchers.table.reimbursement'),
+      align: 'right',
+      render: (r) => {
+        const amount = hasCashAdvance(r) ? cashAdvanceReimbursement(r, r.totalAmountSpent ?? 0) : 0
+        return amount > 0 ? formatCurrency(amount) : '—'
+      }
+    },
+    {
+      key: 'orNumber',
+      header: t('vouchers.table.orNumber'),
+      render: (r) => r.orNumber || '—'
+    },
+    {
       key: 'id',
       header: t('common.actions'),
       sortable: false,
@@ -119,6 +158,16 @@ export function Vouchers() {
               title={t('vouchers.table.expenseSummaryTooltip')}
             >
               <Receipt size={13} />
+            </Button>
+          )}
+          {r.status === 'approved' && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => handlePrintReceipt(r)}
+              title={r.orNumber ? t('receipts.reprintButton') : t('receipts.printButton')}
+            >
+              <Printer size={13} />
             </Button>
           )}
           {canManage && r.status === 'pending' && (

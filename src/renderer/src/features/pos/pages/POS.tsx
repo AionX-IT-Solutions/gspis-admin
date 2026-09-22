@@ -5,6 +5,7 @@ import { Card } from '@/shared/components/ui/Card'
 import { Button } from '@/shared/components/ui/Button'
 import { Badge } from '@/shared/components/ui/Badge'
 import { Modal } from '@/shared/components/ui/Modal'
+import { ConfirmDialog } from '@/shared/components/ui/ConfirmDialog'
 import { PageHeader } from '@/shared/components/ui/PageHeader'
 import { ExportMenu } from '@/shared/components/ui/ExportMenu'
 import { DocumentPreviewModal } from '@/shared/components/ui/DocumentPreviewModal'
@@ -46,9 +47,12 @@ export function POS() {
     handleAddToCart,
     removeFromCart,
     setCartQuantity,
+    member,
     selectedMemberId,
     setSelectedMember,
-    memberOptions,
+    manualMemberName,
+    setManualMemberName,
+    filteredMembers,
     paymentMethod,
     setPaymentMethod,
     printReceipt,
@@ -65,6 +69,10 @@ export function POS() {
     openVoidConfirm,
     closeVoidConfirm,
     handleConfirmVoidSale,
+    deleteTarget,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    handleConfirmDeleteSale,
     handlePrintReceipt,
     handleExportSalesReport,
     handleViewSalesReport,
@@ -145,6 +153,15 @@ export function POS() {
               {t('pos.history.voidButton')}
             </Button>
           )}
+          <Button
+            size="sm"
+            variant="ghost"
+            title={t('pos.history.deleteButton')}
+            onClick={() => openDeleteConfirm(r)}
+            style={{ color: '#f87171' }}
+          >
+            <Trash2 size={12} />
+          </Button>
         </div>
       ),
       t('pos.history.table.actions')
@@ -345,11 +362,98 @@ export function POS() {
                   paddingTop: 12
                 }}
               >
-                <FieldSelect
-                  value={selectedMemberId ?? ''}
-                  onChange={(e) => setSelectedMember(e.target.value || null)}
-                  options={memberOptions}
-                />
+                <div style={{ position: 'relative' }}>
+                  {selectedMemberId && member ? (
+                    <div
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 8,
+                        background: 'var(--accent-primary-subtle)',
+                        border: '1px solid var(--accent-primary)',
+                        fontSize: 13,
+                        color: 'var(--text-primary)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        minHeight: 40
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: 600 }}>{member.name}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                          -{member.discountRate * 100}%
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedMember(null)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: 'var(--text-secondary)',
+                          fontSize: 16,
+                          padding: 4
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <FieldInput
+                        value={manualMemberName}
+                        onChange={(e) => setManualMemberName(e.target.value)}
+                        placeholder={t('pos.cart.memberSearchPlaceholder')}
+                        autoComplete="off"
+                      />
+                      {filteredMembers.length > 0 && (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: 0,
+                            right: 0,
+                            marginTop: 4,
+                            border: '1px solid var(--border-default)',
+                            borderRadius: 8,
+                            maxHeight: 220,
+                            overflowY: 'auto',
+                            backgroundColor: '#ffffff',
+                            zIndex: 10,
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)'
+                          }}
+                        >
+                          {filteredMembers.map((m) => (
+                            <div
+                              key={m.id}
+                              onClick={() => setSelectedMember(m.id)}
+                              style={{
+                                padding: '8px 12px',
+                                cursor: 'pointer',
+                                borderBottom: '1px solid var(--border-subtle)',
+                                fontSize: 13,
+                                backgroundColor: '#ffffff',
+                                transition: 'background-color 0.15s'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = '#f5f5f5'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = '#ffffff'
+                              }}
+                            >
+                              <div style={{ fontWeight: 600 }}>{m.name}</div>
+                              <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                                -{m.discountRate * 100}%
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
                 <FieldSelect
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value as typeof paymentMethod)}
@@ -564,6 +668,18 @@ export function POS() {
           />
         </FormField>
       </Modal>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={t('pos.modal.deleteSaleConfirmTitle')}
+        message={t('pos.modal.deleteSaleConfirmMessage', {
+          saleNumber: deleteTarget?.saleNumber ?? ''
+        })}
+        confirmLabel={t('common.delete')}
+        danger
+        onConfirm={handleConfirmDeleteSale}
+        onCancel={closeDeleteConfirm}
+      />
     </motion.div>
   )
 }

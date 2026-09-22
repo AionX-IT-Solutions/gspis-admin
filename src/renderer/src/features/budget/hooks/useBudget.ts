@@ -10,9 +10,12 @@ import { useVouchersStore } from '@/features/vouchers/store/vouchers.store'
 import { useHRStore } from '@/features/hr/store/hr.store'
 import { useTroopsStore } from '@/features/troops/store/troops.store'
 import { getReceiptRowsFromVouchers } from '@/features/vouchers/lib/receiptVouchers'
+import { stripCategoryNumbering } from '@/features/vouchers/lib/expenseVouchers'
 import { useBudgetStore, type BudgetCategoryEdit } from '../store/budget.store'
+import { useBudgetSourceMappingsStore } from '../store/budgetSourceMappings.store'
 import { groupCategories, sectionTotals } from '../lib/budgetCalculations'
 import { computeBudgetAutoActuals } from '../lib/budgetAutoActuals'
+import type { BudgetSourceRule } from '../types/budgetSourceMapping.types'
 import {
   buildBudgetPdfDoc,
   exportBudgetDocx,
@@ -35,6 +38,7 @@ export function useBudget() {
   const addCategoryAction = useBudgetStore((s) => s.addCategory)
   const deleteCategoryAction = useBudgetStore((s) => s.deleteCategory)
   const createFiscalYearAction = useBudgetStore((s) => s.createFiscalYear)
+  const deleteFiscalYearAction = useBudgetStore((s) => s.deleteFiscalYear)
 
   const sales = usePOSStore((s) => s.sales)
   const bookings = useRentalsStore((s) => s.bookings)
@@ -43,9 +47,13 @@ export function useBudget() {
   const payroll = useHRStore((s) => s.payroll)
   const cashReceipts = useMemo(() => getReceiptRowsFromVouchers(vouchers), [vouchers])
   const scoutMembers = useTroopsStore((s) => s.scoutMembers)
+  const sourceMappings = useBudgetSourceMappingsStore((s) => s.mappings)
+  const getSourceMapping = useBudgetSourceMappingsStore((s) => s.getMapping)
+  const setSourceMapping = useBudgetSourceMappingsStore((s) => s.setMapping)
 
   const [editingCategory, setEditingCategory] = useState<BudgetCategory | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<BudgetCategory | null>(null)
+  const [deleteYearTarget, setDeleteYearTarget] = useState<string | null>(null)
   const [selectedFiscalYear, setSelectedFiscalYear] = useState('')
   // `null` context = the page-level "Add Line" button (everything editable); a set
   // context = the per-subgroup "+ Add Line" action (section/group/subGroup locked to
@@ -98,6 +106,16 @@ export function useBudget() {
     return map
   }, [categories])
 
+  // Suggestions for an expense line's configured 'voucher' source rule — this fiscal year's
+  // own expense line names, the same suggestion list NewVoucherModal already offers when
+  // someone types a Check Voucher's GL Account, so a rule usually just points at one of these
+  // rather than needing free text for the common case.
+  const expenseVoucherCategorySuggestions = useMemo(
+    () =>
+      categories.filter((c) => c.section === 'expense').map((c) => stripCategoryNumbering(c.name)),
+    [categories]
+  )
+
   // Reference figures pulled live from POS/Rentals/Vouchers/Payroll/Troop payments for
   // whichever budget lines have a confident real-data match — offered in the Edit modal as a
   // one-click fill, never silently overwriting the council-approved manual actuals.
@@ -110,9 +128,21 @@ export function useBudget() {
         vouchers,
         payroll,
         cashReceipts,
-        scoutMembers
+        scoutMembers,
+        sourceMappings
       }),
-    [categories, fiscalYear, sales, bookings, spaces, vouchers, payroll, cashReceipts, scoutMembers]
+    [
+      categories,
+      fiscalYear,
+      sales,
+      bookings,
+      spaces,
+      vouchers,
+      payroll,
+      cashReceipts,
+      scoutMembers,
+      sourceMappings
+    ]
   )
 
   function handleSaveCategory(id: string, edit: BudgetCategoryEdit) {
@@ -120,6 +150,14 @@ export function useBudget() {
     updateCategory(id, edit)
     toast.success(t('budget.toast.updated'))
     setEditingCategory(null)
+  }
+
+  // A line's source rules are a separate record (see budgetSourceMappings.store.ts), keyed by
+  // category name rather than id, so a Save here is independent of handleSaveCategory above —
+  // both happen from the same modal Save click, but touch different collections.
+  function handleSaveSourceMapping(categoryName: string, rules: BudgetSourceRule[]) {
+    if (!canManage) return
+    setSourceMapping(categoryName, rules)
   }
 
   function openAddLine(
@@ -151,6 +189,13 @@ export function useBudget() {
     deleteCategoryAction(deleteTarget.id)
     toast.success(t('budget.toast.categoryDeleted', { name: deleteTarget.name }))
     setDeleteTarget(null)
+  }
+
+  function handleConfirmDeleteFiscalYear() {
+    if (!deleteYearTarget || !canManage) return
+    deleteFiscalYearAction(deleteYearTarget)
+    toast.success(t('budget.toast.fiscalYearDeleted', { year: deleteYearTarget }))
+    setDeleteYearTarget(null)
   }
 
   function handleCreateFiscalYear(newFiscalYear: string) {
@@ -216,9 +261,15 @@ export function useBudget() {
     editingCategory,
     setEditingCategory,
     handleSaveCategory,
+    getSourceMapping,
+    handleSaveSourceMapping,
+    expenseVoucherCategorySuggestions,
     deleteTarget,
     setDeleteTarget,
     handleConfirmDeleteCategory,
+    deleteYearTarget,
+    setDeleteYearTarget,
+    handleConfirmDeleteFiscalYear,
     showAddLine,
     setShowAddLine,
     addLineContext,

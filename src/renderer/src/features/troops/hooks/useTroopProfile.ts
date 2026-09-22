@@ -24,7 +24,6 @@ export function useTroopProfile(troop: Troop | null) {
   const [toggleTarget, setToggleTarget] = useState<ScoutMember | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ScoutMember | null>(null)
   const [forceDeleteTarget, setForceDeleteTarget] = useState<ScoutMember | null>(null)
-  const [paymentTarget, setPaymentTarget] = useState<ScoutMember | null>(null)
   const [viewMemberId, setViewMemberId] = useState<string | null>(null)
   const [search, setSearch] = useState('')
 
@@ -134,8 +133,6 @@ export function useTroopProfile(troop: Troop | null) {
     setForceDeleteTarget,
     handleConfirmForceDelete,
     handleRenew,
-    paymentTarget,
-    setPaymentTarget,
     viewMemberId,
     setViewMemberId
   }

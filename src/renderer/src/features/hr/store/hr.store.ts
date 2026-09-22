@@ -882,10 +882,7 @@ export const useHRStore = create<HRState>()((set, get) => ({
       summary: `Payroll entry ${entry.payrollNumber} created for ${emp?.fullName ?? 'employee'}.`
     })
   },
-  // A disbursed payslip can't be edited or deleted (below) — it's already been paid out, so
-  // altering the figures afterward would misrepresent what the employee actually received.
   updatePayrollEntry: (id, patch) => {
-    if (get().payroll.find((p) => p.id === id)?.status === 'paid') return
     set((s) => ({ payroll: s.payroll.map((p) => (p.id === id ? { ...p, ...patch } : p)) }))
     const entry = get().payroll.find((p) => p.id === id)
     if (entry) persist('payroll', id, entry)
@@ -898,7 +895,6 @@ export const useHRStore = create<HRState>()((set, get) => ({
   },
   deletePayrollEntry: (id) => {
     const entry = get().payroll.find((p) => p.id === id)
-    if (entry?.status === 'paid') return
     set((s) => ({ payroll: s.payroll.filter((p) => p.id !== id) }))
     deleteDocById('payroll', id)
     appendAuditLog({

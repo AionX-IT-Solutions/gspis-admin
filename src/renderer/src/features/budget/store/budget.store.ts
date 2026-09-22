@@ -62,6 +62,10 @@ interface BudgetState {
    *  this expiring year's budget/actual-to-date carried into the new year's prior-year
    *  reference columns (same relationship the source workbook itself uses year to year). */
   createFiscalYear: (newFiscalYear: string) => CreateFiscalYearResult
+  /** Removes every budget line for one fiscal year outright — e.g. a year created by
+   *  mistake via New Fiscal Year. No confirmation/undo at this layer, and no guard against
+   *  deleting the last remaining year — the page-level delete flow owns both. */
+  deleteFiscalYear: (fiscalYear: string) => void
 }
 
 // One-off cleanup for sessions that already auto-seeded before these rows were dropped
@@ -300,5 +304,18 @@ export const useBudgetStore = create<BudgetState>()((set, get) => ({
       summary: `Fiscal year ${newFiscalYear} created, rolled forward from ${latestYear}.`
     })
     return { ok: true }
+  },
+
+  deleteFiscalYear: (fiscalYear) => {
+    const toRemove = get().categories.filter((c) => c.fiscalYear === fiscalYear)
+    if (toRemove.length === 0) return
+    set((s) => ({ categories: s.categories.filter((c) => c.fiscalYear !== fiscalYear) }))
+    toRemove.forEach((c) => deleteDocById('budgetCategories', c.id))
+    appendAuditLog({
+      action: 'budget_fiscal_year_deleted',
+      actorName: currentUser()?.fullName ?? 'System',
+      entityType: 'budget',
+      summary: `Fiscal year ${fiscalYear} deleted (${toRemove.length} budget line${toRemove.length === 1 ? '' : 's'}).`
+    })
   }
 }))

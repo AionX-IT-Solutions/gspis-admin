@@ -30,10 +30,11 @@ export function getReceiptRowsFromVouchers(vouchers: Voucher[]): CashReceipt[] {
           date: voucher.refundDate || voucher.date,
           payor: voucher.payee,
           particulars: `${voucher.particulars} (cash advance refund)`,
-          referenceNumber: voucher.voucherNumber,
+          referenceNumber: voucher.refundOrNumber || voucher.voucherNumber,
           category: 'Cash Advance Refund',
           bankAccount: voucher.bankAccountRef ?? 'Cash on Hand',
-          amount: voucher.amountRefunded
+          amount: voucher.amountRefunded,
+          receiptType: voucher.receiptType
         })
       }
       continue
@@ -46,10 +47,11 @@ export function getReceiptRowsFromVouchers(vouchers: Voucher[]): CashReceipt[] {
         date: voucher.date,
         payor: voucher.payee,
         particulars: voucher.particulars,
-        referenceNumber: voucher.voucherNumber,
+        referenceNumber: voucher.orNumber || voucher.voucherNumber,
         category: line.account.trim() || 'Other Operations',
         bankAccount: voucher.bankAccountRef ?? 'Cash on Hand',
-        amount: line.credit
+        amount: line.credit,
+        receiptType: voucher.receiptType
       })
     })
   }

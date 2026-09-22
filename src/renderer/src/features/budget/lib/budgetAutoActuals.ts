@@ -3,7 +3,7 @@ import type { RentalBooking, RentalSpace } from '@/features/rentals/types/rental
 import type { Voucher } from '@/features/vouchers/types/vouchers.types'
 import type { PayrollEntry } from '@/features/hr/types/hr.types'
 import type { CashReceipt } from '@/features/scrd/types/cashReceipts.types'
-import type { MemberPaymentCategory, ScoutMember } from '@/features/troops/types/troop.types'
+import type { ScoutMember } from '@/features/troops/types/troop.types'
 import {
   getExpenseVouchers,
   voucherCategory,
@@ -13,59 +13,45 @@ import {
 } from '@/features/vouchers/lib/expenseVouchers'
 import { fiscalMonthIndex } from '@/shared/lib/fiscalYear'
 import type { BudgetCategory } from '../types/budget.types'
+import type { BudgetSourceMapping } from '../types/budgetSourceMapping.types'
 
 function emptyMonths(): number[] {
   return Array(12).fill(0)
 }
 
-/** Strips the workbook's leading ordinal ("1. ", "23. ") and normalizes case/whitespace
- *  so a budget category name can be compared against a voucher's free-text GL account. */
-function normalizeCategoryName(name: string): string {
+/** Strips the workbook's leading ordinal ("1. ", "23. ") and normalizes case/whitespace so a
+ *  budget category name can be compared against a voucher's free-text GL account — also the
+ *  category identity a user-configured BudgetSourceMapping is keyed on (see
+ *  budgetSourceMappings.store.ts), so a mapping survives a category being re-seeded each
+ *  fiscal year the same way these built-in rules always have. */
+export function normalizeCategoryName(name: string): string {
   return name
     .replace(/^\d+[.)]?\s*/, '')
     .toLowerCase()
     .trim()
 }
 
-// Personnel-service budget lines that map 1:1 onto a PayrollEntry field — matched
-// against the category name (post-normalization) rather than the raw voucher GL
-// account text, since payroll deductions aren't recorded as vouchers.
-const PAYROLL_FIELD_BY_CATEGORY: Record<string, keyof PayrollEntry> = {
-  salaries: 'basicSalary',
-  'sss contributions': 'sss',
-  'philhealth contributions': 'philhealth',
-  'pag-ibig contributions': 'pagibig',
-  '13th month pay': 'thirteenthMonthPay',
-  'cash gift': 'cashGift',
-  'cost of living allowance': 'cola',
-  'representation of executive': 'representation'
-}
-
-// Membership-dues income budget lines matched against the manually-recorded Cash
-// Receipts categories that fund them (see SCRD > Receipts) — "Troop, BC/DC Fees"
-// rolls up every individual/troop membership category the Council collects under
-// it (Troop Fees, Barangay Committee, Associate, Career Woman, Honorary Member),
-// not just the two its name literally spells out.
-const CASH_RECEIPT_CATEGORIES_BY_BUDGET_LINE: Record<string, CashReceipt['category'][]> = {
-  'council support fund': ['Council Support Fund'],
-  'troop, bc/dc fees': [
-    'Troop Fees',
-    'Barangay Committee',
-    'Associate',
-    'Career Woman',
-    'Honorary Member'
-  ],
-  'training fees': ['Training Fees'],
-  'camping fees': ['Camping Fees']
-}
-
-// The same three income lines are also funded directly by individual Troop member payments
-// (Roster > Record Payment), not just a lump Journal Voucher — both sources add together.
-const MEMBER_PAYMENT_CATEGORIES_BY_BUDGET_LINE: Record<string, MemberPaymentCategory[]> = {
-  'troop, bc/dc fees': ['membership'],
-  'training fees': ['training'],
-  'camping fees': ['camping']
-}
+// The field picker a user-configured 'payroll' rule offers (EditBudgetCategoryModal) — a
+// personnel-service expense line maps 1:1 onto one PayrollEntry field, since payroll
+// deductions aren't recorded as vouchers.
+export const PAYROLL_FIELD_OPTIONS: {
+  field: keyof PayrollEntry
+  category: string
+  label: string
+}[] = [
+  { field: 'basicSalary', category: 'salaries', label: 'Salaries' },
+  { field: 'sss', category: 'sss contributions', label: 'SSS Contributions' },
+  { field: 'philhealth', category: 'philhealth contributions', label: 'PhilHealth Contributions' },
+  { field: 'pagibig', category: 'pag-ibig contributions', label: 'Pag-IBIG Contributions' },
+  { field: 'thirteenthMonthPay', category: '13th month pay', label: '13th Month Pay' },
+  { field: 'cashGift', category: 'cash gift', label: 'Cash Gift' },
+  { field: 'cola', category: 'cost of living allowance', label: 'Cost of Living Allowance' },
+  {
+    field: 'representation',
+    category: 'representation of executive',
+    label: 'Representation of Executive'
+  }
+]
 
 interface AutoActualSources {
   sales: Sale[]
@@ -75,35 +61,31 @@ interface AutoActualSources {
   payroll: PayrollEntry[]
   cashReceipts: CashReceipt[]
   scoutMembers: ScoutMember[]
+  /** User-configured overrides (see EditBudgetCategoryModal's "Source" section /
+   *  budgetSourceMappings.store.ts) — a category with a non-empty mapping here is computed
+   *  purely from its rules, taking over from the built-in defaults below entirely rather than
+   *  merging with them. Covers both income and expense lines. */
+  sourceMappings: BudgetSourceMapping[]
 }
 
-/** One of `budget.autoSource.*` in the locale files — identifies which rule matched a category,
- *  so the UI can say specifically where a line's live figure comes from instead of a single
- *  generic "this has a live figure" tooltip everywhere. */
-export type AutoActualSourceKey =
-  | 'equipmentService'
-  | 'rentalHall'
-  | 'rentalRoom'
-  | 'rentalSpace'
-  | 'councilSupportFund'
-  | 'troopBcDcFees'
-  | 'trainingFees'
-  | 'campingFees'
-  | 'payroll'
-  | 'voucherMatch'
-  | 'cashAdvanceLiquidation'
+/** `budget.autoSource.userConfigured` in the locale files — every auto-actual now comes from
+ *  an explicit user-configured Source mapping (see EditBudgetCategoryModal), so this is the
+ *  only value ever produced; kept as its own type (rather than a plain boolean) so a future
+ *  additional source kind doesn't require reshaping every caller again. */
+export type AutoActualSourceKey = 'userConfigured'
 
 export interface AutoActualEntry {
   months: number[]
   sourceKey: AutoActualSourceKey
 }
 
-/** For each budget category with a recognized real-data source, sums that source into
- *  the same 12-slot Jul-Jun shape as `BudgetCategory.monthlyActuals` — purely a
+/** For each budget category the council has explicitly linked a Source to (see
+ *  EditBudgetCategoryModal's "Source" section / budgetSourceMappings.store.ts), sums that
+ *  source into the same 12-slot Jul-Jun shape as `BudgetCategory.monthlyActuals` — purely a
  *  reference figure the Edit modal can offer to fill in; never overwrites the
- *  council-approved manual actuals on its own. Categories with no confident match
- *  (most personnel/operating-expense lines, most income lines) are simply absent from
- *  the returned map and stay entirely manual, same as today. */
+ *  council-approved manual actuals on its own. There is no built-in guessing — a category
+ *  with no configured Source is simply absent from the returned map and stays entirely
+ *  manual. */
 export function computeBudgetAutoActuals(
   categories: BudgetCategory[],
   fiscalYear: string,
@@ -112,6 +94,7 @@ export function computeBudgetAutoActuals(
   const result = new Map<string, AutoActualEntry>()
   if (!fiscalYear) return result
 
+  const mappingsByName = new Map(sources.sourceMappings.map((m) => [m.categoryName, m]))
   const expenseVouchers = getExpenseVouchers(sources.vouchers)
   // Journal Vouchers liquidating a Cash Advance (see deriveCashAdvanceLiquidation) — their
   // itemized debit lines are real Council Budget expense spending too, just recorded on a
@@ -129,85 +112,101 @@ export function computeBudgetAutoActuals(
     let sourceKey: AutoActualSourceKey | null = null
 
     if (category.section === 'income') {
-      if (normalized.includes('equipment service')) {
-        sourceKey = 'equipmentService'
-        for (const s of sources.sales) {
-          if (s.voided) continue
-          const idx = fiscalMonthIndex(s.createdAt, fiscalYear)
-          if (idx !== null) months[idx] += s.totalAmount
-        }
-      } else if (normalized.includes('rental')) {
-        const wantsHall = normalized.includes('hall')
-        const wantsRoom = normalized.includes('room')
-        sourceKey = wantsHall ? 'rentalHall' : wantsRoom ? 'rentalRoom' : 'rentalSpace'
-        for (const b of sources.bookings) {
-          if (b.status !== 'confirmed' && b.status !== 'completed') continue
-          const space = sources.spaces.find((sp) => sp.id === b.rentalSpaceId)
-          // Prefers the space's own `category` field (set on Add/Edit Room) — falls back to
-          // guessing from its free-text name for a space nobody's re-categorized yet.
-          const spaceName = (space?.name ?? '').toLowerCase()
-          const isHall = space?.category ? space.category === 'hall' : spaceName.includes('hall')
-          const isRoom = space?.category ? space.category === 'room' : spaceName.includes('room')
-          const isThisCategory = wantsHall ? isHall : wantsRoom ? isRoom : !isHall && !isRoom
-          if (!isThisCategory) continue
-          const idx = fiscalMonthIndex(b.bookingDate, fiscalYear)
-          if (idx !== null) months[idx] += b.amountPaid ?? b.totalAmount
-        }
-      } else if (
-        CASH_RECEIPT_CATEGORIES_BY_BUDGET_LINE[normalized] ||
-        MEMBER_PAYMENT_CATEGORIES_BY_BUDGET_LINE[normalized]
-      ) {
-        sourceKey =
-          normalized === 'council support fund'
-            ? 'councilSupportFund'
-            : normalized === 'training fees'
-              ? 'trainingFees'
-              : normalized === 'camping fees'
-                ? 'campingFees'
-                : 'troopBcDcFees'
-        const wantedCashReceiptCategories = CASH_RECEIPT_CATEGORIES_BY_BUDGET_LINE[normalized] ?? []
-        for (const r of sources.cashReceipts) {
-          if (!wantedCashReceiptCategories.includes(r.category)) continue
-          const idx = fiscalMonthIndex(r.date, fiscalYear)
-          if (idx !== null) months[idx] += r.amount
-        }
-        const wantedPaymentCategories = MEMBER_PAYMENT_CATEGORIES_BY_BUDGET_LINE[normalized] ?? []
-        for (const member of sources.scoutMembers) {
-          for (const payment of member.payments ?? []) {
-            if (!wantedPaymentCategories.includes(payment.category)) continue
-            const idx = fiscalMonthIndex(payment.date, fiscalYear)
-            if (idx !== null) months[idx] += payment.amount
+      // No built-in guessing on the income side — every income line stays fully manual
+      // unless the council explicitly links a source for it (see EditBudgetCategoryModal's
+      // "Source" section / budgetSourceMappings.store.ts).
+      const userMapping = mappingsByName.get(normalized)
+      if (userMapping && userMapping.rules.length > 0) {
+        sourceKey = 'userConfigured'
+        for (const rule of userMapping.rules) {
+          // Independent `if`s, not `else if` — a rule can combine more than one source kind
+          // at once (see BudgetSourceRule.sourceTypes), so every kind it lists must run.
+          if (rule.sourceTypes.includes('voucher')) {
+            const wanted = rule.voucherCategories ?? []
+            for (const r of sources.cashReceipts) {
+              if (!wanted.includes(r.category)) continue
+              const idx = fiscalMonthIndex(r.date, fiscalYear)
+              if (idx !== null) months[idx] += r.amount
+            }
+          }
+          if (rule.sourceTypes.includes('troopPayment')) {
+            const wanted = rule.troopPaymentCategories ?? []
+            for (const member of sources.scoutMembers) {
+              for (const payment of member.payments ?? []) {
+                if (!wanted.includes(payment.category)) continue
+                const idx = fiscalMonthIndex(payment.date, fiscalYear)
+                if (idx !== null) months[idx] += payment.amount
+              }
+            }
+          }
+          if (rule.sourceTypes.includes('pos')) {
+            for (const s of sources.sales) {
+              if (s.voided) continue
+              const idx = fiscalMonthIndex(s.createdAt, fiscalYear)
+              if (idx !== null) months[idx] += s.totalAmount
+            }
+          }
+          if (rule.sourceTypes.includes('rental')) {
+            for (const b of sources.bookings) {
+              if (b.status !== 'confirmed' && b.status !== 'completed') continue
+              if (rule.rentalSpaceCategory) {
+                const space = sources.spaces.find((sp) => sp.id === b.rentalSpaceId)
+                if (space?.category !== rule.rentalSpaceCategory) continue
+              }
+              const idx = fiscalMonthIndex(b.bookingDate, fiscalYear)
+              if (idx !== null) months[idx] += b.amountPaid ?? b.totalAmount
+            }
           }
         }
       }
     } else {
-      const payrollField = PAYROLL_FIELD_BY_CATEGORY[normalized]
-      if (payrollField) {
-        sourceKey = 'payroll'
-        for (const p of sources.payroll) {
-          if (p.status !== 'paid') continue
-          const value = p[payrollField]
-          if (typeof value !== 'number') continue
-          const idx = fiscalMonthIndex(p.periodEnd, fiscalYear)
-          if (idx !== null) months[idx] += value
-        }
-      } else {
-        for (const v of expenseVouchers) {
-          if (normalizeCategoryName(linkedBudgetCategoryName(voucherCategory(v))) !== normalized) {
-            continue
-          }
-          sourceKey = 'voucherMatch'
-          const idx = fiscalMonthIndex(v.date, fiscalYear)
-          if (idx !== null) months[idx] += v.amount
-        }
-        for (const v of liquidationVouchers) {
-          for (const line of cashAdvanceLiquidationExpenseLines(v)) {
-            if (normalizeCategoryName(linkedBudgetCategoryName(line.account)) !== normalized) {
-              continue
+      // No built-in guessing on the expense side either — every expense line stays fully
+      // manual unless the council explicitly links a source for it (voucher GL account
+      // text(s) or a payroll field — see EditBudgetCategoryModal's "Source" section /
+      // budgetSourceMappings.store.ts).
+      const userMapping = mappingsByName.get(normalized)
+      if (userMapping && userMapping.rules.length > 0) {
+        sourceKey = 'userConfigured'
+        for (const rule of userMapping.rules) {
+          // Independent `if`s, not `else if` — a rule can combine more than one source kind
+          // at once (see BudgetSourceRule.sourceTypes), so every kind it lists must run.
+          if (rule.sourceTypes.includes('voucher')) {
+            // Unlike the income side's CashReceipt.category (already a clean canonical
+            // string), an expense voucher's GL account text can carry the workbook's
+            // ordinal/compound-item suffixes a cash-advance liquidation line adds — normalize
+            // both sides before comparing.
+            const wanted = (rule.voucherCategories ?? []).map((c) => normalizeCategoryName(c))
+            for (const v of expenseVouchers) {
+              if (
+                !wanted.includes(
+                  normalizeCategoryName(linkedBudgetCategoryName(voucherCategory(v)))
+                )
+              ) {
+                continue
+              }
+              const idx = fiscalMonthIndex(v.date, fiscalYear)
+              if (idx !== null) months[idx] += v.amount
             }
-            sourceKey = 'cashAdvanceLiquidation'
-            const idx = fiscalMonthIndex(v.date, fiscalYear)
-            if (idx !== null) months[idx] += line.debit
+            for (const v of liquidationVouchers) {
+              for (const line of cashAdvanceLiquidationExpenseLines(v)) {
+                if (
+                  !wanted.includes(normalizeCategoryName(linkedBudgetCategoryName(line.account)))
+                ) {
+                  continue
+                }
+                const idx = fiscalMonthIndex(v.date, fiscalYear)
+                if (idx !== null) months[idx] += line.debit
+              }
+            }
+          }
+          if (rule.sourceTypes.includes('payroll') && rule.payrollField) {
+            for (const p of sources.payroll) {
+              if (p.status !== 'paid') continue
+              const value = p[rule.payrollField]
+              if (typeof value !== 'number') continue
+              const idx = fiscalMonthIndex(p.periodEnd, fiscalYear)
+              if (idx !== null) months[idx] += value
+            }
           }
         }
       }

@@ -5,69 +5,36 @@ import {
   reportHydrateFailure,
   deleteDocById
 } from '@/shared/lib/firestoreSync'
-import type { Account, Customer, Invoice, Vendor } from '../types/accounting.types'
+import type { Account, Vendor } from '../types/accounting.types'
 
 interface AccountingState {
-  customers: Customer[]
   vendors: Vendor[]
-  invoices: Invoice[]
   accounts: Account[]
   hydrated: boolean
   hydrate: (force?: boolean) => Promise<void>
-  addInvoice: (invoice: Invoice) => void
-  updateInvoice: (id: string, patch: Partial<Invoice>) => void
-  deleteInvoice: (id: string) => void
-  addCustomer: (customer: Customer) => void
   addVendor: (vendor: Vendor) => void
   updateVendor: (id: string, patch: Partial<Vendor>) => void
   deleteVendor: (id: string) => void
 }
 
 export const useAccountingStore = create<AccountingState>()((set, get) => ({
-  customers: [],
   vendors: [],
-  invoices: [],
   accounts: [],
   hydrated: false,
 
   hydrate: async (force = false) => {
     if (get().hydrated && !force) return
     try {
-      const [customers, vendors, invoices, accounts] = await Promise.all([
-        hydrateCollection<Customer>('customers'),
+      const [vendors, accounts] = await Promise.all([
         hydrateCollection<Vendor>('vendors'),
-        hydrateCollection<Invoice>('invoices'),
         hydrateCollection<Account>('accounts')
       ])
-      set({ customers, vendors, invoices, accounts, hydrated: true })
+      set({ vendors, accounts, hydrated: true })
     } catch (err) {
       reportHydrateFailure('[accounting.store] Failed to hydrate', err)
     }
   },
 
-  addInvoice: (invoice) => {
-    set((s) => ({ invoices: [invoice, ...s.invoices] }))
-    persistDoc('invoices', invoice.id, invoice)
-  },
-  updateInvoice: (id, patch) => {
-    set((s) => ({ invoices: s.invoices.map((i) => (i.id === id ? { ...i, ...patch } : i)) }))
-    const invoice = get().invoices.find((i) => i.id === id)
-    if (invoice) persistDoc('invoices', id, invoice)
-  },
-  // A paid invoice can't be hard-deleted — Income Statement and the customer's Total Billed
-  // are computed live from the current invoice list, so removing one would retroactively
-  // rewrite an already-reconciled month's reported income. Void it instead (see
-  // useViewInvoiceModal's handleVoid), which keeps the record but zeroes its balance due.
-  deleteInvoice: (id) => {
-    const invoice = get().invoices.find((i) => i.id === id)
-    if (invoice?.status === 'paid') return
-    set((s) => ({ invoices: s.invoices.filter((i) => i.id !== id) }))
-    deleteDocById('invoices', id)
-  },
-  addCustomer: (customer) => {
-    set((s) => ({ customers: [customer, ...s.customers] }))
-    persistDoc('customers', customer.id, customer)
-  },
   addVendor: (vendor) => {
     set((s) => ({ vendors: [vendor, ...s.vendors] }))
     persistDoc('vendors', vendor.id, vendor)

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Banknote, Receipt, FileText, Landmark, RefreshCw, Wallet } from 'lucide-react'
+import { Receipt, Landmark, RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/shared/components/ui/Card'
 import { Button } from '@/shared/components/ui/Button'
@@ -8,9 +8,7 @@ import { AnnouncementsHighlight } from '../components/AnnouncementsHighlight'
 import { BirthdaysHighlight } from '../components/BirthdaysHighlight'
 import { BudgetHighlight } from '../components/BudgetHighlight'
 import { StatCard, type StatCardProps } from '../components/StatCard'
-import { CashFlowChart } from '../components/CashFlowChart'
 import { ExpenseCategoryChart } from '../components/ExpenseCategoryChart'
-import { InvoicesSummaryCard } from '../components/InvoicesSummaryCard'
 import { QuickOverviewRow } from '../components/QuickOverviewRow'
 import { RecentActivityCard } from '../components/RecentActivityCard'
 import { useDashboard } from '../hooks/useDashboard'
@@ -27,15 +25,7 @@ const pageVariants = {
 
 export function Dashboard() {
   const { t } = useTranslation()
-  const {
-    toast,
-    loading,
-    invoices,
-    totals,
-    outstandingInvoiceCount,
-    bankAccountBalances,
-    totalBalance
-  } = useDashboard()
+  const { toast, loading, totals, bankAccountBalances, totalBalance } = useDashboard()
 
   const stats: StatCardProps[] = [
     {
@@ -46,29 +36,10 @@ export function Dashboard() {
       color: '#0ea5e9'
     },
     {
-      title: t('dashboard.statIncome'),
-      value: formatCurrency(totals.income),
-      icon: <Banknote size={20} />,
-      color: '#10b981'
-    },
-    {
       title: t('dashboard.statExpenses'),
       value: formatCurrency(totals.expenseTotal),
       icon: <Receipt size={20} />,
       color: '#ef4444'
-    },
-    {
-      title: t('dashboard.statNetProfit'),
-      value: formatCurrency(totals.netProfit),
-      icon: <Wallet size={20} />,
-      color: '#6366f1'
-    },
-    {
-      title: t('dashboard.statOutstandingInvoices'),
-      value: formatCurrency(totals.outstanding),
-      note: t('dashboard.outstandingNote', { count: outstandingInvoiceCount }),
-      icon: <FileText size={20} />,
-      color: '#f59e0b'
     }
   ]
 
@@ -146,7 +117,7 @@ export function Dashboard() {
         }}
       >
         {loading
-          ? Array.from({ length: 5 }).map((_, i) => (
+          ? Array.from({ length: 2 }).map((_, i) => (
               <div key={i} className="skeleton" style={{ height: 110, borderRadius: 14 }} />
             ))
           : stats.map((stat, i) => (
@@ -199,92 +170,27 @@ export function Dashboard() {
         </motion.div>
       )}
 
-      {/* Main Content Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 340px',
-          gap: '20px',
-          marginBottom: '20px'
-        }}
+      {/* Expenses by category */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, delay: 0.35 }}
+        style={{ marginBottom: '20px' }}
       >
-        {/* Cash flow */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.35 }}
+        <Card
+          header={
+            <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              {t('dashboard.expensesByCategoryTitle')}
+            </h2>
+          }
         >
-          <Card
-            header={
-              <div>
-                <h2
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    color: 'var(--text-primary)',
-                    marginBottom: 2
-                  }}
-                >
-                  {t('dashboard.cashFlowTitle')}
-                </h2>
-                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                  {t('dashboard.cashFlowSubtitle')}
-                </p>
-              </div>
-            }
-          >
-            {loading ? (
-              <div className="skeleton" style={{ height: 240, borderRadius: 10 }} />
-            ) : (
-              <CashFlowChart invoices={invoices} />
-            )}
-          </Card>
-
           {loading ? (
-            <div style={{ marginTop: 16 }}>
-              <div className="skeleton" style={{ height: 110, borderRadius: 14 }} />
-            </div>
+            <div className="skeleton" style={{ height: 200, borderRadius: 10 }} />
           ) : (
-            <InvoicesSummaryCard
-              overdue={totals.overdue}
-              notDueYet={totals.notDueYet}
-              draft={totals.draft}
-            />
+            <ExpenseCategoryChart data={totals.topCategories} />
           )}
-        </motion.div>
-
-        {/* Expenses by category */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, delay: 0.42 }}
-          style={{ height: '100%' }}
-        >
-          <Card
-            style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
-            header={
-              <h2 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                {t('dashboard.expensesByCategoryTitle')}
-              </h2>
-            }
-          >
-            <div
-              style={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center'
-              }}
-            >
-              {loading ? (
-                <div className="skeleton" style={{ height: 200, borderRadius: 10 }} />
-              ) : (
-                <ExpenseCategoryChart data={totals.topCategories} />
-              )}
-            </div>
-          </Card>
-        </motion.div>
-      </div>
+        </Card>
+      </motion.div>
 
       <QuickOverviewRow loading={loading} />
       <RecentActivityCard loading={loading} />

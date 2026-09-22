@@ -19,10 +19,27 @@ import { useProgramReportSectionMetaStore } from '@/features/programReports/stor
 import { useTrainingReportsStore } from '@/features/trainingReports/store/trainingReports.store'
 import { useAnnouncementsStore } from '@/features/announcements/store/announcements.store'
 import { useBudgetStore } from '@/features/budget/store/budget.store'
+import { useBudgetSourceMappingsStore } from '@/features/budget/store/budgetSourceMappings.store'
 import { useCouncilDepositsStore } from '@/features/councilDeposits/store/councilDeposits.store'
 import { useExpenseSummaryStore } from '@/features/expenseSummary/store/expenseSummary.store'
 import { useTrainingProfilesStore } from '@/features/trainingProfiles/store/trainingProfiles.store'
 import { useCouncilBoardStore } from '@/features/councilBoard/store/councilBoard.store'
+import { useTroopRegistrationStore } from '@/features/troopRegistration/store/troopRegistration.store'
+import { useDistrictCommitteeStore } from '@/features/districtCommittee/store/districtCommittee.store'
+import { useDistrictCommitteeRegistrationStore } from '@/features/districtCommittee/store/districtCommitteeRegistration.store'
+import { useBarangayCommitteeStore } from '@/features/barangayCommittee/store/barangayCommittee.store'
+import { useBarangayCommitteeRegistrationStore } from '@/features/barangayCommittee/store/barangayCommitteeRegistration.store'
+import { useTrefoilGuildStore } from '@/features/trefoilGuild/store/trefoilGuild.store'
+import { useTrefoilGuildRegistrationStore } from '@/features/trefoilGuild/store/trefoilGuildRegistration.store'
+import { useOavfStore } from '@/features/oavf/store/oavf.store'
+import { useOavfMemberStore } from '@/features/oavf/store/oavfMember.store'
+import { useHonoraryMemberStore } from '@/features/honoraryMember/store/honoraryMember.store'
+import { useHonoraryMemberRegistrationStore } from '@/features/honoraryMember/store/honoraryMemberRegistration.store'
+import { useAssociateMemberStore } from '@/features/associateMember/store/associateMember.store'
+import { useAssociateMemberRegistrationStore } from '@/features/associateMember/store/associateMemberRegistration.store'
+import { useIccgRegistrationStore } from '@/features/iccgRegistration/store/iccgRegistration.store'
+import { useIccgMemberStore } from '@/features/iccgRegistration/store/iccgMember.store'
+import { useMembershipGoalsStore } from '@/features/membershipStatusReport/store/membershipGoals.store'
 
 /**
  * Loads every module's data from Firestore once per session (each store seeds its own
@@ -51,10 +68,31 @@ export function useFirestoreSync() {
   const hydrateTrainingReports = useTrainingReportsStore((s) => s.hydrate)
   const hydrateAnnouncements = useAnnouncementsStore((s) => s.hydrate)
   const hydrateBudget = useBudgetStore((s) => s.hydrate)
+  const hydrateBudgetSourceMappings = useBudgetSourceMappingsStore((s) => s.hydrate)
   const hydrateCouncilDeposits = useCouncilDepositsStore((s) => s.hydrate)
   const hydrateExpenseSummary = useExpenseSummaryStore((s) => s.hydrate)
   const hydrateTrainingProfiles = useTrainingProfilesStore((s) => s.hydrate)
   const hydrateCouncilBoard = useCouncilBoardStore((s) => s.hydrate)
+  const hydrateTroopRegistration = useTroopRegistrationStore((s) => s.hydrate)
+  const hydrateDistrictCommittee = useDistrictCommitteeStore((s) => s.hydrate)
+  const hydrateDistrictCommitteeRegistration = useDistrictCommitteeRegistrationStore(
+    (s) => s.hydrate
+  )
+  const hydrateBarangayCommittee = useBarangayCommitteeStore((s) => s.hydrate)
+  const hydrateBarangayCommitteeRegistration = useBarangayCommitteeRegistrationStore(
+    (s) => s.hydrate
+  )
+  const hydrateTrefoilGuild = useTrefoilGuildStore((s) => s.hydrate)
+  const hydrateTrefoilGuildRegistration = useTrefoilGuildRegistrationStore((s) => s.hydrate)
+  const hydrateOavfMember = useOavfMemberStore((s) => s.hydrate)
+  const hydrateOavf = useOavfStore((s) => s.hydrate)
+  const hydrateHonoraryMember = useHonoraryMemberStore((s) => s.hydrate)
+  const hydrateHonoraryMemberRegistration = useHonoraryMemberRegistrationStore((s) => s.hydrate)
+  const hydrateAssociateMember = useAssociateMemberStore((s) => s.hydrate)
+  const hydrateAssociateMemberRegistration = useAssociateMemberRegistrationStore((s) => s.hydrate)
+  const hydrateIccgRegistration = useIccgRegistrationStore((s) => s.hydrate)
+  const hydrateIccgMember = useIccgMemberStore((s) => s.hydrate)
+  const hydrateMembershipGoals = useMembershipGoalsStore((s) => s.hydrate)
 
   useEffect(() => {
     hydrateHR()
@@ -77,10 +115,27 @@ export function useFirestoreSync() {
     hydrateTrainingReports()
     hydrateAnnouncements()
     hydrateBudget()
+    hydrateBudgetSourceMappings()
     hydrateCouncilDeposits()
     hydrateExpenseSummary()
     hydrateTrainingProfiles()
     hydrateCouncilBoard()
+    hydrateTroopRegistration()
+    hydrateDistrictCommittee()
+    hydrateDistrictCommitteeRegistration()
+    hydrateBarangayCommittee()
+    hydrateBarangayCommitteeRegistration()
+    hydrateTrefoilGuild()
+    hydrateTrefoilGuildRegistration()
+    hydrateOavfMember()
+    hydrateOavf()
+    hydrateHonoraryMember()
+    hydrateHonoraryMemberRegistration()
+    hydrateAssociateMember()
+    hydrateAssociateMemberRegistration()
+    hydrateIccgRegistration()
+    hydrateIccgMember()
+    hydrateMembershipGoals()
   }, [
     hydrateHR,
     hydrateAccounting,
@@ -102,9 +157,26 @@ export function useFirestoreSync() {
     hydrateTrainingReports,
     hydrateAnnouncements,
     hydrateBudget,
+    hydrateBudgetSourceMappings,
     hydrateCouncilDeposits,
     hydrateExpenseSummary,
     hydrateTrainingProfiles,
-    hydrateCouncilBoard
+    hydrateCouncilBoard,
+    hydrateTroopRegistration,
+    hydrateDistrictCommittee,
+    hydrateDistrictCommitteeRegistration,
+    hydrateBarangayCommittee,
+    hydrateBarangayCommitteeRegistration,
+    hydrateTrefoilGuild,
+    hydrateTrefoilGuildRegistration,
+    hydrateOavfMember,
+    hydrateOavf,
+    hydrateHonoraryMember,
+    hydrateHonoraryMemberRegistration,
+    hydrateAssociateMember,
+    hydrateAssociateMemberRegistration,
+    hydrateIccgRegistration,
+    hydrateIccgMember,
+    hydrateMembershipGoals
   ])
 }

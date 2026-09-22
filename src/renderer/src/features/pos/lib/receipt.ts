@@ -1,23 +1,27 @@
-import { formatCurrency } from '@/shared/lib/utils'
+import { formatCurrency, formatDate } from '@/shared/lib/utils'
 import { getReportLogoDataUrl } from '@/shared/lib/reportLogo'
-import { generateBarcodeDataUrl } from './barcode'
+import { SHARED_STYLES, PAGE_STYLE_PORTRAIT, fieldRow, fieldRow2 } from '@/shared/lib/receiptPrint'
 import type { Sale } from '../types/pos.types'
 import type { SilentPrintResult } from '../../../../../shared/printing-types'
 
-async function renderReceiptHtml(sale: Sale): Promise<string> {
+// Prints a complete, self-contained copy of the Council's third receipt booklet — the Sales
+// Invoice, used for POS's sale of goods (as opposed to the Service Invoice/Acknowledgment
+// Receipt, both for services/fees — see shared/lib/receiptPrint.ts, whose styles and
+// field-row markup this shares) — on plain paper via the regular printer configured in
+// Settings, not the POS/thermal receipt roll.
+async function renderSalesInvoiceHtml(sale: Sale): Promise<string> {
   const logoDataUrl = await getReportLogoDataUrl()
-  const barcodeDataUrl = generateBarcodeDataUrl(sale.saleNumber)
 
   const itemsHtml = sale.items
     .map(
       (item) => `
-        <div class="item">
-          <div class="item-name">${item.name}</div>
-          <div class="item-row">
-            <span>${item.quantity} x ${formatCurrency(item.unitPrice)}</span>
-            <span>${formatCurrency(item.subtotal)}</span>
-          </div>
-        </div>
+        <tr>
+          <td class="amount">${item.quantity}</td>
+          <td>${item.unit}</td>
+          <td>${item.name}</td>
+          <td class="amount">${formatCurrency(item.unitPrice)}</td>
+          <td class="amount">${formatCurrency(item.subtotal)}</td>
+        </tr>
       `
     )
     .join('')
@@ -27,87 +31,80 @@ async function renderReceiptHtml(sale: Sale): Promise<string> {
     <html>
       <head>
         <meta charset="utf-8" />
-        <title>Receipt ${sale.saleNumber}</title>
-        <style>
-          @page { size: 80mm auto; margin: 3mm; }
-          * { box-sizing: border-box; }
-          body {
-            font-family: 'Courier New', monospace;
-            width: 74mm;
-            margin: 0 auto;
-            font-size: 11px;
-            color: #000;
-            line-height: 1.45;
-          }
-          .center { text-align: center; }
-          .logo { width: 44px; height: 44px; object-fit: contain; margin-bottom: 4px; }
-          .org-name { font-size: 14px; font-weight: 700; letter-spacing: 0.2px; margin: 0; }
-          .org-sub { font-size: 10px; margin: 1px 0; color: #222; }
-          .badge {
-            display: inline-block; margin-top: 6px; padding: 2px 10px;
-            border: 1px solid #000; border-radius: 999px;
-            font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-          }
-          .divider { border-top: 1px dashed #000; margin: 8px 0; }
-          .divider.solid { border-top: 1px solid #000; }
-          .meta-row { display: flex; justify-content: space-between; gap: 8px; font-size: 10.5px; }
-          .item { margin-bottom: 4px; }
-          .item-name { font-weight: 600; }
-          .item-row { display: flex; justify-content: space-between; color: #333; }
-          .totals .line { display: flex; justify-content: space-between; font-size: 11px; margin: 2px 0; }
-          .totals .grand { font-size: 14px; font-weight: 700; border-top: 1px solid #000; margin-top: 4px; padding-top: 4px; }
-          .footer-note { font-size: 10px; margin-top: 4px; }
-          .footer-note p { margin: 2px 0; }
-          .barcode { width: 100%; max-width: 160px; margin: 8px auto 2px; display: block; }
-        </style>
+        <title>Sales Invoice ${sale.saleNumber}</title>
+        <style>${PAGE_STYLE_PORTRAIT}${SHARED_STYLES}</style>
       </head>
       <body>
         <div class="center">
           ${logoDataUrl ? `<img class="logo" src="${logoDataUrl}" />` : ''}
-          <p class="org-name">Girl Scouts of the Philippines</p>
-          <p class="org-sub">Ilocos Sur Council</p>
-          <p class="org-sub">Plaza Burgos, Vigan City, Ilocos Sur</p>
-          <span class="badge">Official Receipt</span>
+          <p class="org-name">GIRL SCOUT OF THE PHILIPPINES</p>
+          <p class="org-sub">ILOCOS SUR GIRL SCOUT COUNCIL</p>
+          <p class="org-sub">Plaza Burgos Ilocos Sur 2700 City of Vigan (Capital) Ilocos Sur Philippines</p>
+          <p class="org-sub">Non Vat Reg. TIN: 000-768-350-00041</p>
+          <p class="title">Sales Invoice</p>
+          <p class="title-sub">(Exempt)</p>
+        </div>
+        <div class="divider"></div>
+
+        ${fieldRow2('Sold to:', sale.memberName ?? '', 'Date', formatDate(sale.createdAt))}
+        ${fieldRow2('TIN:', '', 'Term', '')}
+        ${fieldRow('Address:', '')}
+        ${fieldRow('Business Style:', '')}
+
+        <table class="lines" style="margin-top: 10px;">
+          <thead>
+            <tr>
+              <th style="width: 60px;">Quantity</th>
+              <th style="width: 50px;">Unit</th>
+              <th>Articles</th>
+              <th class="amount">Unit Price</th>
+              <th class="amount">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+            <tr>
+              <td colspan="3"></td>
+              <td>Total Sales</td>
+              <td class="amount">${formatCurrency(sale.subtotal)}</td>
+            </tr>
+            <tr>
+              <td colspan="3"></td>
+              <td>Less: Discount</td>
+              <td class="amount">${sale.discountAmount > 0 ? formatCurrency(sale.discountAmount) : '&nbsp;'}</td>
+            </tr>
+            <tr class="totals-row">
+              <td colspan="3"></td>
+              <td>Total Amount Due</td>
+              <td class="amount">${formatCurrency(sale.totalAmount)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 4px;">
+          <p style="font-style: italic; margin: 0;">Girl Scout of the Philippines</p>
+          <p class="serial-red" style="margin: 0; font-size: 12px;">${sale.saleNumber}</p>
         </div>
 
-        <div class="divider"></div>
-
-        <div class="meta-row"><span>Receipt #</span><span>${sale.saleNumber}</span></div>
-        <div class="meta-row"><span>Date</span><span>${new Date(sale.createdAt).toLocaleString('en-PH')}</span></div>
-        <div class="meta-row"><span>Cashier</span><span>${sale.cashierName}</span></div>
-        ${sale.memberName ? `<div class="meta-row"><span>Member</span><span>${sale.memberName}</span></div>` : ''}
-
-        <div class="divider"></div>
-
-        ${itemsHtml}
-
-        <div class="divider"></div>
-
-        <div class="totals">
-          <div class="line"><span>Subtotal</span><span>${formatCurrency(sale.subtotal)}</span></div>
-          ${sale.discountAmount > 0 ? `<div class="line"><span>Discount</span><span>-${formatCurrency(sale.discountAmount)}</span></div>` : ''}
-          <div class="line grand"><span>TOTAL</span><span>${formatCurrency(sale.totalAmount)}</span></div>
-          <div class="line"><span>Payment</span><span>${sale.paymentMethod.toUpperCase()}</span></div>
-        </div>
-
-        <div class="divider solid"></div>
-
-        <div class="center footer-note">
-          <p>Thank you for supporting</p>
-          <p><strong>GSP Ilocos Sur Council!</strong></p>
-          <img class="barcode" src="${barcodeDataUrl}" />
+        <div class="signature">
+          <div style="display: inline-flex; align-items: baseline; gap: 8px;">
+            <span>By:</span>
+            <span style="display: inline-block; width: 200px; height: 14px; border-bottom: 1px solid #000;"></span>
+          </div>
+          <div style="font-size: 10px; color: #444; margin-top: 2px;">Cashier / Authorized Representative</div>
         </div>
       </body>
     </html>
   `
 }
 
-/** Prints straight to the configured receipt printer with no OS dialog — see PrinterService for how the cash drawer piggybacks on this. */
+/** Prints straight to the configured printer with no OS dialog. Used both for the Sale-Complete
+ *  modal's Print Receipt button and for reprinting from Sales History. */
 export async function silentPrintReceipt(
   sale: Sale,
   deviceName?: string | null
 ): Promise<SilentPrintResult> {
   if (!window.api?.printer) return { ok: false, error: 'Printer bridge unavailable' }
-  const html = await renderReceiptHtml(sale)
+  const html = await renderSalesInvoiceHtml(sale)
   return window.api.printer.silentPrint({ html, deviceName })
 }

@@ -3,13 +3,16 @@ import { useTranslation } from 'react-i18next'
 import { useToast } from '@/app/hooks/useToast'
 import type { PrinterConfig, PrinterInfo } from '../../../../../shared/printing-types'
 
+// No fixed narrow width here — this printer now prints full accountable-form documents
+// (Sales Invoice, Service Invoice, Acknowledgment Receipt), not an 80mm thermal roll, so the
+// test print should just confirm the OS driver/device actually accepts a job.
 const TEST_RECEIPT_HTML = `
   <!DOCTYPE html>
   <html>
     <head><meta charset="utf-8" /><title>Test Print</title></head>
-    <body style="font-family: 'Courier New', monospace; width: 74mm; margin: 0 auto; font-size: 12px; text-align: center;">
+    <body style="font-family: Georgia, 'Times New Roman', serif; margin: 0; padding: 24px; font-size: 12px; text-align: center;">
       <p style="font-weight: 700;">GSP Ilocos Sur Council</p>
-      <p>Test Print — Receipt Printer OK</p>
+      <p>Test Print — Printer OK</p>
       <p>${new Date().toLocaleString('en-PH')}</p>
     </body>
   </html>

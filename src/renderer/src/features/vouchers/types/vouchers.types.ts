@@ -30,6 +30,18 @@ export interface Voucher {
   createdBy: string
   approvedBy?: string
   createdAt: string
+  // Set on a plain receipt-direction Journal Voucher created via Invoices' Record Payment or
+  // a Troop/District Committee bulk payment — the physical Service Invoice/Acknowledgment
+  // Receipt booklet number (see shared/types/receipt.types.ts's ReceiptRecord.receiptNumber),
+  // distinct from `voucherNumber` (the JV's own accounting sequence). Not used by cash-advance
+  // liquidation JVs, which have their own refundOrNumber below.
+  orNumber?: string
+  // Which of the Council's receipt booklets orNumber actually came from — "Service Invoice"
+  // or "Acknowledgment Receipt" (see shared/types/receipt.types.ts's ReceiptKind). Shown as
+  // its own column in SCRD's Cash Receipts Journal (see useScrdComputations.ts) so it's clear
+  // at a glance which physical receipt backs a given entry. Unset for a voucher recorded
+  // without ever printing/choosing a receipt for it.
+  receiptType?: string
   // Journal Voucher only — cash advance liquidation fields
   // The Check Voucher (id) that disbursed the cash advance this JV liquidates — the
   // Council's real forms cross-reference it (JV's "DV No." field, and "(CV #___)" on the

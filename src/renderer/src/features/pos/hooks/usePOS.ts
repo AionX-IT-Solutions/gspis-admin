@@ -25,12 +25,15 @@ export function usePOS() {
   const sales = usePOSStore((s) => s.sales)
   const cart = usePOSStore((s) => s.cart)
   const selectedMemberId = usePOSStore((s) => s.selectedMemberId)
+  const manualMemberName = usePOSStore((s) => s.manualMemberName)
+  const setManualMemberName = usePOSStore((s) => s.setManualMemberName)
   const addToCart = usePOSStore((s) => s.addToCart)
   const removeFromCart = usePOSStore((s) => s.removeFromCart)
   const setCartQuantity = usePOSStore((s) => s.setCartQuantity)
   const setSelectedMember = usePOSStore((s) => s.setSelectedMember)
   const checkout = usePOSStore((s) => s.checkout)
   const voidSale = usePOSStore((s) => s.voidSale)
+  const deleteSale = usePOSStore((s) => s.deleteSale)
 
   const [search, setSearch] = useState('')
   const [historySearch, setHistorySearch] = useState('')
@@ -44,6 +47,8 @@ export function usePOS() {
   // at once.
   const [voidTarget, setVoidTarget] = useState<Sale | null>(null)
   const [voidReason, setVoidReason] = useState('')
+  // Target sale for the delete confirmation — same reasoning as voidTarget above.
+  const [deleteTarget, setDeleteTarget] = useState<Sale | null>(null)
 
   useEffect(() => {
     window.api?.printer
@@ -79,6 +84,17 @@ export function usePOS() {
   const subtotal = cart.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0)
   const discount = member ? Math.round(subtotal * member.discountRate * 100) / 100 : 0
   const total = subtotal - discount
+
+  // Suggestions for the member picker (same "auto search, or just type a name" pattern as
+  // the Payee field in NewVoucherModal) — only while typing an unmatched name, since once a
+  // real member is selected setSelectedMember already clears manualMemberName to ''.
+  const filteredMembers = useMemo(() => {
+    const q = manualMemberName.trim().toLowerCase()
+    if (!q) return []
+    return members.filter(
+      (m) => m.name.toLowerCase().includes(q) || m.code.toLowerCase().includes(q)
+    )
+  }, [members, manualMemberName])
 
   function processScannedCode(code: string) {
     const memberMatch = members.find((m) => m.code.toLowerCase() === code.toLowerCase())
@@ -162,6 +178,22 @@ export function usePOS() {
     setVoidReason('')
   }
 
+  function openDeleteConfirm(sale: Sale) {
+    setLastSale(null)
+    setDeleteTarget(sale)
+  }
+
+  function closeDeleteConfirm() {
+    setDeleteTarget(null)
+  }
+
+  function handleConfirmDeleteSale() {
+    if (!deleteTarget) return
+    deleteSale(deleteTarget.id, currentUser?.fullName ?? 'Cashier')
+    toast.success(t('pos.toast.saleDeleted', { saleNumber: deleteTarget.saleNumber }))
+    setDeleteTarget(null)
+  }
+
   // Always silent — printing straight to the configured receipt printer, no
   // OS "Save Print Output As" dialog. Used both for the Sale-Complete modal's
   // Print Receipt button and for reprinting from Sales History.
@@ -197,14 +229,6 @@ export function usePOS() {
     }
   }
 
-  const memberOptions = useMemo(
-    () => [
-      { value: '', label: t('pos.cart.noMember') },
-      ...members.map((m) => ({ value: m.id, label: `${m.name} (-${m.discountRate * 100}%)` }))
-    ],
-    [members, t]
-  )
-
   return {
     filtered,
     cart,
@@ -216,9 +240,12 @@ export function usePOS() {
     handleAddToCart,
     removeFromCart,
     setCartQuantity,
+    member,
     selectedMemberId,
     setSelectedMember,
-    memberOptions,
+    manualMemberName,
+    setManualMemberName,
+    filteredMembers,
     paymentMethod,
     setPaymentMethod,
     printReceipt,
@@ -235,6 +262,10 @@ export function usePOS() {
     openVoidConfirm,
     closeVoidConfirm,
     handleConfirmVoidSale,
+    deleteTarget,
+    openDeleteConfirm,
+    closeDeleteConfirm,
+    handleConfirmDeleteSale,
     handlePrintReceipt,
     handleExportSalesReport,
     handleViewSalesReport,

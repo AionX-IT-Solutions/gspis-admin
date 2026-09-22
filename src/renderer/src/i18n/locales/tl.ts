@@ -20,6 +20,7 @@ const tl = {
     delete: 'Tanggalin',
     view: 'Tingnan',
     preview: 'Preview',
+    download: 'I-download',
     downloadHint: 'I-download kung kailangan ang mismong file',
     close: 'Isara',
     back: 'Bumalik',
@@ -35,6 +36,8 @@ const tl = {
     perPageOption: '{{count}} bawat pahina',
     row: 'row',
     rows: 'rows',
+    filteredByDistrict: 'Naka-filter sa district: {{district}}',
+    clearFilter: 'Alisin ang filter',
     yes: 'Oo',
     no: 'Hindi',
     actions: 'Mga Aksyon',
@@ -67,7 +70,7 @@ const tl = {
     guest: 'Bisita',
     myProfile: 'Aking Profile',
     groups: {
-      crm: 'CRM',
+      troopsMembership: 'Mga Troop at Membership',
       councilPrograms: 'Mga Programa ng Konseho',
       hrPayroll: 'HR at Payroll',
       facility: 'Facility',
@@ -84,6 +87,14 @@ const tl = {
       employees: 'Mga Empleyado',
       councilBoard: 'Council Board',
       troops: 'Mga Troop',
+      districtCommittee: 'District Committee',
+      barangayCommittee: 'Barangay Committee',
+      trefoilGuild: 'Trefoil Guild',
+      oavf: 'OAVF / Career Woman',
+      honoraryMember: 'Honorary Members',
+      associateMember: 'Associate Members',
+      iccgRegistration: 'ICCG',
+      membershipStatusReport: 'Membership Status Report',
       activities: 'Mga Aktibidad',
       attendance: 'Attendance',
       leave: 'Mga Leave Request',
@@ -93,8 +104,6 @@ const tl = {
       rentals: 'Mga Rental Booking',
       visitors: 'Logbook ng mga Bisita',
       facilityCalendar: 'Kalendaryo',
-      invoices: 'Mga Invoice',
-      customers: 'Mga Customer',
       vendors: 'Mga Vendor',
       reports: 'Mga Ulat',
       scrd: 'Cash Receipts & Disb.',
@@ -129,9 +138,7 @@ const tl = {
     home: 'Home',
     searchTypes: {
       module: 'Module',
-      customer: 'Customer',
       vendor: 'Vendor',
-      invoice: 'Invoice',
       employee: 'Empleyado',
       troop: 'Troop',
       member: 'Miyembro',
@@ -173,22 +180,11 @@ const tl = {
     refreshButton: 'I-refresh',
     refreshToast: 'Na-refresh na ang data',
     newExpenseButton: 'Bagong Gastos',
-    newInvoiceButton: 'Bagong Invoice',
     statCashBalance: 'Kabuuang Cash & Bank Balance',
     cashBalanceNote: 'Sa {{count}} bank account',
     bankBalancesTitle: 'Mga Balanse ng Bangko',
-    statIncome: 'Kita (bayad na)',
     statExpenses: 'Mga Gastos',
-    statNetProfit: 'Netong Kita',
-    statOutstandingInvoices: 'Mga Outstanding Invoice',
     vsLastPeriod: 'kumpara sa nakaraang panahon',
-    outstandingNote: '{{count}} invoice ang naghihintay ng bayad',
-    cashFlowTitle: 'Halagang In-invoice sa Paglipas ng Panahon',
-    cashFlowSubtitle: 'Huling ~120 araw, bawat 15-araw na panahon',
-    invoicedSeriesName: 'In-invoice',
-    invoicesTitle: 'Mga Invoice',
-    overdueBadge: 'Lagpas na sa Deadline',
-    notDueYetBadge: 'Hindi pa Due',
     expensesByCategoryTitle: 'Mga Gastos ayon sa Kategorya',
     noExpensesRecorded: 'Wala pang naitalang gastos.',
     lowStockLabel: 'Mababa ang Stock',
@@ -319,20 +315,20 @@ const tl = {
       }
     },
     receiptPrinter: {
-      title: 'Receipt Printer at Cash Drawer',
+      title: 'Receipt & Invoice Printer',
       description:
-        'I-print nang tahimik ang resibo sa checkout, walang OS print dialog, papunta sa receipt printer na naka-install sa Windows.',
+        'I-print nang tahimik, walang OS print dialog, papunta sa printer na naka-install sa Windows — POS Sales Invoices, at Service Invoice/Acknowledgment Receipt mula sa Record Payment ng Invoices at bulk payment ng Troop/District Committee.',
       printerLabel: 'Printer',
       systemDefault: 'System default na printer',
       default: 'Default',
       autoPrintLabel: 'I-auto-print ang resibo pagkatapos ng benta',
       autoPrintDesc:
-        'Kapag naka-on, awtomatikong mag-p-print ang resibo pagkatapos ng bawat kumpletong benta. Pwede pa rin itong i-off ng cashier per-sale mula sa Point of Sale screen.',
+        'Kapag naka-on, awtomatikong mag-p-print ang Sales Invoice pagkatapos ng bawat kumpletong benta sa POS. Pwede pa rin itong i-off ng cashier per-sale mula sa Point of Sale screen.',
       testButton: 'Magpadala ng Test Print',
       testSuccess: 'Naipadala ang test receipt sa printer',
       testFailure: 'Nabigo ang test print: {{error}}',
       drawerNote:
-        'Tip sa cash drawer: kung naka-wire ang drawer mo sa RJ11/RJ12 port ng printer na ito, i-enable ang "Open cash drawer when printing" (tinatawag din na "kick drawer") sa Windows driver ng printer — Devices & Printers → right-click sa printer → Printer properties → Device settings. Kapag naka-on na iyon, bubukas na rin ang drawer sa tuwing may naka-print na resibo.'
+        'Tip sa cash drawer (thermal receipt printer lang): kung naka-wire ang drawer mo sa RJ11/RJ12 port ng printer na ito, i-enable ang "Open cash drawer when printing" (tinatawag din na "kick drawer") sa Windows driver ng printer — Devices & Printers → right-click sa printer → Printer properties → Device settings. Kapag naka-on na iyon, bubukas na rin ang drawer sa tuwing may naka-print na resibo. Hindi ito applicable sa dot-matrix/carbon-copy na printer.'
     },
     membershipYear: {
       title: 'Membership Year',
@@ -432,7 +428,7 @@ const tl = {
     },
     groups: {
       core: 'Overview',
-      crm: 'CRM',
+      troopsMembership: 'Troops & Membership',
       accounting: 'Accounting',
       councilPrograms: 'Mga Programa ng Konseho',
       hrPayroll: 'HR at Payroll',
@@ -577,6 +573,9 @@ const tl = {
     searchPlaceholder: 'Maghanap ng troop…',
     empty: 'Walang nahanap na troop',
     viewRoster: 'Tingnan ang Roster',
+    tabTroops: 'Mga Troop',
+    tabRegistrations: 'Mga Registration',
+    tabPayments: 'Mga Bayad',
     table: {
       troopNumber: 'Troop #',
       troopName: 'Pangalan ng Troop',
@@ -599,12 +598,31 @@ const tl = {
       levelPlaceholder: 'Piliin ang level',
       troopName: 'Pangalan ng Troop',
       leaderName: 'Troop Leader',
-      leaderNamePlaceholder: 'Mag-type ng pangalan, o pumili mula sa Training Profiles',
+      leaderNamePlaceholder: 'hal. Juana Dela Cruz',
       trainingsCompletedCount: '{{count}} training ang natapos',
       assistantLeaderName: 'Assistant Troop Leader',
       school: 'Paaralan / Komunidad',
       barangay: 'Barangay',
-      meetingPlace: 'Lugar ng Pagpupulong'
+      meetingPlace: 'Lugar ng Pagpupulong',
+      registrationDetailsHeading: 'Mga Detalye ng Registration',
+      troopAddress: 'Address ng Troop',
+      troopTelNo: 'Tel. No. ng Troop',
+      troopType: 'Uri ng Troop',
+      troopTypePlaceholder: 'Piliin ang uri ng troop',
+      districtCommitteeName: 'Pangalan ng District Committee / Munisipyo',
+      district: 'District',
+      districtPlaceholder: 'Pumili ng district…',
+      barangayCommitteeName: 'Pangalan ng Barangay Committee',
+      sponsoringGroup: 'Sponsoring Group',
+      troopBirthday: 'Kaarawan ng Troop',
+      completeMailingAddress: 'Kumpletong Mailing Address',
+      leaderDetailsHeading: 'Detalye ng Troop Leader',
+      leaderDetailsHint:
+        'Ang Petsa ng Kapanganakan at Katayuan ng Training ay galing sa naka-link na Training Profile ng leader, kung meron — buksan ang Training Profiles para baguhin ang mga iyon.',
+      assistantLeaderDetailsHeading: 'Detalye ng Co-Leader',
+      leaderBeneficiary: 'Beneficiary',
+      leaderRboStatus: 'RBO Status',
+      rboStatusPlaceholder: 'Piliin ang RBO status'
     },
     confirmDeactivate: {
       title: 'I-deactivate ang Troop',
@@ -667,7 +685,10 @@ const tl = {
         level: 'Level',
         guardianName: 'Pangalan ng Guardian',
         guardianContact: 'Contact ng Guardian',
-        address: 'Address'
+        address: 'Address',
+        patrol: 'Patrol / Cluster',
+        gradeYear: 'Grade / Year',
+        beneficiary: 'Beneficiary'
       },
       payment: {
         title: 'Magtala ng Bayad — {{name}}',
@@ -715,6 +736,1299 @@ const tl = {
         exportedPdf: 'Na-export ang member roster bilang PDF',
         exportedWord: 'Na-export ang member roster bilang Word document'
       }
+    },
+    payment: {
+      subtitle:
+        'Mga bulk na bayad kada troop — isang entry bawat remittance, kahit ilang miyembro ang saklaw nito',
+      addButton: 'Magtala ng Bayad',
+      searchPlaceholder: 'Maghanap gamit ang troop o paid by…',
+      empty: 'Wala pang naitalang bayad',
+      modalTitle: 'Magtala ng Bulk Payment',
+      editModalTitle: 'I-edit ang Bayad',
+      submitButton: 'Itala ang Bayad',
+      troopLabel: 'Troop',
+      troopPlaceholder: 'Pumili ng troop',
+      membersLabel: 'Mga saklaw na miyembro ({{count}})',
+      noMembers: 'Walang aktibong miyembro sa troop na ito',
+      perMemberLinesHeading: 'Bayad kada miyembro',
+      flatLinesHeading: 'Flat na bayad kada troop',
+      troopFeeLabel: 'Troop Fee',
+      thinkingDayFeeLabel: 'Thinking Day Fee',
+      categoryLabel: 'Kategorya',
+      amountPerMemberLabel: 'Halaga kada miyembro',
+      totalLabel: 'Kabuuan',
+      dateLabel: 'Petsa',
+      paidByLabel: 'Nagbayad',
+      printReceiptLabel: 'Mag-print ng resibo para sa bayad na ito',
+      ratesFromRegistration:
+        'Mula sa {{schoolYear}} registration na isinumite noong {{date}} — hindi na maeedit dito',
+      noRegistrationNote:
+        'Wala pang naisumiteng Troop Registration para sa troop na ito. Magsumite muna — jan hahalawin ang mga fee rate para sa bayad na ito.',
+      table: {
+        troopNumber: 'Troop #',
+        date: 'Petsa',
+        category: 'Kategorya',
+        paidBy: 'Nagbayad',
+        memberCount: 'Miyembro',
+        totalAmount: 'Kabuuang Halaga'
+      },
+      confirmDelete: {
+        title: 'Burahin ang Bayad',
+        message:
+          'Burahin itong {{category}} na bayad para sa Troop {{troopNumber}}? Maaalis din ang kaugnay na voucher kung mayroon. Hindi na ito maibabalik.'
+      },
+      toast: {
+        troopRequired: 'Pumili ng troop',
+        membersRequired: 'Pumili ng kahit isang miyembro',
+        amountRequired: 'Maglagay ng halagang higit sa zero',
+        paidByRequired: 'Ilagay kung sino ang nagbayad',
+        noRegistration:
+          'Magsumite muna ng Troop Registration para sa troop na ito bago magtala ng bayad',
+        recorded: 'Naitala ang bayad'
+      }
+    }
+  },
+  troopRegistration: {
+    title: 'Troop Registration',
+    subtitle: 'Mga naisumiteng Troop Registration Form, isa bawat troop kada school year',
+    addButton: 'Bagong Registration',
+    exportButton: 'I-export',
+    searchPlaceholder: 'Maghanap gamit ang troop, school year, o troop no…',
+    empty: 'Wala pang naisumiteng registration',
+    troopNotFound: 'Hindi nahanap ang troop para sa registration na ito.',
+    table: {
+      troopNumber: 'Troop #',
+      troopName: 'Pangalan ng Troop',
+      schoolYear: 'School Year',
+      dateApplied: 'Petsa ng Aplikasyon',
+      troopStatus: 'Katayuan',
+      troopNo: 'Troop No.'
+    },
+    troopPicker: {
+      title: 'Bagong Troop Registration',
+      selectTroop: 'Troop',
+      placeholder: 'Pumili ng troop',
+      continue: 'Magpatuloy'
+    },
+    confirmDelete: {
+      title: 'Burahin ang Registration',
+      message:
+        'Burahin ang {{schoolYear}} registration para sa Troop {{troopNumber}}? Hindi na ito maibabalik.'
+    },
+    toast: {
+      validationRequired: 'Kailangan ang school year',
+      created: 'Naisumite ang Troop Registration',
+      updated: 'Na-update ang Troop Registration',
+      deleted: 'Nabura ang Troop Registration',
+      exportedExcel: 'Na-export ang Troop Registration sa Excel',
+      exportedPdf: 'Na-export ang Troop Registration bilang PDF',
+      exportedWord: 'Na-export ang Troop Registration bilang Word document'
+    },
+    form: {
+      newTitle: 'Bagong Registration — Troop {{troopNumber}}',
+      editTitle: 'Registration — Troop {{troopNumber}}',
+      headerSection: 'Impormasyon ng Troop',
+      schoolYear: 'School Year',
+      dateApplied: 'Petsa ng Aplikasyon',
+      troopStatus: 'Katayuan ng Troop',
+      statusNew: 'Bago',
+      statusReRegistered: 'Re-registered',
+      ageLevel: 'Age Level',
+      leadersSection: 'Registration ng mga Leader',
+      addLeader: 'Magdagdag ng Leader',
+      position: 'Posisyon',
+      name: 'Pangalan',
+      trained: 'T/NT',
+      rboStatus: 'RBO Status',
+      birthdate: 'Petsa ng Kapanganakan',
+      beneficiary: 'Beneficiary',
+      membersSection: 'Registration ng mga Miyembro ng Troop',
+      addPatrol: 'Magdagdag ng Patrol/Cluster',
+      addMember: 'Magdagdag ng Miyembro',
+      removePatrol: 'Alisin ang Patrol/Cluster',
+      gradeYear: 'Gr/Yr',
+      regStatus: 'Reg. Status',
+      signaturesSection: 'Mga Lagda',
+      submittedByName: 'Isinumite Ni (Troop Leader)',
+      submittedByDate: 'Petsa',
+      notedByName: 'Napansin Ni (Principal / School Head / BC Chairman)',
+      notedByDate: 'Petsa',
+      remittanceSection: 'Council Action Remittance',
+      gspMembershipFee: 'A. GSP Membership Fee',
+      girlsReReg: 'Girls — Re-Reg',
+      girlsNew: 'Girls — Bago',
+      leaderReReg: 'Leader — Re-Reg',
+      leaderNew: 'Leader — Bago',
+      coLeaderReReg: 'Co-Leader — Re-Reg',
+      coLeaderNew: 'Co-Leader — Bago',
+      membershipFeePerMemberTotal: 'Bayad kada miyembro (kabuuang na-remit)',
+      membershipFeePerMemberCouncilShare: 'Bayad kada miyembro (share ng Council)',
+      councilRetainedShare: 'Retained share ng Council',
+      thinkingDayFee: 'Thinking Day Fee (retained ng Council)',
+      programDevelopmentFund: 'B. Program Development Fund',
+      mutualAssistanceFund: 'C. Kontribusyon sa Mutual Assistance Fund',
+      magazineSubscriptionFee: 'D. GS Magazine Troop Subscription Fee',
+      totalRemittance: 'Kabuuang Remittance',
+      troopNo: 'Troop No.',
+      girlsCardsFrom: 'Girls Cards — Mula',
+      girlsCardsTo: 'Girls Cards — Hanggang',
+      girlsIdCardSeriesYear: 'Girls ID Card Series Year',
+      adultsCardsFrom: 'Adults Cards — Mula',
+      adultsCardsTo: 'Adults Cards — Hanggang',
+      adultsIdCardSeriesYear: 'Adults ID Card Series Year',
+      troopFee: 'Troop Fee (Retained ng Konseho)',
+      rorNo: 'ROR No.',
+      rorDate: 'Petsa ng ROR',
+      dccrNo: 'DCCR No.',
+      dateOfDeposit: 'Petsa ng Deposito',
+      branchCode: 'Branch Code',
+      processedByName: 'Pinoseso Ni (Registration Processor)',
+      approvedByName: 'Inaprubahan Ni (Council Executive)'
+    }
+  },
+  districtCommittee: {
+    title: 'District Committee',
+    subtitle: 'Mga District Committee sa ilalim ng Konseho',
+    addButton: 'Magdagdag ng Committee',
+    searchPlaceholder: 'Maghanap gamit ang pangalan, address, o council…',
+    empty: 'Wala pang District Committee',
+    addModalTitle: 'Magdagdag ng District Committee',
+    editModalTitle: 'I-edit ang District Committee',
+    tabCommittees: 'Mga Committee',
+    tabRegistrations: 'Registration',
+    tabPayments: 'Payment',
+    form: {
+      name: 'Pangalan ng District Committee',
+      address: 'Address',
+      telNo: 'Tel. No.',
+      region: 'Region',
+      council: 'Council',
+      district: 'District',
+      districtPlaceholder: 'Pumili ng district…'
+    },
+    table: {
+      name: 'Pangalan',
+      address: 'Address',
+      telNo: 'Tel. No.',
+      members: 'Miyembro',
+      status: 'Katayuan',
+      deactivate: 'I-deactivate',
+      reactivate: 'I-reactivate'
+    },
+    toast: {
+      deactivated: '"{{name}}" ay na-deactivate',
+      reactivated: '"{{name}}" ay na-reactivate',
+      deleted: '"{{name}}" ay natanggal'
+    },
+    confirmDeactivate: {
+      title: 'I-deactivate ang Committee',
+      message:
+        'I-deactivate ang "{{name}}"? Mananatili ito sa record pero hindi na lalabas sa mga active picker.'
+    },
+    confirmReactivate: {
+      title: 'I-reactivate ang Committee',
+      message: 'I-reactivate ang "{{name}}"?'
+    },
+    confirmDelete: {
+      title: 'Burahin ang Committee',
+      message: 'Burahin ang "{{name}}"? Hindi na ito maibabalik.'
+    },
+    confirmForceDelete: {
+      title: 'Burahin Kahit May Payment History',
+      message:
+        'May naitalang payment history ang mga miyembro ng "{{name}}" — kung ipipilit ang pagbura, maaapektuhan ang mga nakaraang Daily Collections report. Ipagpatuloy pa rin?'
+    },
+    payment: {
+      subtitle:
+        'Mga bulk na bayad kada District Committee — isang entry bawat remittance, kahit ilang miyembro ang saklaw nito',
+      addButton: 'Magtala ng Bayad',
+      searchPlaceholder: 'Maghanap gamit ang committee o paid by…',
+      empty: 'Wala pang naitalang bayad',
+      modalTitle: 'Magtala ng Bulk Payment',
+      editModalTitle: 'I-edit ang Bayad',
+      submitButton: 'Itala ang Bayad',
+      committeeLabel: 'District Committee',
+      committeePlaceholder: 'Pumili ng committee',
+      membersLabel: 'Mga saklaw na miyembro ({{count}})',
+      noMembers: 'Walang aktibong miyembro sa committee na ito',
+      perMemberLinesHeading: 'Bayad kada miyembro',
+      categoryMembership: 'Membership',
+      flatLinesHeading: 'Flat na bayad kada committee',
+      dcGroupFeeLabel: 'D.C. Group Fee',
+      totalLabel: 'Kabuuan',
+      dateLabel: 'Petsa',
+      paidByLabel: 'Nagbayad',
+      printReceiptLabel: 'Mag-print ng resibo para sa bayad na ito',
+      ratesFromRegistration:
+        'Mula sa {{schoolYear}} registration na isinumite noong {{date}} — hindi na maeedit dito',
+      noRegistrationNote:
+        'Wala pang naisumiteng District Committee Registration para sa committee na ito. Magsumite muna — jan hahalawin ang mga fee rate para sa bayad na ito.',
+      table: {
+        committeeName: 'Committee',
+        date: 'Petsa',
+        category: 'Kategorya',
+        paidBy: 'Nagbayad',
+        memberCount: 'Miyembro',
+        totalAmount: 'Kabuuang Halaga'
+      },
+      confirmDelete: {
+        title: 'Burahin ang Bayad',
+        message:
+          'Burahin itong {{category}} na bayad para sa "{{name}}"? Maaalis din ang kaugnay na voucher kung mayroon. Hindi na ito maibabalik.'
+      },
+      toast: {
+        committeeRequired: 'Pumili ng committee',
+        membersRequired: 'Pumili ng kahit isang miyembro',
+        amountRequired: 'Maglagay ng halagang higit sa zero',
+        paidByRequired: 'Ilagay kung sino ang nagbayad',
+        noRegistration:
+          'Magsumite muna ng District Committee Registration para sa committee na ito bago magtala ng bayad',
+        recorded: 'Naitala ang bayad'
+      }
+    }
+  },
+  districtCommitteeRegistration: {
+    title: 'District Committee Registration',
+    subtitle:
+      'Mga naisumiteng District Committee Registration Form, isa bawat committee kada school year',
+    addButton: 'Bagong Registration',
+    exportButton: 'I-export',
+    searchPlaceholder: 'Maghanap gamit ang committee o school year…',
+    empty: 'Wala pang naisumiteng registration',
+    committeeNotFound: 'Hindi nahanap ang District Committee para sa registration na ito.',
+    table: {
+      committeeName: 'Committee',
+      schoolYear: 'School Year',
+      dateApplied: 'Petsa ng Aplikasyon',
+      registrationStatus: 'Katayuan'
+    },
+    committeePicker: {
+      title: 'Bagong District Committee Registration',
+      selectCommittee: 'District Committee',
+      placeholder: 'Pumili ng committee',
+      continue: 'Magpatuloy'
+    },
+    confirmDelete: {
+      title: 'Burahin ang Registration',
+      message:
+        'Burahin ang {{schoolYear}} registration para sa "{{name}}"? Hindi na ito maibabalik.'
+    },
+    toast: {
+      validationRequired: 'Kailangan ang school year',
+      deleted: 'Natanggal ang District Committee Registration',
+      created: 'Naisumite ang District Committee Registration',
+      updated: 'Na-update ang District Committee Registration',
+      exportedExcel: 'Na-export ang District Committee Registration sa Excel',
+      exportedPdf: 'Na-export ang District Committee Registration bilang PDF',
+      exportedWord: 'Na-export ang District Committee Registration bilang Word document'
+    },
+    form: {
+      newTitle: 'Bagong Registration — {{name}}',
+      editTitle: 'I-edit ang Registration — {{name}}',
+      headerSection: 'District Committee Registration Form',
+      schoolYear: 'School Year',
+      dateApplied: 'Petsa ng Aplikasyon',
+      registrationStatus: 'Registration Status',
+      statusNew: 'Bago',
+      statusReRegistered: 'Re-registered',
+      membersSection: 'Registration of Committee Members',
+      addMember: 'Magdagdag ng Miyembro',
+      position: 'Posisyon',
+      fullName: 'Pangalan (Apelyido, Pangalan, M.I.)',
+      birthdate: 'Kaarawan',
+      groupRepresented: 'Group Represented',
+      regStatus: 'Reg. Status',
+      beneficiary: 'Beneficiary',
+      signaturesSection: 'Mga Lagda',
+      submittedByName: 'Isinumite Ni (District Field Adviser)',
+      submittedByDate: 'Petsa',
+      notedByName: 'Napansin Ni (Dist. Com. Chairman/Dist. Commissioner)',
+      notedByDate: 'Petsa',
+      remittanceSection: 'Council Action Remittance',
+      memberFeeTotal: 'Members Fee (Kabuuan)',
+      memberCountsHint: '{{reReg}} Re-Reg, {{new}} Bago — binilang mula sa roster sa itaas',
+      memberFeePerMember: 'Fee kada Miyembro',
+      programDevelopmentFund: 'Program Development Fund',
+      mutualAssistanceFund: 'Contribution to the Mutual Assistance Fund',
+      totalRemittance: 'Kabuuang Remittance',
+      dcGroupFee: 'D.C. Group Fee (Retained ng Konseho)',
+      adultsCardsFrom: 'Adult Cards Issued — Mula',
+      adultsCardsTo: 'Adult Cards Issued — Hanggang',
+      rorNo: 'ROR No.',
+      rorDate: 'Petsa ng ROR',
+      dccrNo: 'DCCR No.',
+      dateOfDeposit: 'Petsa ng Deposito',
+      dccrSumNo: 'DCCR Sum No.',
+      branchCode: 'Branch Code',
+      processedByName: 'Pinoseso Ni (Registration Processor)',
+      approvedByName: 'Inaprubahan Ni (Council Executive)'
+    }
+  },
+  barangayCommittee: {
+    title: 'Barangay Committee',
+    subtitle: 'Mga Barangay Committee sa ilalim ng Konseho',
+    addButton: 'Magdagdag ng Committee',
+    searchPlaceholder: 'Maghanap gamit ang pangalan, address, o council…',
+    empty: 'Wala pang Barangay Committee',
+    addModalTitle: 'Magdagdag ng Barangay Committee',
+    editModalTitle: 'I-edit ang Barangay Committee',
+    tabCommittees: 'Mga Committee',
+    tabRegistrations: 'Registration',
+    tabPayments: 'Payment',
+    form: {
+      name: 'Pangalan ng Barangay Committee',
+      address: 'Address',
+      telNo: 'Tel. No.',
+      districtCommitteeName: 'Pangalan ng District Committee',
+      region: 'Region',
+      council: 'Council',
+      district: 'District',
+      districtPlaceholder: 'Pumili ng district…'
+    },
+    table: {
+      name: 'Pangalan',
+      address: 'Address',
+      districtCommitteeName: 'District Committee',
+      telNo: 'Tel. No.',
+      members: 'Miyembro',
+      status: 'Katayuan',
+      deactivate: 'I-deactivate',
+      reactivate: 'I-reactivate'
+    },
+    toast: {
+      deactivated: '"{{name}}" ay na-deactivate',
+      reactivated: '"{{name}}" ay na-reactivate',
+      deleted: '"{{name}}" ay natanggal'
+    },
+    confirmDeactivate: {
+      title: 'I-deactivate ang Committee',
+      message:
+        'I-deactivate ang "{{name}}"? Mananatili ito sa record pero hindi na lalabas sa mga active picker.'
+    },
+    confirmReactivate: {
+      title: 'I-reactivate ang Committee',
+      message: 'I-reactivate ang "{{name}}"?'
+    },
+    confirmDelete: {
+      title: 'Burahin ang Committee',
+      message: 'Burahin ang "{{name}}"? Hindi na ito maibabalik.'
+    },
+    confirmForceDelete: {
+      title: 'Burahin Kahit May Payment History',
+      message:
+        'May naitalang payment history ang mga miyembro ng "{{name}}" — kung ipipilit ang pagbura, maaapektuhan ang mga nakaraang Daily Collections report. Ipagpatuloy pa rin?'
+    },
+    payment: {
+      subtitle:
+        'Mga bulk na bayad kada Barangay Committee — isang entry bawat remittance, kahit ilang miyembro ang saklaw nito',
+      addButton: 'Magtala ng Bayad',
+      searchPlaceholder: 'Maghanap gamit ang committee o paid by…',
+      empty: 'Wala pang naitalang bayad',
+      modalTitle: 'Magtala ng Bulk Payment',
+      editModalTitle: 'I-edit ang Bayad',
+      submitButton: 'Itala ang Bayad',
+      committeeLabel: 'Barangay Committee',
+      committeePlaceholder: 'Maghanap ng pangalan ng committee…',
+      membersLabel: 'Mga saklaw na miyembro ({{count}})',
+      noMembers: 'Walang aktibong miyembro sa committee na ito',
+      categoryMembership: 'Membership',
+      bcGroupFeeLabel: 'B.C. Group Fee',
+      totalLabel: 'Kabuuan',
+      dateLabel: 'Petsa',
+      paidByLabel: 'Nagbayad',
+      ratesFromRegistration:
+        'Mula sa {{schoolYear}} registration na isinumite noong {{date}} — hindi na maeedit dito',
+      noRegistrationNote:
+        'Wala pang naisumiteng Barangay Committee Registration para sa committee na ito. Magsumite muna — jan hahalawin ang mga fee rate para sa bayad na ito.',
+      table: {
+        committeeName: 'Committee',
+        date: 'Petsa',
+        category: 'Kategorya',
+        paidBy: 'Nagbayad',
+        memberCount: 'Miyembro',
+        totalAmount: 'Kabuuang Halaga'
+      },
+      confirmDelete: {
+        title: 'Burahin ang Bayad',
+        message:
+          'Burahin itong {{category}} na bayad para sa "{{name}}"? Maaalis din ang kaugnay na voucher kung mayroon. Hindi na ito maibabalik.'
+      },
+      toast: {
+        committeeRequired: 'Pumili ng committee',
+        membersRequired: 'Pumili ng kahit isang miyembro',
+        amountRequired: 'Maglagay ng halagang higit sa zero',
+        paidByRequired: 'Ilagay kung sino ang nagbayad',
+        noRegistration:
+          'Magsumite muna ng Barangay Committee Registration para sa committee na ito bago magtala ng bayad',
+        recorded: 'Naitala ang bayad'
+      }
+    }
+  },
+  barangayCommitteeRegistration: {
+    title: 'Barangay Committee Registration',
+    subtitle:
+      'Mga naisumiteng Barangay Committee Registration Form, isa bawat committee kada school year',
+    addButton: 'Bagong Registration',
+    exportButton: 'I-export',
+    searchPlaceholder: 'Maghanap gamit ang committee o school year…',
+    empty: 'Wala pang naisumiteng registration',
+    committeeNotFound: 'Hindi nahanap ang Barangay Committee para sa registration na ito.',
+    table: {
+      committeeName: 'Committee',
+      schoolYear: 'School Year',
+      dateApplied: 'Petsa ng Aplikasyon',
+      registrationStatus: 'Katayuan'
+    },
+    committeePicker: {
+      title: 'Bagong Barangay Committee Registration',
+      selectCommittee: 'Barangay Committee',
+      placeholder: 'Pumili ng committee',
+      continue: 'Magpatuloy'
+    },
+    confirmDelete: {
+      title: 'Burahin ang Registration',
+      message:
+        'Burahin ang {{schoolYear}} registration para sa "{{name}}"? Hindi na ito maibabalik.'
+    },
+    toast: {
+      validationRequired: 'Kailangan ang school year',
+      deleted: 'Natanggal ang Barangay Committee Registration',
+      created: 'Naisumite ang Barangay Committee Registration',
+      updated: 'Na-update ang Barangay Committee Registration',
+      exportedExcel: 'Na-export ang Barangay Committee Registration sa Excel',
+      exportedPdf: 'Na-export ang Barangay Committee Registration bilang PDF',
+      exportedWord: 'Na-export ang Barangay Committee Registration bilang Word document'
+    },
+    form: {
+      newTitle: 'Bagong Registration — {{name}}',
+      editTitle: 'I-edit ang Registration — {{name}}',
+      headerSection: 'Barangay Committee Registration Form',
+      schoolYear: 'School Year',
+      dateApplied: 'Petsa ng Aplikasyon',
+      registrationStatus: 'Registration Status',
+      statusNew: 'Bago',
+      statusReRegistered: 'Re-registered',
+      membersSection: 'Registration of Committee Members',
+      addMember: 'Magdagdag ng Miyembro',
+      position: 'Posisyon',
+      fullName: 'Pangalan (Apelyido, Pangalan, M.I.)',
+      birthdate: 'Kaarawan',
+      groupRepresented: 'Group Represented',
+      regStatus: 'Reg. Status',
+      beneficiary: 'Beneficiary',
+      signaturesSection: 'Mga Lagda',
+      submittedByName: 'Isinumite Ni (BC Chairman)',
+      submittedByDate: 'Petsa',
+      remittanceSection: 'Council Action Remittance',
+      memberFeeTotal: 'Members Fee (Kabuuan)',
+      memberCountsHint: '{{reReg}} Re-Reg, {{new}} Bago — binilang mula sa roster sa itaas',
+      memberFeePerMember: 'Fee kada Miyembro',
+      programDevelopmentFund: 'Program Development Fund',
+      mutualAssistanceFund: 'Contribution to the Mutual Assistance Fund',
+      totalRemittance: 'Kabuuang Remittance',
+      bcGroupFee: 'B.C. Group Fee (Retained ng Konseho)',
+      adultsCardsFrom: 'Adult Cards Issued — Mula',
+      adultsCardsTo: 'Adult Cards Issued — Hanggang',
+      rorNo: 'ROR No.',
+      rorDate: 'Petsa ng ROR',
+      dccrNo: 'DCCR No.',
+      dateOfDeposit: 'Petsa ng Deposito',
+      branchCode: 'Branch Code',
+      processedByName: 'Pinoseso Ni (Registration Processor)',
+      approvedByName: 'Inaprubahan Ni (Council Executive)'
+    }
+  },
+  trefoilGuild: {
+    title: 'Trefoil Guild',
+    subtitle: 'Mga Trefoil Guild sa ilalim ng Konseho',
+    addButton: 'Magdagdag ng Guild',
+    searchPlaceholder: 'Maghanap gamit ang pangalan, address, o council…',
+    empty: 'Wala pang Trefoil Guild',
+    addModalTitle: 'Magdagdag ng Trefoil Guild',
+    editModalTitle: 'I-edit ang Trefoil Guild',
+    tabGuilds: 'Mga Guild',
+    tabRegistrations: 'Registration',
+    tabPayments: 'Payment',
+    form: {
+      name: 'Pangalan ng Trefoil Guild',
+      guildNumber: 'Trefoil Guild Number',
+      address: 'Address',
+      telNo: 'Tel. No.',
+      email: 'Email Address',
+      region: 'Region',
+      council: 'Council',
+      district: 'District',
+      districtPlaceholder: 'Pumili ng district…'
+    },
+    table: {
+      name: 'Pangalan',
+      guildNumber: 'Guild No.',
+      address: 'Address',
+      telNo: 'Tel. No.',
+      members: 'Miyembro',
+      status: 'Katayuan',
+      deactivate: 'I-deactivate',
+      reactivate: 'I-reactivate'
+    },
+    toast: {
+      deactivated: '"{{name}}" ay na-deactivate',
+      reactivated: '"{{name}}" ay na-reactivate',
+      deleted: '"{{name}}" ay natanggal'
+    },
+    confirmDeactivate: {
+      title: 'I-deactivate ang Guild',
+      message:
+        'I-deactivate ang "{{name}}"? Mananatili ito sa record pero hindi na lalabas sa mga active picker.'
+    },
+    confirmReactivate: {
+      title: 'I-reactivate ang Guild',
+      message: 'I-reactivate ang "{{name}}"?'
+    },
+    confirmDelete: {
+      title: 'Burahin ang Guild',
+      message: 'Burahin ang "{{name}}"? Hindi na ito maibabalik.'
+    },
+    confirmForceDelete: {
+      title: 'Burahin Kahit May Payment History',
+      message:
+        'May naitalang payment history ang mga miyembro ng "{{name}}" — kung ipipilit ang pagbura, maaapektuhan ang mga nakaraang Daily Collections report. Ipagpatuloy pa rin?'
+    },
+    payment: {
+      subtitle:
+        'Mga bulk na bayad kada Trefoil Guild — isang entry bawat remittance, kahit ilang miyembro ang saklaw nito',
+      addButton: 'Magtala ng Bayad',
+      searchPlaceholder: 'Maghanap gamit ang guild o paid by…',
+      empty: 'Wala pang naitalang bayad',
+      modalTitle: 'Magtala ng Bulk Payment',
+      editModalTitle: 'I-edit ang Bayad',
+      submitButton: 'Itala ang Bayad',
+      guildLabel: 'Trefoil Guild',
+      guildPlaceholder: 'Maghanap ng pangalan ng guild…',
+      membersLabel: 'Mga saklaw na miyembro ({{count}})',
+      noMembers: 'Walang aktibong miyembro sa guild na ito',
+      categoryMembership: 'Membership',
+      tgGroupFeeLabel: 'T.G. Group Fee',
+      totalLabel: 'Kabuuan',
+      dateLabel: 'Petsa',
+      paidByLabel: 'Nagbayad',
+      ratesFromRegistration:
+        'Mula sa {{schoolYear}} registration na isinumite noong {{date}} — hindi na maeedit dito',
+      noRegistrationNote:
+        'Wala pang naisumiteng Trefoil Guild Registration para sa guild na ito. Magsumite muna — jan hahalawin ang mga fee rate para sa bayad na ito.',
+      table: {
+        guildName: 'Guild',
+        date: 'Petsa',
+        category: 'Kategorya',
+        paidBy: 'Nagbayad',
+        memberCount: 'Miyembro',
+        totalAmount: 'Kabuuang Halaga'
+      },
+      confirmDelete: {
+        title: 'Burahin ang Bayad',
+        message:
+          'Burahin itong {{category}} na bayad para sa "{{name}}"? Maaalis din ang kaugnay na voucher kung mayroon. Hindi na ito maibabalik.'
+      },
+      toast: {
+        guildRequired: 'Pumili ng guild',
+        membersRequired: 'Pumili ng kahit isang miyembro',
+        amountRequired: 'Maglagay ng halagang higit sa zero',
+        paidByRequired: 'Ilagay kung sino ang nagbayad',
+        noRegistration:
+          'Magsumite muna ng Trefoil Guild Registration para sa guild na ito bago magtala ng bayad',
+        recorded: 'Naitala ang bayad'
+      }
+    }
+  },
+  trefoilGuildRegistration: {
+    title: 'Trefoil Guild Registration',
+    subtitle: 'Mga naisumiteng Trefoil Guild Registration Form, isa bawat guild kada school year',
+    addButton: 'Bagong Registration',
+    exportButton: 'I-export',
+    searchPlaceholder: 'Maghanap gamit ang guild o school year…',
+    empty: 'Wala pang naisumiteng registration',
+    guildNotFound: 'Hindi nahanap ang Trefoil Guild para sa registration na ito.',
+    table: {
+      guildName: 'Guild',
+      schoolYear: 'School Year',
+      dateApplied: 'Petsa ng Aplikasyon',
+      registrationStatus: 'Katayuan'
+    },
+    guildPicker: {
+      title: 'Bagong Trefoil Guild Registration',
+      selectGuild: 'Trefoil Guild',
+      placeholder: 'Pumili ng guild',
+      continue: 'Magpatuloy'
+    },
+    confirmDelete: {
+      title: 'Burahin ang Registration',
+      message:
+        'Burahin ang {{schoolYear}} registration para sa "{{name}}"? Hindi na ito maibabalik.'
+    },
+    toast: {
+      validationRequired: 'Kailangan ang school year',
+      deleted: 'Natanggal ang Trefoil Guild Registration',
+      created: 'Naisumite ang Trefoil Guild Registration',
+      updated: 'Na-update ang Trefoil Guild Registration',
+      exportedExcel: 'Na-export ang Trefoil Guild Registration sa Excel',
+      exportedPdf: 'Na-export ang Trefoil Guild Registration bilang PDF',
+      exportedWord: 'Na-export ang Trefoil Guild Registration bilang Word document'
+    },
+    form: {
+      newTitle: 'Bagong Registration — {{name}}',
+      editTitle: 'I-edit ang Registration — {{name}}',
+      headerSection: 'Trefoil Guild Registration Form',
+      schoolYear: 'School Year',
+      dateApplied: 'Petsa ng Aplikasyon',
+      registrationStatus: 'Registration Status',
+      statusNew: 'Bago',
+      statusReRegistered: 'Re-registered',
+      membersSection: 'Registration of Guild Members',
+      addMember: 'Magdagdag ng Miyembro',
+      position: 'Posisyon',
+      fullName: 'Pangalan (Apelyido, Pangalan, M.I.)',
+      birthdate: 'Kaarawan',
+      regStatus: 'Reg. Status',
+      beneficiary: 'Beneficiary',
+      signaturesSection: 'Mga Lagda',
+      submittedByName: 'Isinumite Ni (TG Chairman)',
+      submittedByDate: 'Petsa',
+      remittanceSection: 'Council Action Remittance',
+      memberFeeTotal: 'Members Fee (Kabuuan)',
+      memberCountsHint: '{{reReg}} Re-Reg, {{new}} Bago — binilang mula sa roster sa itaas',
+      memberFeePerMember: 'Fee kada Miyembro',
+      programDevelopmentFund: 'Program Development Fund',
+      mutualAssistanceFund: 'Contribution to the Mutual Assistance Fund',
+      totalRemittance: 'Kabuuang Remittance',
+      tgGroupFee: 'T.G. Group Fee (Retained ng Konseho)',
+      adultsCardsFrom: 'No. of Cards Issued — Mula',
+      adultsCardsTo: 'No. of Cards Issued — Hanggang',
+      orNo: 'O.R. No.',
+      orDate: 'Petsa ng O.R.',
+      dccrNo: 'DCCR No.',
+      dateOfDeposit: 'Petsa ng Deposito',
+      branchCode: 'Branch Code',
+      processedByName: 'Pinoseso Ni (Registration Processor)',
+      approvedByName: 'Inaprubahan Ni (Council Executive)'
+    }
+  },
+  oavf: {
+    title: 'OAVF / Career Woman Members',
+    subtitle: 'Mga profile ng Other Adult Volunteer at Career Woman Members',
+    addButton: 'Bagong Miyembro',
+    exportLabel: 'I-export',
+    searchPlaceholder: 'Maghanap gamit ang pangalan o address…',
+    empty: 'Wala pang OAVF/Career Woman member',
+    addModalTitle: 'Bagong OAVF/Career Woman Member',
+    editModalTitle: 'I-edit ang OAVF/Career Woman Member',
+    tabMembers: 'Mga Miyembro',
+    tabRegistrations: 'Registration',
+    tabPayments: 'Payment',
+    table: {
+      name: 'Pangalan',
+      district: 'District',
+      dateApplied: 'Petsa ng Aplikasyon',
+      mobileNo: 'Mobile No.',
+      wasGirlScout: 'Dating Girl Scout',
+      membershipFeeTotal: 'Bayad',
+      paymentStatus: 'Bayad',
+      paid: 'Bayad na',
+      unpaid: 'Hindi pa bayad',
+      membershipStatus: 'Membership',
+      active: 'Aktibo',
+      expired: 'Expired',
+      noRegistration: 'Walang Registration'
+    },
+    confirmDelete: {
+      title: 'Burahin ang Miyembro',
+      message: 'Burahin ang miyembrong "{{name}}"? Hindi na ito maibabalik.'
+    },
+    confirmForceDelete: {
+      title: 'Burahin Kahit May Payment History',
+      message:
+        'May Registration si "{{name}}" na may naitalang payment history — kung ituloy ang pagbura, mabubura rin ang Registration na iyon at ang kaugnay na voucher kung mayroon, na maaapektuhan ang mga nakaraang Daily Collections report. Ituloy pa rin?'
+    },
+    payment: {
+      subtitle: 'Mga naitalang bayad ng OAVF/Career Woman Membership Fee',
+      searchPlaceholder: 'Maghanap gamit ang pangalan o school year…',
+      empty: 'Wala pang naitalang bayad',
+      recordButton: 'Magtala ng Bayad',
+      modalTitle: 'Magtala ng Bayad — {{name}}',
+      submitButton: 'Itala ang Bayad',
+      membershipFeeTotal: 'Membership Fee (Kabuuan)',
+      membershipFeeCouncilShare: 'Bahagi ng Council',
+      dateLabel: 'Petsa',
+      totalLabel: 'Kabuuan',
+      feeLabel: 'OAVF/Career Woman Membership Fee',
+      pickerTitle: 'Pumili ng Registration na Babayaran',
+      pickerPlaceholder: 'Maghanap gamit ang pangalan o school year…',
+      pickerEmpty: 'Walang nahanap na unpaid registration',
+      table: {
+        name: 'Aplikante',
+        schoolYear: 'School Year',
+        date: 'Petsa',
+        arNumber: 'AR No.',
+        amount: 'Halaga'
+      },
+      toast: {
+        recorded: 'Naitala ang bayad'
+      }
+    },
+    toast: {
+      missingFields: 'Kailangan ang Apelyido at Pangalan',
+      created: 'Naisave ang OAVF/Career Woman member',
+      updated: 'Na-update ang OAVF/Career Woman member',
+      deleted: 'Natanggal ang OAVF/Career Woman member',
+      exportedExcel: 'Na-export sa Excel',
+      exportedPdf: 'Na-export bilang PDF',
+      exportedWord: 'Na-export bilang Word document'
+    },
+    form: {
+      createButton: 'I-save ang Miyembro',
+      selectPlaceholder: 'Pumili…',
+      dateApplied: 'Petsa',
+      council: 'Council',
+      region: 'Region',
+      district: 'District',
+      lastName: 'Apelyido',
+      firstName: 'Pangalan',
+      middleInitial: 'M.I.',
+      civilStatus: 'Civil Status',
+      sex: 'Kasarian',
+      birthdate: 'Kaarawan',
+      mobileNo: 'Mobile No.',
+      email: 'E-mail',
+      homeAddress: 'Home Address',
+      religion: 'Relihiyon',
+      educationalAttainment: 'Educational Attainment',
+      profession: 'Propesyon',
+      occupation: 'Trabaho',
+      interests: 'Interes',
+      otherOrgAffiliated: 'Ibang Organisasyong Kinabibilangan',
+      beneficiary: 'Beneficiary',
+      beneficiaryContactNo: 'Contact Number/s',
+      wasGirlScout: 'Kasaysayan bilang Girl Scout',
+      wasGirlScoutLabel: 'Naging Girl Scout ka na ba?',
+      gsRegion: 'Region',
+      gsCouncil: 'Council',
+      dateLastRegistered: 'Huling Petsa ng Rehistro',
+      gsPosition: 'Posisyon'
+    },
+    registration: {
+      subtitle: 'Mga OAVF/Career Woman filing, isa bawat aplikante kada school year',
+      addButton: 'Bagong Registration',
+      searchPlaceholder: 'Maghanap gamit ang pangalan o school year…',
+      empty: 'Wala pang naisumiteng registration',
+      addModalTitle: 'Bagong OAVF/Career Woman Registration',
+      editModalTitle: 'I-edit ang OAVF/Career Woman Registration',
+      table: {
+        name: 'Aplikante',
+        schoolYear: 'School Year',
+        dateApplied: 'Petsa ng Aplikasyon'
+      },
+      confirmDelete: {
+        title: 'Burahin ang Registration',
+        message: 'Burahin ang {{schoolYear}} registration ni "{{name}}"? Hindi na ito maibabalik.'
+      },
+      toast: {
+        memberRequired: 'Pumili ng aplikante',
+        schoolYearRequired: 'Kailangan ang school year',
+        created: 'Naisumite ang registration',
+        updated: 'Na-update ang registration',
+        deleted: 'Natanggal ang registration'
+      },
+      form: {
+        createButton: 'I-save ang Registration',
+        applicant: 'Aplikante',
+        applicantPlaceholder: 'Maghanap ng miyembro…',
+        schoolYear: 'School Year',
+        dateApplied: 'Petsa ng Aplikasyon'
+      }
+    }
+  },
+  honoraryMember: {
+    title: 'Honorary Members',
+    subtitle: 'Mga profile ng Honorary Member',
+    addButton: 'Bagong Miyembro',
+    exportLabel: 'I-export',
+    searchPlaceholder: 'Maghanap gamit ang pangalan o address…',
+    empty: 'Wala pang Honorary Member',
+    addModalTitle: 'Bagong Honorary Member',
+    editModalTitle: 'I-edit ang Honorary Member',
+    tabMembers: 'Mga Miyembro',
+    tabRegistrations: 'Registration',
+    tabPayments: 'Payment',
+    table: {
+      name: 'Pangalan',
+      district: 'District',
+      dateApplied: 'Petsa ng Aplikasyon',
+      phone: 'Telepono',
+      wasGirlScout: 'Dating Girl Scout',
+      feeAmount: 'Bayad',
+      paymentStatus: 'Bayad',
+      paid: 'Bayad na',
+      unpaid: 'Hindi pa bayad',
+      membershipStatus: 'Membership',
+      active: 'Aktibo',
+      expired: 'Expired',
+      noRegistration: 'Walang Registration'
+    },
+    confirmDelete: {
+      title: 'Burahin ang Miyembro',
+      message: 'Burahin ang miyembrong "{{name}}"? Hindi na ito maibabalik.'
+    },
+    confirmForceDelete: {
+      title: 'Burahin Kahit May Payment History',
+      message:
+        'May Registration si "{{name}}" na may naitalang payment history — kung ituloy ang pagbura, mabubura rin ang Registration na iyon at ang kaugnay na voucher kung mayroon, na maaapektuhan ang mga nakaraang Daily Collections report. Ituloy pa rin?'
+    },
+    payment: {
+      subtitle: 'Mga naitalang bayad ng Honorary Member fee',
+      searchPlaceholder: 'Maghanap gamit ang pangalan o school year…',
+      empty: 'Wala pang naitalang bayad',
+      recordButton: 'Magtala ng Bayad',
+      modalTitle: 'Magtala ng Bayad — {{name}}',
+      submitButton: 'Itala ang Bayad',
+      membershipFeeTotal: 'Membership Fee (Kabuuan)',
+      membershipFeeCouncilShare: 'Bahagi ng Council',
+      dateLabel: 'Petsa',
+      totalLabel: 'Kabuuan',
+      feeLabel: 'Honorary Member Fee',
+      pickerTitle: 'Pumili ng Registration na Babayaran',
+      pickerPlaceholder: 'Maghanap gamit ang pangalan o school year…',
+      pickerEmpty: 'Walang nahanap na unpaid registration',
+      table: {
+        name: 'Honoree',
+        schoolYear: 'School Year',
+        date: 'Petsa',
+        arNumber: 'AR No.',
+        amount: 'Halaga'
+      },
+      toast: {
+        amountRequired: 'Maglagay ng halagang higit sa zero',
+        recorded: 'Naitala ang bayad'
+      }
+    },
+    toast: {
+      missingFields: 'Kailangan ang Apelyido at Pangalan',
+      created: 'Naisave ang Honorary Member',
+      updated: 'Na-update ang Honorary Member',
+      deleted: 'Natanggal ang Honorary Member',
+      exportedExcel: 'Na-export sa Excel',
+      exportedPdf: 'Na-export bilang PDF',
+      exportedWord: 'Na-export bilang Word document'
+    },
+    form: {
+      createButton: 'I-save ang Miyembro',
+      selectPlaceholder: 'Pumili…',
+      dateApplied: 'Petsa',
+      lastName: 'Apelyido',
+      firstName: 'Pangalan',
+      middleInitial: 'M.I.',
+      civilStatus: 'Civil Status',
+      sex: 'Kasarian',
+      council: 'Council',
+      region: 'Region',
+      nhq: 'NHQ',
+      district: 'District',
+      homeAddress: 'Home Address',
+      phone: 'Telepono',
+      email: 'E-mail',
+      businessAddress: 'Business Address',
+      businessPhone: 'Telepono',
+      profession: 'Propesyon',
+      occupation: 'Trabaho',
+      beneficiary: 'Beneficiary',
+      wasGirlScout: 'Kasaysayan bilang Girl Scout',
+      wasGirlScoutLabel: 'Pakisaad kung ikaw ay naging Girl Scout',
+      dateLastRegistered: 'Huling Petsa ng Rehistro',
+      position: 'Posisyon'
+    },
+    registration: {
+      subtitle: 'Mga Honorary Member filing, isa bawat honoree kada school year',
+      addButton: 'Bagong Registration',
+      searchPlaceholder: 'Maghanap gamit ang pangalan o school year…',
+      empty: 'Wala pang naisumiteng registration',
+      addModalTitle: 'Bagong Honorary Member Registration',
+      editModalTitle: 'I-edit ang Honorary Member Registration',
+      table: {
+        name: 'Honoree',
+        schoolYear: 'School Year',
+        dateApplied: 'Petsa ng Aplikasyon'
+      },
+      confirmDelete: {
+        title: 'Burahin ang Registration',
+        message: 'Burahin ang {{schoolYear}} registration ni "{{name}}"? Hindi na ito maibabalik.'
+      },
+      toast: {
+        memberRequired: 'Pumili ng honoree',
+        schoolYearRequired: 'Kailangan ang school year',
+        created: 'Naisumite ang registration',
+        updated: 'Na-update ang registration',
+        deleted: 'Natanggal ang registration'
+      },
+      form: {
+        createButton: 'I-save ang Registration',
+        honoree: 'Honoree',
+        honoreePlaceholder: 'Maghanap ng miyembro…',
+        schoolYear: 'School Year',
+        dateApplied: 'Petsa ng Aplikasyon'
+      }
+    }
+  },
+  associateMember: {
+    title: 'Associate Members',
+    subtitle: 'Mga profile ng Associate Member',
+    addButton: 'Bagong Miyembro',
+    exportLabel: 'I-export',
+    searchPlaceholder: 'Maghanap gamit ang pangalan o address…',
+    empty: 'Wala pang Associate Member',
+    addModalTitle: 'Bagong Associate Member',
+    editModalTitle: 'I-edit ang Associate Member',
+    tabMembers: 'Mga Miyembro',
+    tabRegistrations: 'Registration',
+    tabPayments: 'Payment',
+    table: {
+      amfNumber: 'AMF No.',
+      name: 'Pangalan',
+      district: 'District',
+      dateApplied: 'Petsa ng Aplikasyon',
+      phone: 'Telepono',
+      wasGirlScout: 'Dating Girl Scout',
+      feeAmount: 'Bayad',
+      paymentStatus: 'Bayad',
+      paid: 'Bayad na',
+      unpaid: 'Hindi pa bayad',
+      membershipStatus: 'Membership',
+      active: 'Aktibo',
+      expired: 'Expired',
+      noRegistration: 'Walang Registration'
+    },
+    confirmDelete: {
+      title: 'Burahin ang Miyembro',
+      message: 'Burahin ang miyembrong "{{name}}"? Hindi na ito maibabalik.'
+    },
+    confirmForceDelete: {
+      title: 'Burahin Kahit May Payment History',
+      message:
+        'May Registration si "{{name}}" na may naitalang payment history — kung ituloy ang pagbura, mabubura rin ang Registration na iyon at ang kaugnay na voucher kung mayroon, na maaapektuhan ang mga nakaraang Daily Collections report. Ituloy pa rin?'
+    },
+    payment: {
+      subtitle: 'Mga naitalang bayad ng Associate Member fee',
+      searchPlaceholder: 'Maghanap gamit ang pangalan o school year…',
+      empty: 'Wala pang naitalang bayad',
+      recordButton: 'Magtala ng Bayad',
+      modalTitle: 'Magtala ng Bayad — {{name}}',
+      submitButton: 'Itala ang Bayad',
+      membershipFeeTotal: 'Membership Fee (Kabuuan)',
+      membershipFeeCouncilShare: 'Bahagi ng Council',
+      dateLabel: 'Petsa',
+      totalLabel: 'Kabuuan',
+      pickerTitle: 'Pumili ng Registration na Babayaran',
+      pickerPlaceholder: 'Maghanap gamit ang pangalan o school year…',
+      pickerEmpty: 'Walang nahanap na unpaid registration',
+      table: {
+        name: 'Aplikante',
+        schoolYear: 'School Year',
+        date: 'Petsa',
+        arNumber: 'AR No.',
+        amount: 'Halaga'
+      },
+      toast: {
+        amountRequired: 'Maglagay ng halagang higit sa zero',
+        recorded: 'Naitala ang bayad'
+      }
+    },
+    toast: {
+      missingFields: 'Kailangan ang Apelyido at Pangalan',
+      created: 'Naisave ang Associate Member',
+      updated: 'Na-update ang Associate Member',
+      deleted: 'Natanggal ang Associate Member',
+      exportedExcel: 'Na-export sa Excel',
+      exportedPdf: 'Na-export bilang PDF',
+      exportedWord: 'Na-export bilang Word document'
+    },
+    form: {
+      createButton: 'I-save ang Miyembro',
+      selectPlaceholder: 'Pumili…',
+      amfNumber: 'AMF No.',
+      series: 'Series',
+      dateApplied: 'Petsa',
+      council: 'Council',
+      region: 'Region',
+      district: 'District',
+      lastName: 'Apelyido',
+      firstName: 'Pangalan',
+      middleInitial: 'M.I.',
+      civilStatus: 'Civil Status',
+      sex: 'Kasarian',
+      homeAddress: 'Home Address',
+      phone: 'Telepono',
+      email: 'E-mail',
+      businessAddress: 'Business Address',
+      businessPhone: 'Telepono',
+      profession: 'Propesyon',
+      occupation: 'Trabaho',
+      beneficiary: 'Beneficiary',
+      wasGirlScout: 'Kasaysayan bilang Girl Scout',
+      wasGirlScoutLabel: 'Pakisaad kung ikaw ay naging Girl Scout',
+      dateLastRegistered: 'Huling Petsa ng Rehistro',
+      position: 'Posisyon'
+    },
+    registration: {
+      subtitle: 'Mga Associate Member filing, isa bawat aplikante kada school year',
+      addButton: 'Bagong Registration',
+      searchPlaceholder: 'Maghanap gamit ang pangalan o school year…',
+      empty: 'Wala pang naisumiteng registration',
+      addModalTitle: 'Bagong Associate Member Registration',
+      editModalTitle: 'I-edit ang Associate Member Registration',
+      table: {
+        name: 'Aplikante',
+        schoolYear: 'School Year',
+        dateApplied: 'Petsa ng Aplikasyon'
+      },
+      confirmDelete: {
+        title: 'Burahin ang Registration',
+        message: 'Burahin ang {{schoolYear}} registration ni "{{name}}"? Hindi na ito maibabalik.'
+      },
+      toast: {
+        memberRequired: 'Pumili ng aplikante',
+        schoolYearRequired: 'Kailangan ang school year',
+        created: 'Naisumite ang registration',
+        updated: 'Na-update ang registration',
+        deleted: 'Natanggal ang registration'
+      },
+      form: {
+        createButton: 'I-save ang Registration',
+        applicant: 'Aplikante',
+        applicantPlaceholder: 'Maghanap ng miyembro…',
+        schoolYear: 'School Year',
+        dateApplied: 'Petsa ng Aplikasyon'
+      }
+    }
+  },
+  iccgRegistration: {
+    title: 'ICCG Registration',
+    subtitle:
+      'Mga naisumiteng ICCG (Catholic Guiding Section) Membership Registration Form, isa bawat school/troop kada school year',
+    addButton: 'Bagong Registration',
+    exportButton: 'I-export',
+    searchPlaceholder: 'Maghanap gamit ang school, troop, o school year…',
+    empty: 'Wala pang naisumiteng registration',
+    troopNotFound: 'Hindi nahanap ang troop para sa registration na ito.',
+    tabMembers: 'Members',
+    tabRegistrations: 'Registration',
+    tabPayments: 'Payment',
+    table: {
+      school: 'School',
+      troopNumber: 'Troop #',
+      schoolYear: 'School Year',
+      dateApplied: 'Petsa ng Aplikasyon',
+      girls: 'Girls',
+      adults: 'Adults',
+      total: 'Total'
+    },
+    troopPicker: {
+      title: 'Bagong ICCG Registration',
+      selectTroop: 'Troop',
+      placeholder: 'Pumili ng troop',
+      continue: 'Magpatuloy'
+    },
+    confirmDelete: {
+      title: 'Burahin ang Registration',
+      message:
+        'Burahin ang {{schoolYear}} ICCG registration para sa "{{school}}"? Hindi na ito maibabalik.'
+    },
+    toast: {
+      validationRequired: 'Kailangan ang school',
+      created: 'Naisumite ang ICCG Registration',
+      updated: 'Na-update ang ICCG Registration',
+      deleted: 'Nabura ang ICCG Registration',
+      exportedExcel: 'Na-export ang ICCG Registration sa Excel',
+      exportedPdf: 'Na-export ang ICCG Registration bilang PDF',
+      exportedWord: 'Na-export ang ICCG Registration bilang Word document'
+    },
+    form: {
+      newTitle: 'Bagong Registration — Troop {{troopNumber}}',
+      editTitle: 'Registration — Troop {{troopNumber}}',
+      headerSection: 'Impormasyon ng CGS',
+      school: 'School',
+      ageLevel: 'Age Level',
+      schoolYear: 'School Year',
+      dateApplied: 'Petsa ng Aplikasyon',
+      formNo: 'Form No.',
+      seriesYear: 'Series Year',
+      girlsSection: 'CGS Registered Girl Members',
+      addGirl: 'Magdagdag ng Girl',
+      adultsSection: 'CGS Registered Adult Members (at least 2)',
+      addAdult: 'Magdagdag ng Adult',
+      name: 'Pangalan (Last, First, M.I.)',
+      gradeYear: 'Grade/Year',
+      email: 'e-mail address',
+      signaturesSection: 'Mga Lagda',
+      submittedByName: 'Isinumite Ni (CGS Adult Leader)',
+      submittedByDate: 'Petsa',
+      notedByName: 'Napansin Ni (School Principal)',
+      notedByDate: 'Petsa',
+      feeSection: 'CGS Registration Fee',
+      noOfGirls: 'No. of Girls',
+      amountGirls: 'Halaga — Girls',
+      noOfAdults: 'No. of Adult',
+      amountAdults: 'Halaga — Adult',
+      feePerMemberTotal: 'Bayad kada miyembro (kabuuang na-remit)',
+      feePerMemberCouncilShare: 'Bayad kada miyembro (share ng Council)',
+      councilRetainedShare: 'Retained share ng Council',
+      total: 'Total',
+      arNo: 'AR No.',
+      dateOfDeposit: 'Petsa ng Deposito',
+      dccrNo: 'DCCR No.',
+      processedByName: 'Pinoseso Ni (Registration Processor)',
+      approvedByName: 'Inaprubahan Ni (Council Executive)'
+    },
+    members: {
+      subtitle:
+        'Permanenteng ICCG roster kada Troop (girls + adults), mula sa mga naisumiteng registration',
+      addButton: 'Magdagdag ng Miyembro',
+      searchPlaceholder: 'Maghanap gamit ang pangalan o troop…',
+      empty: 'Wala pang ICCG members',
+      addModalTitle: 'Magdagdag ng ICCG Member',
+      editModalTitle: 'I-edit ang ICCG Member',
+      roleGirl: 'Girl',
+      roleAdult: 'Adult',
+      deactivate: 'I-deactivate',
+      reactivate: 'I-reactivate',
+      table: {
+        troopNumber: 'Troop #',
+        name: 'Pangalan',
+        role: 'Role',
+        gradeYear: 'Grade/Year',
+        email: 'e-mail address',
+        status: 'Katayuan'
+      },
+      form: {
+        troop: 'Troop',
+        troopPlaceholder: 'Pumili ng troop',
+        role: 'Role',
+        fullName: 'Pangalan (Last, First, M.I.)',
+        gradeYear: 'Grade/Year',
+        email: 'e-mail address'
+      },
+      toast: {
+        troopRequired: 'Pumili ng troop',
+        nameRequired: 'Kailangan ang pangalan',
+        created: 'Naidagdag ang ICCG member',
+        updated: 'Na-update ang ICCG member',
+        deactivated: '"{{name}}" na-deactivate',
+        reactivated: '"{{name}}" na-reactivate',
+        deleted: '"{{name}}" nabura'
+      },
+      confirmDeactivate: {
+        title: 'I-deactivate ang Miyembro',
+        message:
+          'I-deactivate si "{{name}}"? Mananatili sila sa record pero hindi na sila lalabas bilang aktibong roster member.'
+      },
+      confirmReactivate: {
+        title: 'I-reactivate ang Miyembro',
+        message: 'I-reactivate si "{{name}}"?'
+      },
+      confirmDelete: {
+        title: 'Burahin ang Miyembro',
+        message: 'Burahin si "{{name}}"? Hindi na ito maibabalik.'
+      },
+      confirmForceDelete: {
+        title: 'Burahin Kahit May Payment History',
+        message:
+          'May naitalang payment history si "{{name}}" — kung ituloy ang pagbura, maaapektuhan ang mga nakaraang Daily Collections report. Ituloy pa rin?'
+      }
+    },
+    payment: {
+      subtitle:
+        'Mga bulk na bayad kada ICCG roster ng Troop — isang entry bawat remittance, kahit ilang babae/adulto ang saklaw nito',
+      addButton: 'Magtala ng Bayad',
+      searchPlaceholder: 'Maghanap gamit ang troop o paid by…',
+      empty: 'Wala pang naitalang bayad',
+      modalTitle: 'Magtala ng Bulk Payment',
+      editModalTitle: 'I-edit ang Bayad',
+      submitButton: 'Itala ang Bayad',
+      troopLabel: 'Troop',
+      troopPlaceholder: 'Maghanap gamit ang troop number o pangalan…',
+      membersLabel: 'Mga babaeng saklaw ({{girls}}), Mga adultong saklaw ({{adults}})',
+      girlsFeeLabel: 'Bayad — Girls',
+      adultsFeeLabel: 'Bayad — Adults',
+      councilShareLabel: 'Share ng Council (kada miyembro)',
+      councilRetainedTotal: 'Retained share ng Council',
+      totalLabel: 'Kabuuan',
+      dateLabel: 'Petsa',
+      paidByLabel: 'Nagbayad',
+      ratesFromRegistration:
+        'Mungkahing rate mula sa {{schoolYear}} registration na isinumite noong {{date}} — maeedit dito',
+      noRegistrationNote:
+        'Wala pang naisumiteng ICCG Registration para sa troop na ito — gagamitin ang standard na ₱20/₱5 rate. Puwede ka pa ring magtala ng bayad; magsumite na lang ng registration mamaya para naka-sync ang mungkahing rate.',
+      table: {
+        troopNumber: 'Troop #',
+        date: 'Petsa',
+        category: 'Kategorya',
+        paidBy: 'Nagbayad',
+        memberCount: 'Miyembro',
+        totalAmount: 'Kabuuang Halaga'
+      },
+      confirmDelete: {
+        title: 'Burahin ang Bayad',
+        message:
+          'Burahin itong {{category}} na bayad para sa Troop {{troopNumber}}? Maaalis din ang kaugnay na voucher kung mayroon. Hindi na ito maibabalik.'
+      },
+      toast: {
+        troopRequired: 'Pumili ng troop',
+        amountRequired: 'Maglagay ng halagang higit sa zero',
+        paidByRequired: 'Ilagay kung sino ang nagbayad',
+        recorded: 'Naitala ang bayad'
+      }
+    }
+  },
+  membershipStatusReport: {
+    title: 'Membership Status Report',
+    subtitle:
+      'Council-wide na bilang ng miyembro, kinokompyut mula sa lahat ng registration module',
+    exportLabel: 'I-export',
+    schoolYear: 'Membership Year',
+    newYearButton: 'Bagong Membership Year',
+    newYearModal: {
+      title: 'Magsimula ng Bagong Membership Year',
+      yearLabel: 'Membership Year',
+      createButton: 'Gawin',
+      hint: 'Kokopyahin ang mga Goal target ng {{year}} bilang panimula para sa bagong taon — pwede itong baguhin anumang oras sa Edit Goals. Wala nang ibang kailangan bago ito — awtomatikong lalabas dito ang mga registration na ifa-file sa bagong taon.'
+    },
+    table: {
+      district: 'District',
+      troopsUnits: 'No. of Troops & Units',
+      girlsAdults: 'No. of Girls & Adults',
+      totalNo: 'Total No.',
+      girls: 'Girls',
+      adults: 'Adults'
+    },
+    goals: {
+      title: 'Goal / Achieved / Balance',
+      editButton: 'I-edit ang Goals',
+      editTitle: 'I-edit ang Goals — {{schoolYear}}',
+      category: 'Kategorya',
+      goal: 'Goal',
+      achieved: 'Achieved',
+      balance: 'Balance',
+      membershipPotential: 'Membership potential registered',
+      barangayCommittee: 'Barangay Committee registered',
+      districtCommittee: 'District Committee registered',
+      associateMember: 'Associate Member registered',
+      honoraryMember: 'Honorary Member',
+      trefoilGuild: 'Trefoil Guild',
+      careerWoman: 'Career Woman',
+      iccg: 'ICCG'
+    },
+    toast: {
+      exportedExcel: 'Na-export sa Excel',
+      exportedPdf: 'Na-export bilang PDF',
+      exportedWord: 'Na-export bilang Word document',
+      yearRequired: 'Maglagay ng membership year',
+      yearExists: 'May membership year na ito',
+      yearCreated: 'Nagawa na ang {{year}}'
     }
   },
   attendance: {
@@ -1303,6 +2617,7 @@ const tl = {
     fiscalYear: 'Fiscal Year {{year}}',
     addLineButton: 'Magdagdag ng Linya',
     newFiscalYearButton: 'Bagong Fiscal Year',
+    deleteFiscalYearButton: 'Tanggalin ang fiscal year na ito',
     newFiscalYearModal: {
       title: 'Magsimula ng Bagong Fiscal Year',
       yearLabel: 'Fiscal Year',
@@ -1349,30 +2664,33 @@ const tl = {
       totalActual: 'Kabuuang Aktwal',
       useAllLiveData: 'Gamitin lahat ng live data',
       liveDataHint:
-        'Kinuwenta mula sa benta ng POS, rental bookings, vouchers, o payroll — i-click para punan ang buwang ito'
+        'Kinuwenta mula sa benta ng POS, rental bookings, vouchers, o payroll — i-click para punan ang buwang ito',
+      source: {
+        heading: 'Source',
+        hintIncome:
+          'I-link ang line na ito sa tunay na pinagmumulan ng pera nito — Vouchers/Cash Receipts, Troops & Membership payments, Point of Sale (NES), o Rentals. Kapag may nadagdag kang rule dito, papalitan nito ang built-in default ng line na ito; kapag inalis lahat ng rule, babalik sa default.',
+        hintExpense:
+          'I-link ang line na ito sa mga voucher o payroll field na aktwal na nagbabayad dito — kapaki-pakinabang kapag hindi eksaktong tugma ang GL Account text ng Check Voucher sa pangalan ng line na ito. Kapag may nadagdag kang rule dito, papalitan nito ang built-in default ng line na ito; kapag inalis lahat ng rule, babalik sa default.',
+        addRule: 'Magdagdag ng Source',
+        empty:
+          'Wala pang na-link na source — mananatiling manual ang line na ito maliban kung may umiiral nang built-in default.',
+        removeRule: 'Alisin ang source na ito',
+        sourceTypeNotSpecified: 'Hindi Tinukoy',
+        sourceTypeVoucher: 'Vouchers / Cash Receipts',
+        sourceTypeTroopPayment: 'Troops & Membership (Roster payments)',
+        sourceTypePos: 'Point of Sale (NES)',
+        sourceTypeRental: 'Rentals',
+        sourceTypePayroll: 'Payroll',
+        voucherCategoriesLabel: 'Aling voucher/receipt categories ang kasama',
+        voucherCategoryPlaceholder: 'I-type o pumili ng category…',
+        rentalCategoryAny: 'Kahit anong rental space',
+        payrollFieldPlaceholder: 'Pumili ng payroll field'
+      }
     },
     autoSourceHint:
       'May live na halaga ang line na ito mula sa totoong data — buksan ang Edit para tignan/gamitin ito',
     autoSource: {
-      equipmentService: 'Kinuha mula sa mga benta sa Point of Sale (NES).',
-      rentalHall:
-        'Kinuha mula sa kumpirmado/tapos nang bookings ng mga rental space na Hall ang kategorya (Rentals module).',
-      rentalRoom:
-        'Kinuha mula sa kumpirmado/tapos nang bookings ng mga rental space na Room ang kategorya (Rentals module).',
-      rentalSpace:
-        'Kinuha mula sa kumpirmado/tapos nang bookings ng mga rental space na Space ang kategorya (Rentals module).',
-      councilSupportFund:
-        'Kinuha mula sa approved Journal Voucher receipts na naka-record bilang Council Support Fund.',
-      troopBcDcFees:
-        'Kinuha mula sa Troop membership payments (Roster) kasama ang approved Journal Voucher receipts (Troop Fees, Barangay Committee, Associate, Career Woman, Honorary Member).',
-      trainingFees:
-        'Kinuha mula sa Troop training payments (Roster) kasama ang approved Journal Voucher receipts na naka-record bilang Training Fees.',
-      campingFees:
-        'Kinuha mula sa Troop camping payments (Roster) kasama ang approved Journal Voucher receipts na naka-record bilang Camping Fees.',
-      payroll: 'Kinuha mula sa mga bayad na (paid) Payroll entries.',
-      voucherMatch: 'Kinuha mula sa approved Disbursement Vouchers na may tugmang Account Title.',
-      cashAdvanceLiquidation:
-        'Kinuha mula sa approved Journal Voucher na naglilikida ng Cash Advance, base sa item na may tugmang Account Title.'
+      userConfigured: 'Naka-link sa source na sinet-up mo — buksan ang Edit para tignan o baguhin.'
     },
     toast: {
       updated: 'Na-update ang budget line',
@@ -1383,6 +2701,7 @@ const tl = {
       fiscalYearExists: 'Mayroon nang ganitong fiscal year',
       noSourceYear: 'Walang existing fiscal year na kokopyahin',
       fiscalYearCreated: 'Nagawa ang {{year}}',
+      fiscalYearDeleted: 'Natanggal ang {{year}}',
       excel: 'Na-export ang budget sa Excel',
       pdf: 'Na-export ang budget sa PDF',
       word: 'Na-export ang budget sa Word'
@@ -1391,6 +2710,11 @@ const tl = {
       title: 'Tanggalin ang Budget Line',
       message:
         'Tanggalin ang "{{name}}"? Mawawala rin ang budgeted amount at monthly actuals nito — hindi na ito mababawi.'
+    },
+    confirmDeleteYear: {
+      title: 'Tanggalin ang Fiscal Year',
+      message:
+        'Tanggalin ang {{year}}? Mawawala rin lahat ng budget line ng fiscal year na ito — hindi na ito mababawi.'
     }
   },
   facilityCalendar: {
@@ -1429,6 +2753,8 @@ const tl = {
       amount: 'Halaga',
       date: 'Petsa',
       status: 'Katayuan',
+      orNumber: 'OR No.',
+      reimbursement: 'Reimbursement',
       empty: 'Walang nakitang voucher',
       exportTooltip: 'I-export ang voucher',
       expenseSummaryTooltip: 'Pamahalaan ang Expense Summary'
@@ -1444,7 +2770,7 @@ const tl = {
       payeePlaceholder: 'Pangalan ng vendor o tatanggap',
       payeeAddress: 'Address ng Payee',
       bankAccount: 'Bank Account',
-      bankAccountPlaceholder: 'hal. DBP #00-500128590-5',
+      bankAccountPlaceholder: 'Pumili ng Bank Account (default sa Cash on Hand)',
       accountLinesLabel: 'Mga Account Title (Debit)',
       accountLinesLabelCredit: 'Mga Account Title (Credit)',
       accountPlaceholder: 'Account title, hal. Office Supplies',
@@ -1459,6 +2785,7 @@ const tl = {
       cashAdvanceSourcePlaceholder: 'Piliin ang Check Voucher na naglabas ng cash advance',
       cashAdvanceSourceEmptyHint:
         'Walang nahanap na tugmang Check Voucher — gumawa muna ng isa na may debit line na ang Account Title ay eksaktong "Cash Advance".',
+      cashAdvanceSourceRequiredHint: 'Pumili muna ng Cash Advance source sa itaas.',
       cashAdvanceAmount: 'Halaga ng Cash Advance',
       cashAdvanceDate: 'Petsa ng Cash Advance',
       totalAmountSpent: 'Kabuuang Nagastos',
@@ -1467,10 +2794,16 @@ const tl = {
       refundDate: 'Petsa ng Refund',
       cashAdvanceAutoLinesNote:
         'Awtomatikong bubuuin ang account lines mula sa Summary of Expenses kapag na-log na ang mga gastos — gamitin ang receipt icon sa Vouchers list matapos i-save ang voucher na ito.',
-      autoCalculatedField: 'Awtomatikong kinukuwenta mula sa Summary of Expenses.'
+      autoCalculatedField: 'Awtomatikong kinukuwenta mula sa Summary of Expenses.',
+      unbalancedHint:
+        'Hindi balanse — Debit {{debit}} vs Credit {{credit}}. Dapat balanse ang bawat voucher: kabuuang debit = kabuuang credit.'
     },
     toast: {
       missingFields: 'Kailangan ang payee at kahit isang account line na may halaga',
+      unbalanced:
+        'Hindi tugma ang kabuuang debit at credit (₱{{debit}} vs ₱{{credit}}) — dapat balanse muna bago ito ma-save',
+      cashAdvanceSourceRequired:
+        'Piliin muna kung aling Check Voucher talaga ang naglabas ng cash advance na ito bago ito i-liquidate',
       created: 'Nagawa na ang voucher',
       updated: 'Na-update ang voucher',
       deleted: 'Nabura ang voucher',
@@ -1631,106 +2964,28 @@ const tl = {
       wordGenerated: 'Nagawa ang Word document'
     }
   },
-  invoices: {
-    title: 'Mga Invoice',
-    newInvoiceButton: 'Bagong Invoice',
-    searchPlaceholder: 'Maghanap ng invoice…',
-    markAsPaidButton: 'Markahan bilang Nabayaran',
-    voidButton: 'I-void',
-    defaultMemo: 'Salamat po sa inyong suporta.',
-    status: {
-      partially_paid: 'Bahagyang Bayad',
-      void: 'Void'
-    },
-    filter: {
-      all: 'Lahat'
-    },
-    summary: {
-      overdue: 'Lumagpas sa Deadline',
-      notDueYet: 'Hindi pa Dapat Bayaran',
-      paid: 'Nabayaran'
-    },
-    table: {
-      number: 'Numero',
-      customer: 'Customer',
-      issueDate: 'Petsa ng Pag-isyu',
-      dueDate: 'Deadline ng Bayad',
-      status: 'Katayuan',
-      total: 'Kabuuan',
-      balanceDue: 'Balanseng Dapat Bayaran',
-      amount: 'Halaga',
-      empty: 'Walang nakitang invoice'
-    },
-    detail: {
-      issued: 'Ini-isyu Noong',
-      due: 'Deadline',
-      description: 'Paglalarawan',
-      qty: 'Dami',
-      rate: 'Rate',
-      subtotal: 'Subtotal',
-      total: 'Kabuuan'
-    },
-    form: {
-      saveAsDraft: 'I-save bilang Draft',
-      saveAndSend: 'I-save at Ipadala',
-      saveButton: 'I-save',
-      selectCustomer: 'Pumili ng customer',
-      searchCustomer: 'Maghanap ayon sa pangalan, kumpanya, o email',
-      useAsManualCustomer: 'Gamitin ang "{{name}}" (wala sa system)',
-      manualCustomerBadge: 'Manual na entry',
-      lineItems: 'Mga Line Item',
-      addLine: 'Magdagdag ng Linya',
-      descriptionPlaceholder: 'Paglalarawan'
-    },
+  // Shared "which receipt template, what breakdown" fields — used by both Invoices' Record
+  // Payment and Troops & Membership's Record Bulk Payment (see ReceiptFieldsSection).
+  receipts: {
+    printButton: 'I-print ang Resibo',
+    reprintButton: 'I-reprint ang Resibo',
+    tabServiceInvoice: 'Service Invoice',
+    tabAcknowledgmentReceipt: 'Acknowledgment Receipt',
+    receiptNumber: 'SI/AR Number',
+    tin: 'TIN',
+    address: 'Address',
+    businessStyle: 'Business Style',
+    modeOfPayment: 'Mode of Payment',
+    othersPlaceholder: 'Iba pa (tukuyin)',
+    breakdownTotal: 'Kabuuan ng Breakdown / Target na Halaga',
+    descriptionColumn: 'Detalye',
+    amountColumn: 'Halaga',
     toast: {
-      customerRequired: 'Mangyaring pumili ng customer.',
-      dueDateRequired: 'Mangyaring itakda ang deadline ng bayad.',
-      lineItemRequired: 'Magdagdag ng kahit isang line item.',
-      sent: '{{number}} ay naipadala kay {{customer}}',
-      savedAsDraft: '{{number}} ay na-save bilang draft',
-      markedPaid: '{{number}} ay minarkahan bilang nabayaran',
-      voided: '{{number}} ay na-void',
-      deleted: '{{number}} ay na-delete',
-      cannotDeletePaid: 'Hindi pwedeng tanggalin ang bayad na invoice — i-void ito sa halip.'
-    },
-    confirmDelete: {
-      title: 'Burahin ang Invoice',
-      message: 'Burahin ang invoice {{number}}? Hindi na ito maaaring bawiin.'
-    }
-  },
-  customers: {
-    title: 'Mga Customer',
-    newCustomerButton: 'Bagong Customer',
-    searchPlaceholder: 'Maghanap ng customer…',
-    fields: {
-      company: 'Kumpanya',
-      email: 'Email',
-      phone: 'Telepono',
-      status: 'Katayuan',
-      openBalance: 'Bukas na Balanse'
-    },
-    table: {
-      name: 'Customer',
-      empty: 'Walang nakitang customer'
-    },
-    detail: {
-      totalBilled: 'Kabuuang Siningil',
-      invoices: 'Mga Invoice',
-      noInvoices: 'Wala pang invoice ang customer na ito.'
-    },
-    form: {
-      fullName: 'Buong Pangalan',
-      fullNamePlaceholder: 'Juan Dela Cruz',
-      companyPlaceholder: 'Pangalan ng kumpanya',
-      emailPlaceholder: 'name@company.ph',
-      phonePlaceholder: '+63 9XX XXX XXXX',
-      address: 'Address',
-      addressPlaceholder: 'Lungsod, Probinsya',
-      saveButton: 'I-save ang Customer'
-    },
-    toast: {
-      missingFields: 'Kailangan ang pangalan at email.',
-      created: '{{name}} ay naidagdag sa mga customer'
+      receiptNumberRequired: 'Mangyaring ilagay ang SI/AR number.',
+      breakdownRequired: 'Magdagdag ng kahit isang halaga.',
+      breakdownMismatch: 'Ang kabuuan ng breakdown ay dapat kapareho ng kabuuang halaga.',
+      printFailed:
+        'Na-record ang resibo, pero hindi na-print — tignan kung nakakonekta at naka-configure ang printer sa Settings'
     }
   },
   vendors: {
@@ -1771,14 +3026,13 @@ const tl = {
     title: 'Mga Ulat',
     tabs: {
       pnl: 'Kita at Gastos',
-      balanceSheet: 'Balance Sheet',
       dailyCollections: 'Daily Collections'
     },
     pnl: {
       chartTitle: 'Kita kumpara sa Gastos',
       chartSubtitle: 'Huling 6 na buwan · cash basis',
       cardTitle: 'Kita at Gastos',
-      cardSubtitle: 'Cash basis · bayad na invoice at bayad na gastos',
+      cardSubtitle: 'Cash basis · bayad na gastos',
       income: 'Kita',
       expenses: 'Mga Gastos',
       totalIncome: 'Kabuuang Kita',
@@ -1791,26 +3045,15 @@ const tl = {
         word: 'Na-export ang Income Statement bilang Word document'
       }
     },
-    balanceSheet: {
-      exportLabel: 'I-export ang Balance Sheet',
-      assets: 'Mga Ari-arian',
-      liabilities: 'Mga Pananagutan',
-      equity: 'Equity',
-      totalAssets: 'Kabuuang Ari-arian',
-      totalLiabilities: 'Kabuuang Pananagutan',
-      totalLiabilitiesEquity: 'Kabuuang Pananagutan at Equity',
-      toast: {
-        excel: 'Na-export ang Balance Sheet sa Excel',
-        pdf: 'Na-export ang Balance Sheet bilang PDF',
-        word: 'Na-export ang Balance Sheet bilang Word document'
-      }
-    },
     dailyCollections: {
       cardTitle: 'Daily Cash Collection Report',
       cardSubtitle: 'Beginning balance, mga resibo, at bank deposit para sa isang araw',
+      rangeSubtitle:
+        'Pinagsama-samang view sa napiling mga petsa — lumipat sa iisang araw para mag-edit o mag-save.',
       exportLabel: 'I-export ang Daily Collections',
       saved: 'Na-save',
       draft: 'Hindi pa naka-save',
+      rangeBadge: 'Saklaw na Petsa (view lang)',
       beginningBalance: 'Beginning Balance',
       addCashReceipts: 'Add: Cash Receipts',
       lessCashDeposit: 'Less: Cash Deposit',
@@ -1825,6 +3068,9 @@ const tl = {
       noAttachments: 'Wala pang naka-attach na file',
       uploadAttachment: 'Mag-attach ng File',
       saveButton: 'I-save ang Report',
+      deleteAttachmentTitle: 'Burahin ang Attachment',
+      deleteAttachmentMessage:
+        'Sigurado ka bang gusto mong burahin ang "{{name}}"? Permanenteng maaalis ang file na ito. Hindi na ito maibabalik pa.',
       table: {
         siNo: 'SI No.',
         receivedFrom: 'Natanggap Mula Kay',
@@ -1832,16 +3078,30 @@ const tl = {
         total: 'Kabuuan',
         bank: 'Bangko',
         saNo: 'S/A No.',
-        purpose: 'Layunin'
+        purpose: 'Layunin',
+        covers: 'Sakop',
+        coversHint:
+          'Saklaw na petsa ng koleksyong kinakatawan ng deposit na ito. Default ay isang araw lang — palawakin kung nagde-deposit ng naipong cash mula sa ilang araw na hindi pa na-deposit sa iisang biyahe sa bangko.'
       },
       walkIn: 'Walk-in',
       toast: {
         saved: 'Na-save ang Daily Collection Report',
         attachmentUploaded: 'Na-upload ang attachment',
         attachmentFailed: 'Hindi na-upload ang attachment',
+        attachmentDeleted: 'Nabura ang attachment',
         excel: 'Na-export ang Daily Collection Report sa Excel',
         pdf: 'Na-export ang Daily Collection Report bilang PDF',
         word: 'Na-export ang Daily Collection Report bilang Word document'
+      },
+      depositReceipt: {
+        printButton: 'I-print ang Resibo',
+        title: 'I-print ang Deposit Receipt',
+        hint: 'Patunay na inabot ang cash na ito para i-deposito — hindi ito bagong benta, kaya hindi na ito idadagdag ulit bilang income. Ang halagang nakolekta ay nabilang na noong unang natanggap ito.',
+        payorLabel: 'Natanggap Mula Kay (nag-abot ng cash)',
+        cashierLabel: 'Tinanggap Ni (kumilala para sa deposit)',
+        toast: {
+          payorRequired: 'Mangyaring ilagay kung sino ang nag-abot ng cash.'
+        }
       }
     }
   },
@@ -1886,6 +3146,7 @@ const tl = {
       particulars: 'Particulars',
       reference: 'Ref #',
       category: 'Kategorya',
+      receiptType: 'Resibong Ginamit',
       bankAccount: 'Bank Account',
       amount: 'Halaga'
     },
@@ -1939,6 +3200,7 @@ const tl = {
       itemsCount: '{{count}} item',
       printButton: 'I-print',
       voidButton: 'I-void',
+      deleteButton: 'Tanggalin',
       table: {
         saleNumber: 'Sale #',
         date: 'Petsa',
@@ -1958,7 +3220,7 @@ const tl = {
     cart: {
       title: 'Cart ({{count}})',
       empty: 'Walang laman ang cart — mag-scan o mag-click ng produkto para idagdag.',
-      noMember: 'Walang miyembro',
+      memberSearchPlaceholder: 'Maghanap ng miyembro o mag-type ng pangalan…',
       printReceipt: 'I-print ang resibo',
       subtotal: 'Subtotal',
       discount: 'Diskwento',
@@ -1977,7 +3239,8 @@ const tl = {
       silentPrintFailed:
         'Hindi ma-print ang resibo — siguraduhing naka-connect at naka-configure ang receipt printer sa Settings',
       saleVoided: 'Na-void ang Benta {{saleNumber}} — naibalik ang stock',
-      voidReasonRequired: 'Maglagay ng dahilan bago i-void ang bentang ito'
+      voidReasonRequired: 'Maglagay ng dahilan bago i-void ang bentang ito',
+      saleDeleted: 'Natanggal ang Benta {{saleNumber}}'
     },
     modal: {
       saleCompleteTitle: 'Nakumpleto ang Benta — {{saleNumber}}',
@@ -1988,7 +3251,10 @@ const tl = {
       undoSaleConfirmMessage:
         'Ma-void ang Benta {{saleNumber}} at maibabalik ang mga item sa stock. Hindi na ito maaaring bawiin.',
       undoSaleReasonLabel: 'Dahilan ng void/refund',
-      undoSaleReasonPlaceholder: 'hal. Maling item ang na-ring up, humingi ng refund ang customer…'
+      undoSaleReasonPlaceholder: 'hal. Maling item ang na-ring up, humingi ng refund ang customer…',
+      deleteSaleConfirmTitle: 'Tanggalin ang bentang ito?',
+      deleteSaleConfirmMessage:
+        'Permanenteng matatanggal ang Benta {{saleNumber}}. Hindi na ito maaaring bawiin.'
     }
   },
   products: {
@@ -2442,6 +3708,11 @@ const tl = {
       email: 'Email Address',
       homeAddress: 'Tirahan',
       roles: 'Posisyon/Tungkulin sa GSP Ilocos Sur Council',
+      whichTroop: 'Aling Troop',
+      whichTroopPlaceholder: 'Pumili ng troop',
+      troopRole: 'Posisyon sa Troop na iyon',
+      troopRoleLeader: 'Troop Leader',
+      troopRoleAssistant: 'Assistant Troop Leader',
       completedTrainings: 'Natapos na Training',
       otherCompletedTraining: 'Iba pa (pakisulat)',
       ageLevelSpecialization: 'Para sa mga Nakatapos ng Age-Level Specialization Course Lamang',

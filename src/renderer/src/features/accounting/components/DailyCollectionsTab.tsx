@@ -1,18 +1,23 @@
-import { useRef, type CSSProperties } from 'react'
+import { useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, Trash2, Paperclip, Download, Lock } from 'lucide-react'
+import { Plus, Trash2, Paperclip, Eye, Lock, Printer } from 'lucide-react'
 import { Card } from '@/shared/components/ui/Card'
 import { Button } from '@/shared/components/ui/Button'
 import { Badge } from '@/shared/components/ui/Badge'
 import { FieldInput, FieldSelect } from '@/shared/components/ui/FormField'
 import { ExportMenu } from '@/shared/components/ui/ExportMenu'
 import { DocumentPreviewModal } from '@/shared/components/ui/DocumentPreviewModal'
-import { formatCurrency } from '@/shared/lib/utils'
+import { ConfirmDialog } from '@/shared/components/ui/ConfirmDialog'
+import { downloadFile } from '@/shared/lib/storageSync'
+import { formatCurrency, formatDate } from '@/shared/lib/utils'
 import { bankDisplayName } from '@/features/scrd/store/banks.store'
+import { useAppStore } from '@/app/store/app.store'
 import { useDailyCollectionsTab } from '../hooks/useDailyCollectionsTab'
+import { PrintDepositReceiptModal } from './PrintDepositReceiptModal'
+import type { CashDepositLine, DailyCollectionAttachment } from '../types/dailyCollection.types'
 
 const categoryCols: {
-  key: 'nes' | 'bcFee' | 'csf' | 'iccg' | 'memReg' | 'rentals'
+  key: 'nes' | 'bcFee' | 'csf' | 'iccg' | 'memReg' | 'rentals' | 'refundOfCa' | 'others'
   label: string
 }[] = [
   { key: 'nes', label: 'NES' },
@@ -20,7 +25,9 @@ const categoryCols: {
   { key: 'csf', label: 'CSF' },
   { key: 'iccg', label: 'ICCG' },
   { key: 'memReg', label: 'Mem. Reg.' },
-  { key: 'rentals', label: 'Rentals' }
+  { key: 'rentals', label: 'Rentals' },
+  { key: 'refundOfCa', label: 'Refund of CA' },
+  { key: 'others', label: 'Others' }
 ]
 
 const th: CSSProperties = {
@@ -38,10 +45,21 @@ const tdLeft: CSSProperties = { ...td, textAlign: 'left' }
 export function DailyCollectionsTab() {
   const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const currentUser = useAppStore((s) => s.currentUser)
+  const [printingDeposit, setPrintingDeposit] = useState<CashDepositLine | null>(null)
+  const [previewAttachment, setPreviewAttachment] = useState<{ url: string; name: string } | null>(
+    null
+  )
+  const [attachmentToDelete, setAttachmentToDelete] = useState<DailyCollectionAttachment | null>(
+    null
+  )
   const {
     canManage,
-    selectedDate,
-    setSelectedDate,
+    dateFrom,
+    setDateFrom,
+    dateTo,
+    setDateTo,
+    isRange,
     beginningBalance,
     setBeginningBalance,
     autoReceiptRows,
@@ -70,7 +88,8 @@ export function DailyCollectionsTab() {
     handleView,
     handleExportExcel,
     handleExportPdf,
-    handleExportWord
+    handleExportWord,
+    preparedByDisplay
   } = useDailyCollectionsTab()
 
   return (
@@ -92,21 +111,32 @@ export function DailyCollectionsTab() {
                   {t('reports.dailyCollections.cardTitle')}
                 </h2>
                 <p style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                  {t('reports.dailyCollections.cardSubtitle')}
+                  {isRange
+                    ? t('reports.dailyCollections.rangeSubtitle')
+                    : t('reports.dailyCollections.cardSubtitle')}
                 </p>
               </div>
-              <Badge variant={isSaved ? 'success' : 'outline'}>
-                {isSaved
-                  ? t('reports.dailyCollections.saved')
-                  : t('reports.dailyCollections.draft')}
+              <Badge variant={isRange ? 'outline' : isSaved ? 'success' : 'outline'}>
+                {isRange
+                  ? t('reports.dailyCollections.rangeBadge')
+                  : isSaved
+                    ? t('reports.dailyCollections.saved')
+                    : t('reports.dailyCollections.draft')}
               </Badge>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <FieldInput
                 type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                style={{ width: 160 }}
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                style={{ width: 150 }}
+              />
+              <span style={{ color: 'var(--text-muted)', fontSize: 12 }}>–</span>
+              <FieldInput
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                style={{ width: 150 }}
               />
               <ExportMenu
                 label={t('reports.dailyCollections.exportLabel')}
@@ -135,7 +165,7 @@ export function DailyCollectionsTab() {
             type="number"
             min={0}
             value={beginningBalance}
-            disabled={!canManage}
+            disabled={!canManage || isRange}
             onChange={(e) => setBeginningBalance(parseFloat(e.target.value) || 0)}
             style={{ width: 160, textAlign: 'right' }}
           />
@@ -155,7 +185,7 @@ export function DailyCollectionsTab() {
           {t('reports.dailyCollections.addCashReceipts')}
         </p>
         <div style={{ overflowX: 'auto', marginBottom: 8 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 760 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 860 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                 <th style={thLeft}>{t('reports.dailyCollections.table.siNo')}</th>
@@ -222,7 +252,16 @@ export function DailyCollectionsTab() {
                     </td>
                   ))}
                   <td style={{ ...td, fontWeight: 600 }}>
-                    {formatCurrency(l.nes + l.bcFee + l.csf + l.iccg + l.memReg + l.rentals)}
+                    {formatCurrency(
+                      l.nes +
+                        l.bcFee +
+                        l.csf +
+                        l.iccg +
+                        l.memReg +
+                        l.rentals +
+                        l.refundOfCa +
+                        l.others
+                    )}
                   </td>
                   <td style={td}>
                     {canManage && (
@@ -259,7 +298,7 @@ export function DailyCollectionsTab() {
             </tfoot>
           </table>
         </div>
-        {canManage && (
+        {canManage && !isRange && (
           <Button
             size="sm"
             variant="ghost"
@@ -309,54 +348,124 @@ export function DailyCollectionsTab() {
           {t('reports.dailyCollections.lessCashDeposit')}
         </p>
         <div style={{ overflowX: 'auto', marginBottom: 8 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 560 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 820 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                 <th style={thLeft}>{t('reports.dailyCollections.table.bank')}</th>
                 <th style={thLeft}>{t('reports.dailyCollections.table.saNo')}</th>
                 <th style={thLeft}>{t('reports.dailyCollections.table.purpose')}</th>
+                <th style={thLeft} title={t('reports.dailyCollections.table.coversHint')}>
+                  {t('reports.dailyCollections.table.covers')}
+                </th>
                 <th style={th}>{t('reports.dailyCollections.table.amount')}</th>
-                <th style={{ ...th, width: 32 }} />
+                <th style={{ ...th, width: 64 }} />
               </tr>
             </thead>
             <tbody>
               {deposits.map((d) => (
                 <tr key={d.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                   <td style={tdLeft}>
-                    <FieldSelect
-                      value={d.bankId}
-                      disabled={!canManage}
-                      onChange={(e) => setDepositBank(d.id, e.target.value)}
-                      placeholder={t('reports.dailyCollections.selectBank')}
-                      options={banks
-                        .filter((b) => b.isActive)
-                        .map((b) => ({ value: b.id, label: bankDisplayName(b) }))}
-                      style={{ minWidth: 160 }}
-                    />
+                    {isRange ? (
+                      <>
+                        {d.bankName || '—'}{' '}
+                        <Lock
+                          size={10}
+                          style={{ opacity: 0.5, display: 'inline', verticalAlign: 'middle' }}
+                        />
+                      </>
+                    ) : (
+                      <FieldSelect
+                        value={d.bankId}
+                        disabled={!canManage}
+                        onChange={(e) => setDepositBank(d.id, e.target.value)}
+                        placeholder={t('reports.dailyCollections.selectBank')}
+                        options={banks
+                          .filter((b) => b.isActive)
+                          .map((b) => ({ value: b.id, label: bankDisplayName(b) }))}
+                        style={{ minWidth: 160 }}
+                      />
+                    )}
                   </td>
                   <td style={tdLeft}>{d.saNo || '—'}</td>
                   <td style={tdLeft}>
-                    <FieldInput
-                      value={d.purpose}
-                      disabled={!canManage}
-                      onChange={(e) => updateDeposit(d.id, { purpose: e.target.value })}
-                      style={{ width: 140 }}
-                    />
+                    {isRange ? (
+                      d.purpose || '—'
+                    ) : (
+                      <FieldInput
+                        value={d.purpose}
+                        disabled={!canManage}
+                        onChange={(e) => updateDeposit(d.id, { purpose: e.target.value })}
+                        style={{ width: 140 }}
+                      />
+                    )}
+                  </td>
+                  <td style={tdLeft}>
+                    {isRange ? (
+                      d.coverageFrom && d.coverageTo && d.coverageFrom !== d.coverageTo ? (
+                        `${formatDate(d.coverageFrom)} – ${formatDate(d.coverageTo)}`
+                      ) : (
+                        '—'
+                      )
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <FieldInput
+                          type="date"
+                          value={d.coverageFrom ?? dateFrom}
+                          disabled={!canManage}
+                          max={d.coverageTo || dateFrom}
+                          onChange={(e) => updateDeposit(d.id, { coverageFrom: e.target.value })}
+                          style={{ width: 122 }}
+                        />
+                        <span style={{ color: 'var(--text-muted)', fontSize: 11 }}>–</span>
+                        <FieldInput
+                          type="date"
+                          value={d.coverageTo ?? dateFrom}
+                          disabled={!canManage}
+                          min={d.coverageFrom}
+                          max={dateFrom}
+                          onChange={(e) => updateDeposit(d.id, { coverageTo: e.target.value })}
+                          style={{ width: 122 }}
+                        />
+                      </div>
+                    )}
                   </td>
                   <td style={td}>
-                    <FieldInput
-                      type="number"
-                      min={0}
-                      value={d.amount}
-                      disabled={!canManage}
-                      onChange={(e) =>
-                        updateDeposit(d.id, { amount: parseFloat(e.target.value) || 0 })
-                      }
-                      style={{ width: 100, textAlign: 'right' }}
-                    />
+                    {isRange ? (
+                      formatCurrency(d.amount)
+                    ) : (
+                      <FieldInput
+                        type="number"
+                        min={0}
+                        value={d.amount}
+                        disabled={!canManage}
+                        onChange={(e) =>
+                          updateDeposit(d.id, { amount: parseFloat(e.target.value) || 0 })
+                        }
+                        style={{ width: 100, textAlign: 'right' }}
+                      />
+                    )}
                   </td>
-                  <td style={td}>
-                    {canManage && (
+                  <td style={{ ...td, display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+                    {!isRange && canManage && d.amount > 0 && (
+                      <button
+                        onClick={() => setPrintingDeposit(d)}
+                        title={
+                          d.receipt
+                            ? t('receipts.reprintButton')
+                            : t('reports.dailyCollections.depositReceipt.printButton')
+                        }
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          color: 'var(--text-muted)',
+                          padding: 2
+                        }}
+                      >
+                        <Printer size={13} />
+                      </button>
+                    )}
+                    {!isRange && canManage && (
                       <button
                         onClick={() => removeDeposit(d.id)}
                         style={{
@@ -376,7 +485,7 @@ export function DailyCollectionsTab() {
             </tbody>
             <tfoot>
               <tr>
-                <td style={tdLeft} colSpan={3}>
+                <td style={tdLeft} colSpan={4}>
                   <strong>{t('reports.dailyCollections.table.total')}</strong>
                 </td>
                 <td style={{ ...td, fontWeight: 700 }}>{formatCurrency(totalDeposited)}</td>
@@ -385,7 +494,7 @@ export function DailyCollectionsTab() {
             </tfoot>
           </table>
         </div>
-        {canManage && (
+        {canManage && !isRange && (
           <Button size="sm" variant="ghost" leftIcon={<Plus size={12} />} onClick={addDeposit}>
             {t('reports.dailyCollections.addDeposit')}
           </Button>
@@ -466,13 +575,28 @@ export function DailyCollectionsTab() {
               }}
             >
               <Paperclip size={13} color="var(--text-muted)" />
-              <span style={{ fontSize: 12, flex: 1 }}>{a.name}</span>
-              <a href={a.url} target="_blank" rel="noreferrer" title={t('common.download')}>
-                <Download size={13} color="var(--text-muted)" />
-              </a>
-              {canManage && (
+              <span
+                style={{
+                  flex: 1,
+                  fontSize: 12,
+                  color: 'var(--text-primary)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}
+              >
+                {a.name}
+              </span>
+              <button
+                onClick={() => setPreviewAttachment({ url: a.url, name: a.name })}
+                title={t('common.view')}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}
+              >
+                <Eye size={13} color="var(--text-muted)" />
+              </button>
+              {canManage && !isRange && (
                 <button
-                  onClick={() => handleDeleteAttachment(a.id)}
+                  onClick={() => setAttachmentToDelete(a)}
                   style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}
                 >
                   <Trash2 size={13} color="var(--text-muted)" />
@@ -481,7 +605,7 @@ export function DailyCollectionsTab() {
             </div>
           ))}
         </div>
-        {canManage && (
+        {canManage && !isRange && (
           <>
             <input
               ref={fileInputRef}
@@ -505,7 +629,7 @@ export function DailyCollectionsTab() {
           </>
         )}
 
-        {canManage && (
+        {canManage && !isRange && (
           <div
             style={{
               marginTop: 20,
@@ -530,6 +654,43 @@ export function DailyCollectionsTab() {
         onDownloadExcel={handleExportExcel}
         onDownloadPdf={handleExportPdf}
         onDownloadWord={handleExportWord}
+      />
+
+      <DocumentPreviewModal
+        open={!!previewAttachment}
+        onClose={() => setPreviewAttachment(null)}
+        url={previewAttachment?.url ?? null}
+        title={previewAttachment?.name ?? t('reports.dailyCollections.attachments')}
+        onDownload={
+          previewAttachment
+            ? () => downloadFile(previewAttachment.url, previewAttachment.name)
+            : undefined
+        }
+      />
+
+      <PrintDepositReceiptModal
+        deposit={printingDeposit}
+        defaultPayorName={preparedByDisplay}
+        defaultCashierName={currentUser?.fullName ?? ''}
+        onClose={() => setPrintingDeposit(null)}
+        onPrinted={(receipt) => {
+          if (printingDeposit) updateDeposit(printingDeposit.id, { receipt })
+        }}
+      />
+
+      <ConfirmDialog
+        open={!!attachmentToDelete}
+        title={t('reports.dailyCollections.deleteAttachmentTitle')}
+        message={t('reports.dailyCollections.deleteAttachmentMessage', {
+          name: attachmentToDelete?.name ?? ''
+        })}
+        onConfirm={() => {
+          if (attachmentToDelete) handleDeleteAttachment(attachmentToDelete.id)
+          setAttachmentToDelete(null)
+        }}
+        onCancel={() => setAttachmentToDelete(null)}
+        confirmLabel={t('common.delete')}
+        danger
       />
     </>
   )

@@ -3,11 +3,17 @@ import { useTranslation } from 'react-i18next'
 import { useBanksStore } from '../store/banks.store'
 import { safeAmount, useBankBalances } from './useBankBalances'
 import { useVouchersStore } from '@/features/vouchers/store/vouchers.store'
-import { getExpenseVouchers } from '@/features/vouchers/lib/expenseVouchers'
+import {
+  getExpenseVouchers,
+  hasCashAdvance,
+  cashAdvanceReimbursement
+} from '@/features/vouchers/lib/expenseVouchers'
 import { getReceiptRowsFromVouchers } from '@/features/vouchers/lib/receiptVouchers'
 import { usePOSStore } from '@/features/pos/store/pos.store'
 import { useRentalsStore } from '@/features/rentals/store/rentals.store'
 import { useTroopsStore } from '@/features/troops/store/troops.store'
+import { useDailyCollectionsStore } from '@/features/accounting/store/dailyCollections.store'
+import { RECEIPT_KIND_LABELS } from '@/shared/types/receipt.types'
 import type { MemberPaymentCategory } from '@/features/troops/types/troop.types'
 import type { JournalRow, BankAccountBalance } from '../lib/scrdExcelExport'
 
@@ -54,11 +60,27 @@ export function useScrdComputations() {
   const restoreBank = useBanksStore((s) => s.restoreBank)
   const vouchers = useVouchersStore((s) => s.vouchers)
   const cashReceipts = useMemo(() => getReceiptRowsFromVouchers(vouchers), [vouchers])
+  // A cash-advance liquidation JV that overspent its advance owes the payee the excess back
+  // in real cash — the mirror image of an underspent one's leftover refund, which
+  // getReceiptRowsFromVouchers already turns into a "Cash Advance Refund" receipt row above.
+  // Journal Vouchers are otherwise never disbursements (see getExpenseVouchers), so this
+  // reimbursement leg needs its own row here to actually leave the bank balance.
+  const cashAdvanceReimbursementRows = useMemo(
+    () =>
+      vouchers
+        .filter(
+          (v) => v.voucherType === 'journal_voucher' && v.status === 'approved' && hasCashAdvance(v)
+        )
+        .map((v) => ({ voucher: v, amount: cashAdvanceReimbursement(v, v.totalAmountSpent ?? 0) }))
+        .filter((r) => r.amount > 0),
+    [vouchers]
+  )
   const sales = usePOSStore((s) => s.sales)
   const bookings = useRentalsStore((s) => s.bookings)
   const spaces = useRentalsStore((s) => s.spaces)
   const purchases = usePOSStore((s) => s.purchases)
   const scoutMembers = useTroopsStore((s) => s.scoutMembers)
+  const dailyCollectionReports = useDailyCollectionsStore((s) => s.reports)
 
   const [manualInterestIncome, setManualInterestIncome] = useState(0)
   const [manualOtherIncome, setManualOtherIncome] = useState(0)
@@ -82,7 +104,8 @@ export function useScrdComputations() {
       reference: r.referenceNumber,
       category: r.category,
       bankAccount: r.bankAccount,
-      amount: safeAmount(r.amount)
+      amount: safeAmount(r.amount),
+      receiptType: r.receiptType
     }))
     const fromSales: JournalDisplayRow[] = sales
       .filter((s) => !s.voided)
@@ -94,7 +117,8 @@ export function useScrdComputations() {
         reference: s.saleNumber,
         category: 'NES Sales',
         bankAccount: 'Cash on Hand',
-        amount: safeAmount(s.totalAmount)
+        amount: safeAmount(s.totalAmount),
+        receiptType: 'Sales Invoice'
       }))
     const fromRentals: JournalDisplayRow[] = bookings
       .filter((b) => b.status === 'confirmed' || b.status === 'completed')
@@ -117,18 +141,50 @@ export function useScrdComputations() {
         particulars: `${RECEIPT_CATEGORY_BY_MEMBER_PAYMENT[payment.category]} (${m.fullName})`,
         category: RECEIPT_CATEGORY_BY_MEMBER_PAYMENT[payment.category],
         bankAccount: 'Cash on Hand',
-        amount: safeAmount(payment.amount)
+        amount: safeAmount(payment.amount),
+        receiptType: payment.receipt ? RECEIPT_KIND_LABELS[payment.receipt.receiptType] : undefined
       }))
     )
-    return [...fromManual, ...fromSales, ...fromRentals, ...fromTroopPayments].sort((a, b) =>
-      a.date < b.date ? 1 : -1
+    // Daily Collections' hand-entered rows — only the categories with no automated source of
+    // their own (BC Fee/CSF/ICCG). The NES/Mem. Reg./Rentals columns on that same form are
+    // skipped here since fromSales/fromTroopPayments/fromRentals above already count those
+    // amounts from their real records — re-adding them from a manual entry would double-count.
+    const fromDailyCollections: JournalDisplayRow[] = dailyCollectionReports.flatMap((r) =>
+      r.manualReceipts.flatMap((line) => {
+        const rows: JournalDisplayRow[] = []
+        const push = (category: string, amount: number) => {
+          if (amount > 0) {
+            rows.push({
+              id: `${line.id}-${category}`,
+              date: r.date,
+              name: line.receivedFrom,
+              particulars: `${category} (${line.siNo})`,
+              reference: line.siNo,
+              category,
+              bankAccount: 'Cash on Hand',
+              amount: safeAmount(amount)
+            })
+          }
+        }
+        push('BC Fee', line.bcFee)
+        push('CSF', line.csf)
+        push('ICCG', line.iccg)
+        return rows
+      })
     )
-  }, [cashReceipts, sales, bookings, spaces, scoutMembers])
+    return [
+      ...fromManual,
+      ...fromSales,
+      ...fromRentals,
+      ...fromTroopPayments,
+      ...fromDailyCollections
+    ].sort((a, b) => (a.date < b.date ? 1 : -1))
+  }, [cashReceipts, sales, bookings, spaces, scoutMembers, dailyCollectionReports])
 
   const disbursementRows: JournalDisplayRow[] = useMemo(
     () =>
-      getExpenseVouchers(vouchers)
-        .map((v) => ({
+      [
+        ...getExpenseVouchers(vouchers).map((v) => ({
           id: v.id,
           date: v.date,
           name: v.payee,
@@ -137,9 +193,19 @@ export function useScrdComputations() {
           category: v.accountLines[0]?.account ?? 'General',
           bankAccount: v.bankAccountRef ?? 'Cash on Hand',
           amount: safeAmount(v.amount)
+        })),
+        ...cashAdvanceReimbursementRows.map(({ voucher: v, amount }) => ({
+          id: `${v.id}-reimbursement`,
+          date: v.date,
+          name: v.payee,
+          particulars: v.particulars,
+          reference: v.voucherNumber,
+          category: 'Cash Advance Reimbursement',
+          bankAccount: v.bankAccountRef ?? 'Cash on Hand',
+          amount: safeAmount(amount)
         }))
-        .sort((a, b) => (a.date < b.date ? 1 : -1)),
-    [vouchers]
+      ].sort((a, b) => (a.date < b.date ? 1 : -1)),
+    [vouchers, cashAdvanceReimbursementRows]
   )
 
   // Matches the Council's real SCRD format: NES Sales, Rental Income, Interest
@@ -199,8 +265,14 @@ export function useScrdComputations() {
         if (line.debit) map.set(line.account, (map.get(line.account) ?? 0) + safeAmount(line.debit))
       }
     }
+    for (const { amount } of cashAdvanceReimbursementRows) {
+      map.set(
+        'Cash Advance Reimbursement',
+        (map.get('Cash Advance Reimbursement') ?? 0) + safeAmount(amount)
+      )
+    }
     return Array.from(map.entries()).map(([category, amount]) => ({ category, amount }))
-  }, [vouchers])
+  }, [vouchers, cashAdvanceReimbursementRows])
 
   const generalDisbursementCategories = useMemo(
     () =>

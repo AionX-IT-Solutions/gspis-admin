@@ -39,6 +39,9 @@ export interface CartLine {
   productId: string
   sku: string
   name: string
+  /** Denormalized from the product at add-to-cart time (see addToCart) — the Sales Invoice's
+   *  "Unit" column (pc, box, etc.) needs it printed per line. */
+  unit: string
   unitPrice: number
   quantity: number
 }
@@ -49,6 +52,7 @@ export interface SaleItem {
   productId: string
   sku: string
   name: string
+  unit: string
   quantity: number
   unitPrice: number
   subtotal: number

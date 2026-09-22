@@ -20,6 +20,7 @@ const en = {
     delete: 'Delete',
     view: 'View',
     preview: 'Preview',
+    download: 'Download',
     downloadHint: 'Download if you need the file itself',
     close: 'Close',
     back: 'Back',
@@ -35,6 +36,8 @@ const en = {
     perPageOption: '{{count}} / page',
     row: 'row',
     rows: 'rows',
+    filteredByDistrict: 'Filtered by district: {{district}}',
+    clearFilter: 'Clear filter',
     yes: 'Yes',
     no: 'No',
     actions: 'Actions',
@@ -67,7 +70,7 @@ const en = {
     guest: 'Guest',
     myProfile: 'My Profile',
     groups: {
-      crm: 'CRM',
+      troopsMembership: 'Troops & Membership',
       councilPrograms: 'Council Programs',
       hrPayroll: 'HR & Payroll',
       facility: 'Facility',
@@ -84,6 +87,14 @@ const en = {
       employees: 'Employees',
       councilBoard: 'Council Board',
       troops: 'Troops',
+      districtCommittee: 'District Committee',
+      barangayCommittee: 'Barangay Committee',
+      trefoilGuild: 'Trefoil Guild',
+      oavf: 'OAVF / Career Woman',
+      honoraryMember: 'Honorary Members',
+      associateMember: 'Associate Members',
+      iccgRegistration: 'ICCG',
+      membershipStatusReport: 'Membership Status Report',
       activities: 'Activities',
       attendance: 'Attendance',
       leave: 'Leave Requests',
@@ -93,8 +104,6 @@ const en = {
       rentals: 'Rental Bookings',
       visitors: 'Visitors Logbook',
       facilityCalendar: 'Calendar',
-      invoices: 'Invoices',
-      customers: 'Customers',
       vendors: 'Vendors',
       reports: 'Reports',
       scrd: 'Cash Receipts & Disb.',
@@ -129,9 +138,7 @@ const en = {
     home: 'Home',
     searchTypes: {
       module: 'Module',
-      customer: 'Customer',
       vendor: 'Vendor',
-      invoice: 'Invoice',
       employee: 'Employee',
       troop: 'Troop',
       member: 'Member',
@@ -173,22 +180,11 @@ const en = {
     refreshButton: 'Refresh',
     refreshToast: 'Data refreshed',
     newExpenseButton: 'New Expense',
-    newInvoiceButton: 'New Invoice',
     statCashBalance: 'Total Cash & Bank Balance',
     cashBalanceNote: 'Across {{count}} bank account(s)',
     bankBalancesTitle: 'Bank Balances',
-    statIncome: 'Income (paid)',
     statExpenses: 'Expenses',
-    statNetProfit: 'Net Profit',
-    statOutstandingInvoices: 'Outstanding Invoices',
     vsLastPeriod: 'vs last period',
-    outstandingNote: '{{count}} invoice(s) awaiting payment',
-    cashFlowTitle: 'Invoiced Amount Over Time',
-    cashFlowSubtitle: 'Last ~120 days, by 15-day period',
-    invoicedSeriesName: 'Invoiced',
-    invoicesTitle: 'Invoices',
-    overdueBadge: 'Overdue',
-    notDueYetBadge: 'Not due yet',
     expensesByCategoryTitle: 'Expenses by Category',
     noExpensesRecorded: 'No expenses recorded yet.',
     lowStockLabel: 'Low Stock Items',
@@ -314,20 +310,20 @@ const en = {
       }
     },
     receiptPrinter: {
-      title: 'Receipt Printer & Cash Drawer',
+      title: 'Receipt & Invoice Printer',
       description:
-        'Print sale receipts silently at checkout, with no OS print dialog, to a Windows-installed receipt printer.',
+        "Print silently, with no OS print dialog, to this Windows-installed printer — POS Sales Invoices, and Service Invoices/Acknowledgment Receipts from Invoices' Record Payment and Troop/District Committee bulk payments.",
       printerLabel: 'Printer',
       systemDefault: 'System default printer',
       default: 'Default',
       autoPrintLabel: 'Auto-print receipt after sale',
       autoPrintDesc:
-        'When on, a receipt prints automatically after every completed sale. Cashiers can still turn this off per sale from the Point of Sale screen.',
+        'When on, a Sales Invoice prints automatically after every completed POS sale. Cashiers can still turn this off per sale from the Point of Sale screen.',
       testButton: 'Send Test Print',
       testSuccess: 'Test receipt sent to the printer',
       testFailure: 'Test print failed: {{error}}',
       drawerNote:
-        'Cash drawer tip: if your drawer is wired into this printer’s RJ11/RJ12 port, enable “Open cash drawer when printing” (sometimes called “kick drawer”) in the printer’s Windows driver — Devices & Printers → right-click the printer → Printer properties → Device settings. Once that’s on, every printed receipt also pops the drawer.'
+        'Cash drawer tip (thermal receipt printers only): if your drawer is wired into this printer’s RJ11/RJ12 port, enable “Open cash drawer when printing” (sometimes called “kick drawer”) in the printer’s Windows driver — Devices & Printers → right-click the printer → Printer properties → Device settings. Once that’s on, every printed receipt also pops the drawer. Not applicable to a dot-matrix/carbon-copy printer.'
     },
     membershipYear: {
       title: 'Membership Year',
@@ -425,7 +421,7 @@ const en = {
     },
     groups: {
       core: 'Overview',
-      crm: 'CRM',
+      troopsMembership: 'Troops & Membership',
       accounting: 'Accounting',
       councilPrograms: 'Council Programs',
       hrPayroll: 'HR & Payroll',
@@ -569,6 +565,9 @@ const en = {
     searchPlaceholder: 'Search troops…',
     empty: 'No troops found',
     viewRoster: 'View Roster',
+    tabTroops: 'Troops',
+    tabRegistrations: 'Registrations',
+    tabPayments: 'Payments',
     table: {
       troopNumber: 'Troop #',
       troopName: 'Troop Name',
@@ -591,12 +590,31 @@ const en = {
       levelPlaceholder: 'Select level',
       troopName: 'Troop Name',
       leaderName: 'Troop Leader',
-      leaderNamePlaceholder: 'Type a name, or pick from Training Profiles',
+      leaderNamePlaceholder: 'e.g. Juana Dela Cruz',
       trainingsCompletedCount: '{{count}} training(s) completed',
       assistantLeaderName: 'Assistant Troop Leader',
       school: 'School / Community',
       barangay: 'Barangay',
-      meetingPlace: 'Meeting Place'
+      meetingPlace: 'Meeting Place',
+      registrationDetailsHeading: 'Registration Details',
+      troopAddress: 'Troop Address',
+      troopTelNo: 'Troop Tel. No.',
+      troopType: 'Troop Type',
+      troopTypePlaceholder: 'Select troop type',
+      districtCommitteeName: 'District Committee Name / Municipality',
+      district: 'District',
+      districtPlaceholder: 'Select district…',
+      barangayCommitteeName: 'Barangay Committee Name',
+      sponsoringGroup: 'Sponsoring Group',
+      troopBirthday: 'Troop Birthday',
+      completeMailingAddress: 'Complete Mailing Address',
+      leaderDetailsHeading: 'Troop Leader Details',
+      leaderDetailsHint:
+        'Birthdate and Trained status come from the leader’s linked Training Profile when they have one — open Training Profiles to update those.',
+      assistantLeaderDetailsHeading: 'Co-Leader Details',
+      leaderBeneficiary: 'Beneficiary',
+      leaderRboStatus: 'RBO Status',
+      rboStatusPlaceholder: 'Select RBO status'
     },
     confirmDeactivate: {
       title: 'Deactivate Troop',
@@ -659,7 +677,10 @@ const en = {
         level: 'Level',
         guardianName: 'Guardian Name',
         guardianContact: 'Guardian Contact',
-        address: 'Address'
+        address: 'Address',
+        patrol: 'Patrol / Cluster',
+        gradeYear: 'Grade / Year',
+        beneficiary: 'Beneficiary'
       },
       payment: {
         title: 'Record Payment — {{name}}',
@@ -708,6 +729,1290 @@ const en = {
         exportedPdf: 'Member roster exported as PDF',
         exportedWord: 'Member roster exported as Word document'
       }
+    },
+    payment: {
+      subtitle:
+        'Bulk fee payments recorded per troop — one entry per remittance, covering however many members it paid for',
+      addButton: 'Record Payment',
+      searchPlaceholder: 'Search by troop or paid by…',
+      empty: 'No payments recorded yet',
+      modalTitle: 'Record Bulk Payment',
+      editModalTitle: 'Edit Payment',
+      submitButton: 'Record Payment',
+      troopLabel: 'Troop',
+      troopPlaceholder: 'Select troop',
+      membersLabel: 'Members covered ({{count}})',
+      noMembers: 'No active members in this troop',
+      perMemberLinesHeading: 'Per-member fees',
+      flatLinesHeading: 'Flat per-troop fees',
+      troopFeeLabel: 'Troop Fee',
+      thinkingDayFeeLabel: 'Thinking Day Fee',
+      categoryLabel: 'Category',
+      amountPerMemberLabel: 'Amount per member',
+      totalLabel: 'Total',
+      dateLabel: 'Date',
+      paidByLabel: 'Paid By',
+      printReceiptLabel: 'Print a receipt for this payment',
+      ratesFromRegistration:
+        'Rates from the {{schoolYear}} registration filed {{date}} — not editable here',
+      noRegistrationNote:
+        'No Troop Registration filed for this troop yet. File one first — its fee rates are what this payment is computed from.',
+      table: {
+        troopNumber: 'Troop #',
+        date: 'Date',
+        category: 'Category',
+        paidBy: 'Paid By',
+        memberCount: 'Members',
+        totalAmount: 'Total Amount'
+      },
+      confirmDelete: {
+        title: 'Delete Payment',
+        message:
+          'Delete this {{category}} payment for Troop {{troopNumber}}? Any linked voucher is removed too. This cannot be undone.'
+      },
+      toast: {
+        troopRequired: 'Select a troop',
+        membersRequired: 'Select at least one member',
+        amountRequired: 'Enter an amount greater than zero',
+        paidByRequired: 'Enter who paid',
+        noRegistration: 'File a Troop Registration for this troop before recording payment',
+        recorded: 'Payment recorded'
+      }
+    }
+  },
+  troopRegistration: {
+    title: 'Troop Registration',
+    subtitle: 'Filed national Troop Registration Forms, one per troop per school year',
+    addButton: 'New Registration',
+    exportButton: 'Export',
+    searchPlaceholder: 'Search by troop, school year, or troop no…',
+    empty: 'No registrations filed yet',
+    troopNotFound: 'Troop not found for this registration.',
+    table: {
+      troopNumber: 'Troop #',
+      troopName: 'Troop Name',
+      schoolYear: 'School Year',
+      dateApplied: 'Date Applied',
+      troopStatus: 'Status',
+      troopNo: 'Troop No.'
+    },
+    troopPicker: {
+      title: 'New Troop Registration',
+      selectTroop: 'Troop',
+      placeholder: 'Select a troop',
+      continue: 'Continue'
+    },
+    confirmDelete: {
+      title: 'Delete Registration',
+      message:
+        'Delete the {{schoolYear}} registration for Troop {{troopNumber}}? This cannot be undone.'
+    },
+    toast: {
+      validationRequired: 'School year is required',
+      created: 'Troop Registration filed',
+      updated: 'Troop Registration updated',
+      deleted: 'Troop Registration deleted',
+      exportedExcel: 'Troop Registration exported to Excel',
+      exportedPdf: 'Troop Registration exported as PDF',
+      exportedWord: 'Troop Registration exported as Word document'
+    },
+    form: {
+      newTitle: 'New Registration — Troop {{troopNumber}}',
+      editTitle: 'Registration — Troop {{troopNumber}}',
+      headerSection: 'Troop Information',
+      schoolYear: 'School Year',
+      dateApplied: 'Date Applied',
+      troopStatus: 'Troop Status',
+      statusNew: 'New',
+      statusReRegistered: 'Re-registered',
+      ageLevel: 'Age Level',
+      leadersSection: 'Registration of Leaders',
+      addLeader: 'Add Leader',
+      position: 'Position',
+      name: 'Name',
+      trained: 'T/NT',
+      rboStatus: 'RBO Status',
+      birthdate: 'Birthdate',
+      beneficiary: 'Beneficiary',
+      membersSection: 'Registration of Troop Members',
+      addPatrol: 'Add Patrol/Cluster',
+      addMember: 'Add Member',
+      removePatrol: 'Remove Patrol/Cluster',
+      gradeYear: 'Gr/Yr',
+      regStatus: 'Reg. Status',
+      signaturesSection: 'Signatures',
+      submittedByName: 'Submitted By (Troop Leader)',
+      submittedByDate: 'Date',
+      notedByName: 'Noted By (Principal / School Head / BC Chairman)',
+      notedByDate: 'Date',
+      remittanceSection: 'Council Action Remittance',
+      gspMembershipFee: 'A. GSP Membership Fee',
+      girlsReReg: 'Girls — Re-Reg',
+      girlsNew: 'Girls — New',
+      leaderReReg: 'Leader — Re-Reg',
+      leaderNew: 'Leader — New',
+      coLeaderReReg: 'Co-Leader — Re-Reg',
+      coLeaderNew: 'Co-Leader — New',
+      membershipFeePerMemberTotal: 'Per-member fee (total remitted)',
+      membershipFeePerMemberCouncilShare: 'Per-member fee (Council share)',
+      councilRetainedShare: "Council's retained share",
+      thinkingDayFee: 'Thinking Day Fee (retained by Council)',
+      programDevelopmentFund: 'B. Program Development Fund',
+      mutualAssistanceFund: 'C. Contribution to the Mutual Assistance Fund',
+      magazineSubscriptionFee: 'D. GS Magazine Troop Subscription Fee',
+      totalRemittance: 'Total Remittance',
+      troopNo: 'Troop No.',
+      girlsCardsFrom: 'Girls Cards — From',
+      girlsCardsTo: 'Girls Cards — To',
+      girlsIdCardSeriesYear: 'Girls ID Card Series Year',
+      adultsCardsFrom: 'Adults Cards — From',
+      adultsCardsTo: 'Adults Cards — To',
+      adultsIdCardSeriesYear: 'Adults ID Card Series Year',
+      troopFee: 'Troop Fee (Retained by Council)',
+      rorNo: 'ROR No.',
+      rorDate: 'ROR Date',
+      dccrNo: 'DCCR No.',
+      dateOfDeposit: 'Date of Deposit',
+      branchCode: 'Branch Code',
+      processedByName: 'Processed By (Registration Processor)',
+      approvedByName: 'Approved By (Council Executive)'
+    }
+  },
+  districtCommittee: {
+    title: 'District Committee',
+    subtitle: 'District Committees under the Council',
+    addButton: 'Add Committee',
+    searchPlaceholder: 'Search by name, address, or council…',
+    empty: 'No District Committees yet',
+    addModalTitle: 'Add District Committee',
+    editModalTitle: 'Edit District Committee',
+    tabCommittees: 'Committees',
+    tabRegistrations: 'Registration',
+    tabPayments: 'Payment',
+    form: {
+      name: 'District Committee Name',
+      address: 'Address',
+      telNo: 'Tel. No.',
+      region: 'Region',
+      council: 'Council',
+      district: 'District',
+      districtPlaceholder: 'Select district…'
+    },
+    table: {
+      name: 'Name',
+      address: 'Address',
+      telNo: 'Tel. No.',
+      members: 'Members',
+      status: 'Status',
+      deactivate: 'Deactivate',
+      reactivate: 'Reactivate'
+    },
+    toast: {
+      deactivated: '"{{name}}" deactivated',
+      reactivated: '"{{name}}" reactivated',
+      deleted: '"{{name}}" deleted'
+    },
+    confirmDeactivate: {
+      title: 'Deactivate Committee',
+      message: 'Deactivate "{{name}}"? It stays on record but won’t show in active pickers.'
+    },
+    confirmReactivate: {
+      title: 'Reactivate Committee',
+      message: 'Reactivate "{{name}}"?'
+    },
+    confirmDelete: {
+      title: 'Delete Committee',
+      message: 'Delete "{{name}}"? This cannot be undone.'
+    },
+    confirmForceDelete: {
+      title: 'Delete Despite Payment History',
+      message:
+        '"{{name}}"’s members have recorded payment history — deleting anyway will affect past Daily Collections reports. Delete anyway?'
+    },
+    payment: {
+      subtitle:
+        'Bulk fee payments recorded per District Committee — one entry per remittance, covering however many members it paid for',
+      addButton: 'Record Payment',
+      searchPlaceholder: 'Search by committee or paid by…',
+      empty: 'No payments recorded yet',
+      modalTitle: 'Record Bulk Payment',
+      editModalTitle: 'Edit Payment',
+      submitButton: 'Record Payment',
+      committeeLabel: 'District Committee',
+      committeePlaceholder: 'Select committee',
+      membersLabel: 'Members covered ({{count}})',
+      noMembers: 'No active members in this committee',
+      perMemberLinesHeading: 'Per-member fees',
+      categoryMembership: 'Membership',
+      flatLinesHeading: 'Flat per-committee fees',
+      dcGroupFeeLabel: 'D.C. Group Fee',
+      totalLabel: 'Total',
+      dateLabel: 'Date',
+      paidByLabel: 'Paid By',
+      printReceiptLabel: 'Print a receipt for this payment',
+      ratesFromRegistration:
+        'Rates from the {{schoolYear}} registration filed {{date}} — not editable here',
+      noRegistrationNote:
+        'No District Committee Registration filed for this committee yet. File one first — its fee rates are what this payment is computed from.',
+      table: {
+        committeeName: 'Committee',
+        date: 'Date',
+        category: 'Category',
+        paidBy: 'Paid By',
+        memberCount: 'Members',
+        totalAmount: 'Total Amount'
+      },
+      confirmDelete: {
+        title: 'Delete Payment',
+        message:
+          'Delete this {{category}} payment for "{{name}}"? Any linked voucher is removed too. This cannot be undone.'
+      },
+      toast: {
+        committeeRequired: 'Select a committee',
+        membersRequired: 'Select at least one member',
+        amountRequired: 'Enter an amount greater than zero',
+        paidByRequired: 'Enter who paid',
+        noRegistration:
+          'File a District Committee Registration for this committee before recording payment',
+        recorded: 'Payment recorded'
+      }
+    }
+  },
+  districtCommitteeRegistration: {
+    title: 'District Committee Registration',
+    subtitle:
+      'Filed national District Committee Registration Forms, one per committee per school year',
+    addButton: 'New Registration',
+    exportButton: 'Export',
+    searchPlaceholder: 'Search by committee or school year…',
+    empty: 'No registrations filed yet',
+    committeeNotFound: 'District Committee not found for this registration.',
+    table: {
+      committeeName: 'Committee',
+      schoolYear: 'School Year',
+      dateApplied: 'Date Applied',
+      registrationStatus: 'Status'
+    },
+    committeePicker: {
+      title: 'New District Committee Registration',
+      selectCommittee: 'District Committee',
+      placeholder: 'Select a committee',
+      continue: 'Continue'
+    },
+    confirmDelete: {
+      title: 'Delete Registration',
+      message: 'Delete the {{schoolYear}} registration for "{{name}}"? This cannot be undone.'
+    },
+    toast: {
+      validationRequired: 'School year is required',
+      deleted: 'District Committee Registration deleted',
+      created: 'District Committee Registration filed',
+      updated: 'District Committee Registration updated',
+      exportedExcel: 'District Committee Registration exported to Excel',
+      exportedPdf: 'District Committee Registration exported as PDF',
+      exportedWord: 'District Committee Registration exported as Word document'
+    },
+    form: {
+      newTitle: 'New Registration — {{name}}',
+      editTitle: 'Edit Registration — {{name}}',
+      headerSection: 'District Committee Registration Form',
+      schoolYear: 'School Year',
+      dateApplied: 'Date Applied',
+      registrationStatus: 'Registration Status',
+      statusNew: 'New',
+      statusReRegistered: 'Re-registered',
+      membersSection: 'Registration of Committee Members',
+      addMember: 'Add Member',
+      position: 'Position',
+      fullName: 'Name (Last, First, M.I.)',
+      birthdate: 'Birthdate',
+      groupRepresented: 'Group Represented',
+      regStatus: 'Reg. Status',
+      beneficiary: 'Beneficiary',
+      signaturesSection: 'Signatures',
+      submittedByName: 'Submitted By (District Field Adviser)',
+      submittedByDate: 'Date',
+      notedByName: 'Noted By (Dist. Com. Chairman/Dist. Commissioner)',
+      notedByDate: 'Date',
+      remittanceSection: 'Council Action Remittance',
+      memberFeeTotal: 'Members Fee (Total)',
+      memberCountsHint: '{{reReg}} Re-Reg, {{new}} New — counted from the roster above',
+      memberFeePerMember: 'Fee per Member',
+      programDevelopmentFund: 'Program Development Fund',
+      mutualAssistanceFund: 'Contribution to the Mutual Assistance Fund',
+      totalRemittance: 'Total Remittance',
+      dcGroupFee: 'D.C. Group Fee (Retained by Council)',
+      adultsCardsFrom: 'Adult Cards Issued — From',
+      adultsCardsTo: 'Adult Cards Issued — To',
+      rorNo: 'ROR No.',
+      rorDate: 'ROR Date',
+      dccrNo: 'DCCR No.',
+      dateOfDeposit: 'Date of Deposit',
+      dccrSumNo: 'DCCR Sum No.',
+      branchCode: 'Branch Code',
+      processedByName: 'Processed By (Registration Processor)',
+      approvedByName: 'Approved By (Council Executive)'
+    }
+  },
+  barangayCommittee: {
+    title: 'Barangay Committee',
+    subtitle: 'Barangay Committees under the Council',
+    addButton: 'Add Committee',
+    searchPlaceholder: 'Search by name, address, or council…',
+    empty: 'No Barangay Committees yet',
+    addModalTitle: 'Add Barangay Committee',
+    editModalTitle: 'Edit Barangay Committee',
+    tabCommittees: 'Committees',
+    tabRegistrations: 'Registration',
+    tabPayments: 'Payment',
+    form: {
+      name: 'Barangay Committee Name',
+      address: 'Address',
+      telNo: 'Tel. No.',
+      districtCommitteeName: 'District Committee Name',
+      region: 'Region',
+      council: 'Council',
+      district: 'District',
+      districtPlaceholder: 'Select district…'
+    },
+    table: {
+      name: 'Name',
+      address: 'Address',
+      districtCommitteeName: 'District Committee',
+      telNo: 'Tel. No.',
+      members: 'Members',
+      status: 'Status',
+      deactivate: 'Deactivate',
+      reactivate: 'Reactivate'
+    },
+    toast: {
+      deactivated: '"{{name}}" deactivated',
+      reactivated: '"{{name}}" reactivated',
+      deleted: '"{{name}}" deleted'
+    },
+    confirmDeactivate: {
+      title: 'Deactivate Committee',
+      message: 'Deactivate "{{name}}"? It stays on record but won’t show in active pickers.'
+    },
+    confirmReactivate: {
+      title: 'Reactivate Committee',
+      message: 'Reactivate "{{name}}"?'
+    },
+    confirmDelete: {
+      title: 'Delete Committee',
+      message: 'Delete "{{name}}"? This cannot be undone.'
+    },
+    confirmForceDelete: {
+      title: 'Delete Despite Payment History',
+      message:
+        '"{{name}}"’s members have recorded payment history — deleting anyway will affect past Daily Collections reports. Delete anyway?'
+    },
+    payment: {
+      subtitle:
+        'Bulk fee payments recorded per Barangay Committee — one entry per remittance, covering however many members it paid for',
+      addButton: 'Record Payment',
+      searchPlaceholder: 'Search by committee or paid by…',
+      empty: 'No payments recorded yet',
+      modalTitle: 'Record Bulk Payment',
+      editModalTitle: 'Edit Payment',
+      submitButton: 'Record Payment',
+      committeeLabel: 'Barangay Committee',
+      committeePlaceholder: 'Search by committee name…',
+      membersLabel: 'Members covered ({{count}})',
+      noMembers: 'No active members in this committee',
+      categoryMembership: 'Membership',
+      bcGroupFeeLabel: 'B.C. Group Fee',
+      totalLabel: 'Total',
+      dateLabel: 'Date',
+      paidByLabel: 'Paid By',
+      ratesFromRegistration:
+        'Rates from the {{schoolYear}} registration filed {{date}} — not editable here',
+      noRegistrationNote:
+        'No Barangay Committee Registration filed for this committee yet. File one first — its fee rates are what this payment is computed from.',
+      table: {
+        committeeName: 'Committee',
+        date: 'Date',
+        category: 'Category',
+        paidBy: 'Paid By',
+        memberCount: 'Members',
+        totalAmount: 'Total Amount'
+      },
+      confirmDelete: {
+        title: 'Delete Payment',
+        message:
+          'Delete this {{category}} payment for "{{name}}"? Any linked voucher is removed too. This cannot be undone.'
+      },
+      toast: {
+        committeeRequired: 'Select a committee',
+        membersRequired: 'Select at least one member',
+        amountRequired: 'Enter an amount greater than zero',
+        paidByRequired: 'Enter who paid',
+        noRegistration:
+          'File a Barangay Committee Registration for this committee before recording payment',
+        recorded: 'Payment recorded'
+      }
+    }
+  },
+  barangayCommitteeRegistration: {
+    title: 'Barangay Committee Registration',
+    subtitle:
+      'Filed national Barangay Committee Registration Forms, one per committee per school year',
+    addButton: 'New Registration',
+    exportButton: 'Export',
+    searchPlaceholder: 'Search by committee or school year…',
+    empty: 'No registrations filed yet',
+    committeeNotFound: 'Barangay Committee not found for this registration.',
+    table: {
+      committeeName: 'Committee',
+      schoolYear: 'School Year',
+      dateApplied: 'Date Applied',
+      registrationStatus: 'Status'
+    },
+    committeePicker: {
+      title: 'New Barangay Committee Registration',
+      selectCommittee: 'Barangay Committee',
+      placeholder: 'Select a committee',
+      continue: 'Continue'
+    },
+    confirmDelete: {
+      title: 'Delete Registration',
+      message: 'Delete the {{schoolYear}} registration for "{{name}}"? This cannot be undone.'
+    },
+    toast: {
+      validationRequired: 'School year is required',
+      deleted: 'Barangay Committee Registration deleted',
+      created: 'Barangay Committee Registration filed',
+      updated: 'Barangay Committee Registration updated',
+      exportedExcel: 'Barangay Committee Registration exported to Excel',
+      exportedPdf: 'Barangay Committee Registration exported as PDF',
+      exportedWord: 'Barangay Committee Registration exported as Word document'
+    },
+    form: {
+      newTitle: 'New Registration — {{name}}',
+      editTitle: 'Edit Registration — {{name}}',
+      headerSection: 'Barangay Committee Registration Form',
+      schoolYear: 'School Year',
+      dateApplied: 'Date Applied',
+      registrationStatus: 'Registration Status',
+      statusNew: 'New',
+      statusReRegistered: 'Re-registered',
+      membersSection: 'Registration of Committee Members',
+      addMember: 'Add Member',
+      position: 'Position',
+      fullName: 'Name (Last, First, M.I.)',
+      birthdate: 'Birthdate',
+      groupRepresented: 'Group Represented',
+      regStatus: 'Reg. Status',
+      beneficiary: 'Beneficiary',
+      signaturesSection: 'Signatures',
+      submittedByName: 'Submitted By (BC Chairman)',
+      submittedByDate: 'Date',
+      remittanceSection: 'Council Action Remittance',
+      memberFeeTotal: 'Members Fee (Total)',
+      memberCountsHint: '{{reReg}} Re-Reg, {{new}} New — counted from the roster above',
+      memberFeePerMember: 'Fee per Member',
+      programDevelopmentFund: 'Program Development Fund',
+      mutualAssistanceFund: 'Contribution to the Mutual Assistance Fund',
+      totalRemittance: 'Total Remittance',
+      bcGroupFee: 'B.C. Group Fee (Retained by Council)',
+      adultsCardsFrom: 'Adult Cards Issued — From',
+      adultsCardsTo: 'Adult Cards Issued — To',
+      rorNo: 'ROR No.',
+      rorDate: 'ROR Date',
+      dccrNo: 'DCCR No.',
+      dateOfDeposit: 'Date of Deposit',
+      branchCode: 'Branch Code',
+      processedByName: 'Processed By (Registration Processor)',
+      approvedByName: 'Approved By (Council Executive)'
+    }
+  },
+  trefoilGuild: {
+    title: 'Trefoil Guild',
+    subtitle: 'Trefoil Guilds under the Council',
+    addButton: 'Add Guild',
+    searchPlaceholder: 'Search by name, address, or council…',
+    empty: 'No Trefoil Guilds yet',
+    addModalTitle: 'Add Trefoil Guild',
+    editModalTitle: 'Edit Trefoil Guild',
+    tabGuilds: 'Guilds',
+    tabRegistrations: 'Registration',
+    tabPayments: 'Payment',
+    form: {
+      name: 'Trefoil Guild Name',
+      guildNumber: 'Trefoil Guild Number',
+      address: 'Address',
+      telNo: 'Tel. No.',
+      email: 'Email Address',
+      region: 'Region',
+      council: 'Council',
+      district: 'District',
+      districtPlaceholder: 'Select district…'
+    },
+    table: {
+      name: 'Name',
+      guildNumber: 'Guild No.',
+      address: 'Address',
+      telNo: 'Tel. No.',
+      members: 'Members',
+      status: 'Status',
+      deactivate: 'Deactivate',
+      reactivate: 'Reactivate'
+    },
+    toast: {
+      deactivated: '"{{name}}" deactivated',
+      reactivated: '"{{name}}" reactivated',
+      deleted: '"{{name}}" deleted'
+    },
+    confirmDeactivate: {
+      title: 'Deactivate Guild',
+      message: 'Deactivate "{{name}}"? It stays on record but won’t show in active pickers.'
+    },
+    confirmReactivate: {
+      title: 'Reactivate Guild',
+      message: 'Reactivate "{{name}}"?'
+    },
+    confirmDelete: {
+      title: 'Delete Guild',
+      message: 'Delete "{{name}}"? This cannot be undone.'
+    },
+    confirmForceDelete: {
+      title: 'Delete Despite Payment History',
+      message:
+        '"{{name}}"’s members have recorded payment history — deleting anyway will affect past Daily Collections reports. Delete anyway?'
+    },
+    payment: {
+      subtitle:
+        'Bulk fee payments recorded per Trefoil Guild — one entry per remittance, covering however many members it paid for',
+      addButton: 'Record Payment',
+      searchPlaceholder: 'Search by guild or paid by…',
+      empty: 'No payments recorded yet',
+      modalTitle: 'Record Bulk Payment',
+      editModalTitle: 'Edit Payment',
+      submitButton: 'Record Payment',
+      guildLabel: 'Trefoil Guild',
+      guildPlaceholder: 'Search by guild name…',
+      membersLabel: 'Members covered ({{count}})',
+      noMembers: 'No active members in this guild',
+      categoryMembership: 'Membership',
+      tgGroupFeeLabel: 'T.G. Group Fee',
+      totalLabel: 'Total',
+      dateLabel: 'Date',
+      paidByLabel: 'Paid By',
+      ratesFromRegistration:
+        'Rates from the {{schoolYear}} registration filed {{date}} — not editable here',
+      noRegistrationNote:
+        'No Trefoil Guild Registration filed for this guild yet. File one first — its fee rates are what this payment is computed from.',
+      table: {
+        guildName: 'Guild',
+        date: 'Date',
+        category: 'Category',
+        paidBy: 'Paid By',
+        memberCount: 'Members',
+        totalAmount: 'Total Amount'
+      },
+      confirmDelete: {
+        title: 'Delete Payment',
+        message:
+          'Delete this {{category}} payment for "{{name}}"? Any linked voucher is removed too. This cannot be undone.'
+      },
+      toast: {
+        guildRequired: 'Select a guild',
+        membersRequired: 'Select at least one member',
+        amountRequired: 'Enter an amount greater than zero',
+        paidByRequired: 'Enter who paid',
+        noRegistration: 'File a Trefoil Guild Registration for this guild before recording payment',
+        recorded: 'Payment recorded'
+      }
+    }
+  },
+  trefoilGuildRegistration: {
+    title: 'Trefoil Guild Registration',
+    subtitle: 'Filed national Trefoil Guild Registration Forms, one per guild per school year',
+    addButton: 'New Registration',
+    exportButton: 'Export',
+    searchPlaceholder: 'Search by guild or school year…',
+    empty: 'No registrations filed yet',
+    guildNotFound: 'Trefoil Guild not found for this registration.',
+    table: {
+      guildName: 'Guild',
+      schoolYear: 'School Year',
+      dateApplied: 'Date Applied',
+      registrationStatus: 'Status'
+    },
+    guildPicker: {
+      title: 'New Trefoil Guild Registration',
+      selectGuild: 'Trefoil Guild',
+      placeholder: 'Select a guild',
+      continue: 'Continue'
+    },
+    confirmDelete: {
+      title: 'Delete Registration',
+      message: 'Delete the {{schoolYear}} registration for "{{name}}"? This cannot be undone.'
+    },
+    toast: {
+      validationRequired: 'School year is required',
+      deleted: 'Trefoil Guild Registration deleted',
+      created: 'Trefoil Guild Registration filed',
+      updated: 'Trefoil Guild Registration updated',
+      exportedExcel: 'Trefoil Guild Registration exported to Excel',
+      exportedPdf: 'Trefoil Guild Registration exported as PDF',
+      exportedWord: 'Trefoil Guild Registration exported as Word document'
+    },
+    form: {
+      newTitle: 'New Registration — {{name}}',
+      editTitle: 'Edit Registration — {{name}}',
+      headerSection: 'Trefoil Guild Registration Form',
+      schoolYear: 'School Year',
+      dateApplied: 'Date Applied',
+      registrationStatus: 'Registration Status',
+      statusNew: 'New',
+      statusReRegistered: 'Re-registered',
+      membersSection: 'Registration of Guild Members',
+      addMember: 'Add Member',
+      position: 'Position',
+      fullName: 'Name (Last, First, M.I.)',
+      birthdate: 'Birthdate',
+      regStatus: 'Reg. Status',
+      beneficiary: 'Beneficiary',
+      signaturesSection: 'Signatures',
+      submittedByName: 'Submitted By (TG Chairman)',
+      submittedByDate: 'Date',
+      remittanceSection: 'Council Action Remittance',
+      memberFeeTotal: 'Members Fee (Total)',
+      memberCountsHint: '{{reReg}} Re-Reg, {{new}} New — counted from the roster above',
+      memberFeePerMember: 'Fee per Member',
+      programDevelopmentFund: 'Program Development Fund',
+      mutualAssistanceFund: 'Contribution to the Mutual Assistance Fund',
+      totalRemittance: 'Total Remittance',
+      tgGroupFee: 'T.G. Group Fee (Retained by Council)',
+      adultsCardsFrom: 'No. of Cards Issued — From',
+      adultsCardsTo: 'No. of Cards Issued — To',
+      orNo: 'O.R. No.',
+      orDate: 'O.R. Date',
+      dccrNo: 'DCCR No.',
+      dateOfDeposit: 'Date of Deposit',
+      branchCode: 'Branch Code',
+      processedByName: 'Processed By (Registration Processor)',
+      approvedByName: 'Approved By (Council Executive)'
+    }
+  },
+  oavf: {
+    title: 'OAVF / Career Woman Members',
+    subtitle: 'Other Adult Volunteer and Career Woman Member profiles',
+    addButton: 'New Member',
+    exportLabel: 'Export',
+    searchPlaceholder: 'Search by name or address…',
+    empty: 'No OAVF/Career Woman members yet',
+    addModalTitle: 'New OAVF/Career Woman Member',
+    editModalTitle: 'Edit OAVF/Career Woman Member',
+    tabMembers: 'Members',
+    tabRegistrations: 'Registration',
+    tabPayments: 'Payment',
+    table: {
+      name: 'Name',
+      district: 'District',
+      dateApplied: 'Date Applied',
+      mobileNo: 'Mobile No.',
+      wasGirlScout: 'Former Girl Scout',
+      membershipFeeTotal: 'Fee',
+      paymentStatus: 'Payment',
+      paid: 'Paid',
+      unpaid: 'Unpaid',
+      membershipStatus: 'Membership',
+      active: 'Active',
+      expired: 'Expired',
+      noRegistration: 'No Registration'
+    },
+    confirmDelete: {
+      title: 'Delete Member',
+      message: 'Delete the member "{{name}}"? This cannot be undone.'
+    },
+    confirmForceDelete: {
+      title: 'Delete Despite Payment History',
+      message:
+        '"{{name}}" has a Registration with recorded payment history — deleting anyway also removes that Registration and any linked voucher, which will affect past Daily Collections reports. Delete anyway?'
+    },
+    payment: {
+      subtitle: 'Recorded OAVF/Career Woman membership fee payments',
+      searchPlaceholder: 'Search by name or school year…',
+      empty: 'No payments recorded yet',
+      recordButton: 'Record Payment',
+      modalTitle: 'Record Payment — {{name}}',
+      submitButton: 'Record Payment',
+      membershipFeeTotal: 'Membership Fee (Total)',
+      membershipFeeCouncilShare: 'Council Share',
+      dateLabel: 'Date',
+      totalLabel: 'Total',
+      feeLabel: 'OAVF/Career Woman Membership Fee',
+      pickerTitle: 'Select Registration to Pay',
+      pickerPlaceholder: 'Search by applicant name or school year…',
+      pickerEmpty: 'No unpaid registrations found',
+      table: {
+        name: 'Applicant',
+        schoolYear: 'School Year',
+        date: 'Date',
+        arNumber: 'AR No.',
+        amount: 'Amount'
+      },
+      toast: {
+        recorded: 'Payment recorded'
+      }
+    },
+    toast: {
+      missingFields: 'Last Name and First Name are required',
+      created: 'OAVF/Career Woman member saved',
+      updated: 'OAVF/Career Woman member updated',
+      deleted: 'OAVF/Career Woman member deleted',
+      exportedExcel: 'Exported to Excel',
+      exportedPdf: 'Exported as PDF',
+      exportedWord: 'Exported as Word document'
+    },
+    form: {
+      createButton: 'Save Member',
+      selectPlaceholder: 'Select…',
+      dateApplied: 'Date',
+      council: 'Council',
+      region: 'Region',
+      district: 'District',
+      lastName: 'Last Name',
+      firstName: 'First Name',
+      middleInitial: 'M.I.',
+      civilStatus: 'Civil Status',
+      sex: 'Sex',
+      birthdate: 'Birthdate',
+      mobileNo: 'Mobile No.',
+      email: 'E-mail',
+      homeAddress: 'Home Address',
+      religion: 'Religion',
+      educationalAttainment: 'Educational Attainment',
+      profession: 'Profession',
+      occupation: 'Occupation',
+      interests: 'Interest/s',
+      otherOrgAffiliated: 'Other Organization Affiliated',
+      beneficiary: 'Beneficiary',
+      beneficiaryContactNo: 'Contact Number/s',
+      wasGirlScout: 'Girl Scout History',
+      wasGirlScoutLabel: 'Have you been a Girl Scout?',
+      gsRegion: 'Region',
+      gsCouncil: 'Council',
+      dateLastRegistered: 'Date Last Registered',
+      gsPosition: 'Position'
+    },
+    registration: {
+      subtitle: 'OAVF/Career Woman filings, one per applicant per school year',
+      addButton: 'New Registration',
+      searchPlaceholder: 'Search by name or school year…',
+      empty: 'No registrations filed yet',
+      addModalTitle: 'New OAVF/Career Woman Registration',
+      editModalTitle: 'Edit OAVF/Career Woman Registration',
+      table: {
+        name: 'Applicant',
+        schoolYear: 'School Year',
+        dateApplied: 'Date Applied'
+      },
+      confirmDelete: {
+        title: 'Delete Registration',
+        message: 'Delete the {{schoolYear}} registration for "{{name}}"? This cannot be undone.'
+      },
+      toast: {
+        memberRequired: 'Select an applicant',
+        schoolYearRequired: 'School year is required',
+        created: 'Registration filed',
+        updated: 'Registration updated',
+        deleted: 'Registration deleted'
+      },
+      form: {
+        createButton: 'Save Registration',
+        applicant: 'Applicant',
+        applicantPlaceholder: 'Search for a member…',
+        schoolYear: 'School Year',
+        dateApplied: 'Date Applied'
+      }
+    }
+  },
+  honoraryMember: {
+    title: 'Honorary Members',
+    subtitle: 'Honorary Member profiles',
+    addButton: 'New Member',
+    exportLabel: 'Export',
+    searchPlaceholder: 'Search by name or address…',
+    empty: 'No Honorary Members yet',
+    addModalTitle: 'New Honorary Member',
+    editModalTitle: 'Edit Honorary Member',
+    tabMembers: 'Members',
+    tabRegistrations: 'Registration',
+    tabPayments: 'Payment',
+    table: {
+      name: 'Name',
+      district: 'District',
+      dateApplied: 'Date Applied',
+      phone: 'Phone',
+      wasGirlScout: 'Former Girl Scout',
+      feeAmount: 'Fee',
+      paymentStatus: 'Payment',
+      paid: 'Paid',
+      unpaid: 'Unpaid',
+      membershipStatus: 'Membership',
+      active: 'Active',
+      expired: 'Expired',
+      noRegistration: 'No Registration'
+    },
+    confirmDelete: {
+      title: 'Delete Member',
+      message: 'Delete the member "{{name}}"? This cannot be undone.'
+    },
+    confirmForceDelete: {
+      title: 'Delete Despite Payment History',
+      message:
+        '"{{name}}" has a Registration with recorded payment history — deleting anyway also removes that Registration and any linked voucher, which will affect past Daily Collections reports. Delete anyway?'
+    },
+    payment: {
+      subtitle: 'Recorded Honorary Member fee payments',
+      searchPlaceholder: 'Search by name or school year…',
+      empty: 'No payments recorded yet',
+      recordButton: 'Record Payment',
+      modalTitle: 'Record Payment — {{name}}',
+      submitButton: 'Record Payment',
+      membershipFeeTotal: 'Membership Fee (Total)',
+      membershipFeeCouncilShare: 'Council Share',
+      dateLabel: 'Date',
+      totalLabel: 'Total',
+      feeLabel: 'Honorary Member Fee',
+      pickerTitle: 'Select Registration to Pay',
+      pickerPlaceholder: 'Search by name or school year…',
+      pickerEmpty: 'No unpaid registrations found',
+      table: {
+        name: 'Honoree',
+        schoolYear: 'School Year',
+        date: 'Date',
+        arNumber: 'AR No.',
+        amount: 'Amount'
+      },
+      toast: {
+        amountRequired: 'Enter an amount greater than zero',
+        recorded: 'Payment recorded'
+      }
+    },
+    toast: {
+      missingFields: 'Last Name and First Name are required',
+      created: 'Honorary Member saved',
+      updated: 'Honorary Member updated',
+      deleted: 'Honorary Member deleted',
+      exportedExcel: 'Exported to Excel',
+      exportedPdf: 'Exported as PDF',
+      exportedWord: 'Exported as Word document'
+    },
+    form: {
+      createButton: 'Save Member',
+      selectPlaceholder: 'Select…',
+      dateApplied: 'Date',
+      lastName: 'Last Name',
+      firstName: 'First Name',
+      middleInitial: 'M.I.',
+      civilStatus: 'Civil Status',
+      sex: 'Sex',
+      council: 'Council',
+      region: 'Region',
+      nhq: 'NHQ',
+      district: 'District',
+      homeAddress: 'Home Address',
+      phone: 'Phone',
+      email: 'E-mail',
+      businessAddress: 'Business Address',
+      businessPhone: 'Phone',
+      profession: 'Profession',
+      occupation: 'Occupation',
+      beneficiary: 'Beneficiary',
+      wasGirlScout: 'Girl Scout History',
+      wasGirlScoutLabel: 'Please indicate if you had been a Girl Scout',
+      dateLastRegistered: 'Date Last Registered',
+      position: 'Position'
+    },
+    registration: {
+      subtitle: 'Honorary Member filings, one per honoree per school year',
+      addButton: 'New Registration',
+      searchPlaceholder: 'Search by name or school year…',
+      empty: 'No registrations filed yet',
+      addModalTitle: 'New Honorary Member Registration',
+      editModalTitle: 'Edit Honorary Member Registration',
+      table: {
+        name: 'Honoree',
+        schoolYear: 'School Year',
+        dateApplied: 'Date Applied'
+      },
+      confirmDelete: {
+        title: 'Delete Registration',
+        message: 'Delete the {{schoolYear}} registration for "{{name}}"? This cannot be undone.'
+      },
+      toast: {
+        memberRequired: 'Select an honoree',
+        schoolYearRequired: 'School year is required',
+        created: 'Registration filed',
+        updated: 'Registration updated',
+        deleted: 'Registration deleted'
+      },
+      form: {
+        createButton: 'Save Registration',
+        honoree: 'Honoree',
+        honoreePlaceholder: 'Search for a member…',
+        schoolYear: 'School Year',
+        dateApplied: 'Date Applied'
+      }
+    }
+  },
+  associateMember: {
+    title: 'Associate Members',
+    subtitle: 'Associate Member profiles',
+    addButton: 'New Member',
+    exportLabel: 'Export',
+    searchPlaceholder: 'Search by name or address…',
+    empty: 'No Associate Members yet',
+    addModalTitle: 'New Associate Member',
+    editModalTitle: 'Edit Associate Member',
+    tabMembers: 'Members',
+    tabRegistrations: 'Registration',
+    tabPayments: 'Payment',
+    table: {
+      amfNumber: 'AMF No.',
+      name: 'Name',
+      district: 'District',
+      dateApplied: 'Date Applied',
+      phone: 'Phone',
+      wasGirlScout: 'Former Girl Scout',
+      feeAmount: 'Fee',
+      paymentStatus: 'Payment',
+      paid: 'Paid',
+      unpaid: 'Unpaid',
+      membershipStatus: 'Membership',
+      active: 'Active',
+      expired: 'Expired',
+      noRegistration: 'No Registration'
+    },
+    confirmDelete: {
+      title: 'Delete Member',
+      message: 'Delete the member "{{name}}"? This cannot be undone.'
+    },
+    confirmForceDelete: {
+      title: 'Delete Despite Payment History',
+      message:
+        '"{{name}}" has a Registration with recorded payment history — deleting anyway also removes that Registration and any linked voucher, which will affect past Daily Collections reports. Delete anyway?'
+    },
+    payment: {
+      subtitle: 'Recorded Associate Member fee payments',
+      searchPlaceholder: 'Search by name or school year…',
+      empty: 'No payments recorded yet',
+      recordButton: 'Record Payment',
+      modalTitle: 'Record Payment — {{name}}',
+      submitButton: 'Record Payment',
+      membershipFeeTotal: 'Membership Fee (Total)',
+      membershipFeeCouncilShare: 'Council Share',
+      dateLabel: 'Date',
+      totalLabel: 'Total',
+      pickerTitle: 'Select Registration to Pay',
+      pickerPlaceholder: 'Search by applicant name or school year…',
+      pickerEmpty: 'No unpaid registrations found',
+      table: {
+        name: 'Applicant',
+        schoolYear: 'School Year',
+        date: 'Date',
+        arNumber: 'AR No.',
+        amount: 'Amount'
+      },
+      toast: {
+        amountRequired: 'Enter an amount greater than zero',
+        recorded: 'Payment recorded'
+      }
+    },
+    toast: {
+      missingFields: 'Last Name and First Name are required',
+      created: 'Associate Member saved',
+      updated: 'Associate Member updated',
+      deleted: 'Associate Member deleted',
+      exportedExcel: 'Exported to Excel',
+      exportedPdf: 'Exported as PDF',
+      exportedWord: 'Exported as Word document'
+    },
+    form: {
+      createButton: 'Save Member',
+      selectPlaceholder: 'Select…',
+      amfNumber: 'AMF No.',
+      series: 'Series',
+      dateApplied: 'Date',
+      council: 'Council',
+      region: 'Region',
+      district: 'District',
+      lastName: 'Last Name',
+      firstName: 'First Name',
+      middleInitial: 'M.I.',
+      civilStatus: 'Civil Status',
+      sex: 'Sex',
+      homeAddress: 'Home Address',
+      phone: 'Phone',
+      email: 'E-mail',
+      businessAddress: 'Business Address',
+      businessPhone: 'Phone',
+      profession: 'Profession',
+      occupation: 'Occupation',
+      beneficiary: 'Beneficiary',
+      wasGirlScout: 'Girl Scout History',
+      wasGirlScoutLabel: 'Please indicate if you had been a Girl Scout',
+      dateLastRegistered: 'Date Last Registered',
+      position: 'Position'
+    },
+    registration: {
+      subtitle: 'Associate Member filings, one per applicant per school year',
+      addButton: 'New Registration',
+      searchPlaceholder: 'Search by name or school year…',
+      empty: 'No registrations filed yet',
+      addModalTitle: 'New Associate Member Registration',
+      editModalTitle: 'Edit Associate Member Registration',
+      table: {
+        name: 'Applicant',
+        schoolYear: 'School Year',
+        dateApplied: 'Date Applied'
+      },
+      confirmDelete: {
+        title: 'Delete Registration',
+        message: 'Delete the {{schoolYear}} registration for "{{name}}"? This cannot be undone.'
+      },
+      toast: {
+        memberRequired: 'Select an applicant',
+        schoolYearRequired: 'School year is required',
+        created: 'Registration filed',
+        updated: 'Registration updated',
+        deleted: 'Registration deleted'
+      },
+      form: {
+        createButton: 'Save Registration',
+        applicant: 'Applicant',
+        applicantPlaceholder: 'Search for a member…',
+        schoolYear: 'School Year',
+        dateApplied: 'Date Applied'
+      }
+    }
+  },
+  iccgRegistration: {
+    title: 'ICCG Registration',
+    subtitle:
+      'Filed national ICCG (Catholic Guiding Section) Membership Registration Forms, one per school/troop per school year',
+    addButton: 'New Registration',
+    exportButton: 'Export',
+    searchPlaceholder: 'Search by school, troop, or school year…',
+    empty: 'No registrations filed yet',
+    troopNotFound: 'Troop not found for this registration.',
+    tabMembers: 'Members',
+    tabRegistrations: 'Registration',
+    tabPayments: 'Payment',
+    table: {
+      school: 'School',
+      troopNumber: 'Troop #',
+      schoolYear: 'School Year',
+      dateApplied: 'Date Applied',
+      girls: 'Girls',
+      adults: 'Adults',
+      total: 'Total'
+    },
+    troopPicker: {
+      title: 'New ICCG Registration',
+      selectTroop: 'Troop',
+      placeholder: 'Select a troop',
+      continue: 'Continue'
+    },
+    confirmDelete: {
+      title: 'Delete Registration',
+      message:
+        'Delete the {{schoolYear}} ICCG registration for "{{school}}"? This cannot be undone.'
+    },
+    toast: {
+      validationRequired: 'School is required',
+      created: 'ICCG Registration filed',
+      updated: 'ICCG Registration updated',
+      deleted: 'ICCG Registration deleted',
+      exportedExcel: 'ICCG Registration exported to Excel',
+      exportedPdf: 'ICCG Registration exported as PDF',
+      exportedWord: 'ICCG Registration exported as Word document'
+    },
+    form: {
+      newTitle: 'New Registration — Troop {{troopNumber}}',
+      editTitle: 'Registration — Troop {{troopNumber}}',
+      headerSection: 'CGS Information',
+      school: 'School',
+      ageLevel: 'Age Level',
+      schoolYear: 'School Year',
+      dateApplied: 'Date Applied',
+      formNo: 'Form No.',
+      seriesYear: 'Series Year',
+      girlsSection: 'CGS Registered Girl Members',
+      addGirl: 'Add Girl',
+      adultsSection: 'CGS Registered Adult Members (at least 2)',
+      addAdult: 'Add Adult',
+      name: 'Name (Last, First, M.I.)',
+      gradeYear: 'Grade/Year',
+      email: 'e-mail address',
+      signaturesSection: 'Signatures',
+      submittedByName: 'Submitted By (CGS Adult Leader)',
+      submittedByDate: 'Date',
+      notedByName: 'Noted By (School Principal)',
+      notedByDate: 'Date',
+      feeSection: 'CGS Registration Fee',
+      noOfGirls: 'No. of Girls',
+      amountGirls: 'Amount — Girls',
+      noOfAdults: 'No. of Adult',
+      amountAdults: 'Amount — Adult',
+      feePerMemberTotal: 'Per-member fee (total remitted)',
+      feePerMemberCouncilShare: 'Per-member fee (Council share)',
+      councilRetainedShare: "Council's retained share",
+      total: 'Total',
+      arNo: 'AR No.',
+      dateOfDeposit: 'Date Deposited',
+      dccrNo: 'DCCR No.',
+      processedByName: 'Processed By (Registration Processor)',
+      approvedByName: 'Approved By (Council Executive)'
+    },
+    members: {
+      subtitle:
+        'Persistent per-Troop ICCG roster (girls + adults), synced from filed registrations',
+      addButton: 'Add Member',
+      searchPlaceholder: 'Search by name or troop…',
+      empty: 'No ICCG members yet',
+      addModalTitle: 'Add ICCG Member',
+      editModalTitle: 'Edit ICCG Member',
+      roleGirl: 'Girl',
+      roleAdult: 'Adult',
+      deactivate: 'Deactivate',
+      reactivate: 'Reactivate',
+      table: {
+        troopNumber: 'Troop #',
+        name: 'Name',
+        role: 'Role',
+        gradeYear: 'Grade/Year',
+        email: 'e-mail address',
+        status: 'Status'
+      },
+      form: {
+        troop: 'Troop',
+        troopPlaceholder: 'Select a troop',
+        role: 'Role',
+        fullName: 'Name (Last, First, M.I.)',
+        gradeYear: 'Grade/Year',
+        email: 'e-mail address'
+      },
+      toast: {
+        troopRequired: 'Select a troop',
+        nameRequired: 'Name is required',
+        created: 'ICCG member added',
+        updated: 'ICCG member updated',
+        deactivated: '"{{name}}" deactivated',
+        reactivated: '"{{name}}" reactivated',
+        deleted: '"{{name}}" deleted'
+      },
+      confirmDeactivate: {
+        title: 'Deactivate Member',
+        message:
+          'Deactivate "{{name}}"? They stay on record but won’t be offered as an active roster member.'
+      },
+      confirmReactivate: {
+        title: 'Reactivate Member',
+        message: 'Reactivate "{{name}}"?'
+      },
+      confirmDelete: {
+        title: 'Delete Member',
+        message: 'Delete "{{name}}"? This cannot be undone.'
+      },
+      confirmForceDelete: {
+        title: 'Delete Despite Payment History',
+        message:
+          '"{{name}}" has recorded payment history — deleting anyway will affect past Daily Collections reports. Delete anyway?'
+      }
+    },
+    payment: {
+      subtitle:
+        'Bulk fee payments recorded per Troop’s ICCG roster — one entry per remittance, covering however many girls/adults it paid for',
+      addButton: 'Record Payment',
+      searchPlaceholder: 'Search by troop or paid by…',
+      empty: 'No payments recorded yet',
+      modalTitle: 'Record Bulk Payment',
+      editModalTitle: 'Edit Payment',
+      submitButton: 'Record Payment',
+      troopLabel: 'Troop',
+      troopPlaceholder: 'Search by troop number or name…',
+      membersLabel: 'Girls covered ({{girls}}), Adults covered ({{adults}})',
+      girlsFeeLabel: 'Girls Fee',
+      adultsFeeLabel: 'Adults Fee',
+      councilShareLabel: 'Council share (per member)',
+      councilRetainedTotal: "Council's retained share",
+      totalLabel: 'Total',
+      dateLabel: 'Date',
+      paidByLabel: 'Paid By',
+      ratesFromRegistration:
+        'Rates suggested from the {{schoolYear}} registration filed {{date}} — editable here',
+      noRegistrationNote:
+        'No ICCG Registration filed for this troop yet — using the standard ₱20/₱5 rate. You can still record payment; file a registration later to keep the rate suggestion in sync.',
+      table: {
+        troopNumber: 'Troop #',
+        date: 'Date',
+        category: 'Category',
+        paidBy: 'Paid By',
+        memberCount: 'Members',
+        totalAmount: 'Total Amount'
+      },
+      confirmDelete: {
+        title: 'Delete Payment',
+        message:
+          'Delete this {{category}} payment for Troop {{troopNumber}}? Any linked voucher is removed too. This cannot be undone.'
+      },
+      toast: {
+        troopRequired: 'Select a troop',
+        amountRequired: 'Enter an amount greater than zero',
+        paidByRequired: 'Enter who paid',
+        recorded: 'Payment recorded'
+      }
+    }
+  },
+  membershipStatusReport: {
+    title: 'Membership Status Report',
+    subtitle: 'Council-wide membership counts computed live from every registration module',
+    exportLabel: 'Export',
+    schoolYear: 'Membership Year',
+    newYearButton: 'New Membership Year',
+    newYearModal: {
+      title: 'Start a New Membership Year',
+      yearLabel: 'Membership Year',
+      createButton: 'Create',
+      hint: 'Carries over {{year}}’s Goal targets as a starting point for the new year — adjust them anytime from Edit Goals. Nothing else needs to exist beforehand; registrations filed under the new year will show up here automatically.'
+    },
+    table: {
+      district: 'District',
+      troopsUnits: 'No. of Troops & Units',
+      girlsAdults: 'No. of Girls & Adults',
+      totalNo: 'Total No.',
+      girls: 'Girls',
+      adults: 'Adults'
+    },
+    goals: {
+      title: 'Goal / Achieved / Balance',
+      editButton: 'Edit Goals',
+      editTitle: 'Edit Goals — {{schoolYear}}',
+      category: 'Category',
+      goal: 'Goal',
+      achieved: 'Achieved',
+      balance: 'Balance',
+      membershipPotential: 'Membership potential registered',
+      barangayCommittee: 'Barangay Committee registered',
+      districtCommittee: 'District Committee registered',
+      associateMember: 'Associate Member registered',
+      honoraryMember: 'Honorary Member',
+      trefoilGuild: 'Trefoil Guild',
+      careerWoman: 'Career Woman',
+      iccg: 'ICCG'
+    },
+    toast: {
+      exportedExcel: 'Exported to Excel',
+      exportedPdf: 'Exported as PDF',
+      exportedWord: 'Exported as Word document',
+      yearRequired: 'Enter a membership year label',
+      yearExists: 'That membership year already exists',
+      yearCreated: '{{year}} created'
     }
   },
   attendance: {
@@ -1293,6 +2598,7 @@ const en = {
     fiscalYear: 'Fiscal Year {{year}}',
     addLineButton: 'Add Line',
     newFiscalYearButton: 'New Fiscal Year',
+    deleteFiscalYearButton: 'Delete this fiscal year',
     newFiscalYearModal: {
       title: 'Start a New Fiscal Year',
       yearLabel: 'Fiscal Year',
@@ -1339,30 +2645,33 @@ const en = {
       totalActual: 'Total Actual',
       useAllLiveData: 'Use all live data',
       liveDataHint:
-        'Computed from POS sales, rental bookings, vouchers, or payroll — click to fill in this month'
+        'Computed from POS sales, rental bookings, vouchers, or payroll — click to fill in this month',
+      source: {
+        heading: 'Source',
+        hintIncome:
+          'Link this line to where its money actually comes from — Vouchers/Cash Receipts, Troops & Membership payments, Point of Sale (NES), or Rentals. Once you add a rule here, it replaces the built-in default for this line; clearing every rule reverts to that default.',
+        hintExpense:
+          "Link this line to the vouchers or payroll fields that actually pay for it — useful when a Check Voucher's GL Account text doesn't already match this line's name exactly. Once you add a rule here, it replaces the built-in default for this line; clearing every rule reverts to that default.",
+        addRule: 'Add Source',
+        empty:
+          'No source linked yet — this line stays fully manual unless a built-in default already applies.',
+        removeRule: 'Remove this source',
+        sourceTypeNotSpecified: 'Not Specified',
+        sourceTypeVoucher: 'Vouchers / Cash Receipts',
+        sourceTypeTroopPayment: 'Troops & Membership (Roster payments)',
+        sourceTypePos: 'Point of Sale (NES)',
+        sourceTypeRental: 'Rentals',
+        sourceTypePayroll: 'Payroll',
+        voucherCategoriesLabel: 'Which voucher/receipt categories count',
+        voucherCategoryPlaceholder: 'Type or pick a category…',
+        rentalCategoryAny: 'Any rental space',
+        payrollFieldPlaceholder: 'Select a payroll field'
+      }
     },
     autoSourceHint:
       'This line has a live figure computed from real data — open Edit to review/apply it',
     autoSource: {
-      equipmentService: 'Linked from Point of Sale (NES) sales.',
-      rentalHall:
-        'Linked from confirmed/completed bookings of Hall-category rental spaces (Rentals module).',
-      rentalRoom:
-        'Linked from confirmed/completed bookings of Room-category rental spaces (Rentals module).',
-      rentalSpace:
-        'Linked from confirmed/completed bookings of Space-category rental spaces (Rentals module).',
-      councilSupportFund:
-        'Linked from approved Journal Voucher receipts recorded as Council Support Fund.',
-      troopBcDcFees:
-        'Linked from Troop membership payments (Roster) plus approved Journal Voucher receipts (Troop Fees, Barangay Committee, Associate, Career Woman, Honorary Member).',
-      trainingFees:
-        'Linked from Troop training payments (Roster) plus approved Journal Voucher receipts recorded as Training Fees.',
-      campingFees:
-        'Linked from Troop camping payments (Roster) plus approved Journal Voucher receipts recorded as Camping Fees.',
-      payroll: 'Linked from paid Payroll entries.',
-      voucherMatch: 'Linked from approved Disbursement Vouchers with a matching Account Title.',
-      cashAdvanceLiquidation:
-        'Linked from an approved Journal Voucher liquidating a Cash Advance, itemized under a matching Account Title.'
+      userConfigured: 'Linked to a source you configured — open Edit to review or change it.'
     },
     toast: {
       updated: 'Budget line updated',
@@ -1373,6 +2682,7 @@ const en = {
       fiscalYearExists: 'That fiscal year already exists',
       noSourceYear: 'No existing fiscal year to copy from',
       fiscalYearCreated: '{{year}} created',
+      fiscalYearDeleted: '{{year}} deleted',
       excel: 'Budget exported to Excel',
       pdf: 'Budget exported to PDF',
       word: 'Budget exported to Word'
@@ -1381,6 +2691,11 @@ const en = {
       title: 'Delete Budget Line',
       message:
         'Delete "{{name}}"? Its budgeted amount and monthly actuals go with it — this cannot be undone.'
+    },
+    confirmDeleteYear: {
+      title: 'Delete Fiscal Year',
+      message:
+        'Delete {{year}}? Every budget line for this fiscal year goes with it — this cannot be undone.'
     }
   },
   facilityCalendar: {
@@ -1419,6 +2734,8 @@ const en = {
       amount: 'Amount',
       date: 'Date',
       status: 'Status',
+      orNumber: 'OR No.',
+      reimbursement: 'Reimbursement',
       empty: 'No vouchers found',
       exportTooltip: 'Export voucher',
       expenseSummaryTooltip: 'Manage Expense Summary'
@@ -1434,7 +2751,7 @@ const en = {
       payeePlaceholder: 'Vendor or recipient name',
       payeeAddress: 'Payee Address',
       bankAccount: 'Bank Account',
-      bankAccountPlaceholder: 'e.g. DBP #00-500128590-5',
+      bankAccountPlaceholder: 'Select Bank Account (defaults to Cash on Hand)',
       accountLinesLabel: 'Account Titles (Debit)',
       accountLinesLabelCredit: 'Account Titles (Credit)',
       accountPlaceholder: 'Account title, e.g. Office Supplies',
@@ -1449,6 +2766,7 @@ const en = {
       cashAdvanceSourcePlaceholder: 'Select the Check Voucher that released the cash advance',
       cashAdvanceSourceEmptyHint:
         'No matching Check Voucher found — first create one with a debit line whose Account Title is exactly "Cash Advance".',
+      cashAdvanceSourceRequiredHint: 'Select a Cash Advance source above first.',
       cashAdvanceAmount: 'Amount of Cash Advance',
       cashAdvanceDate: 'Cash Advance Dated',
       totalAmountSpent: 'Total Amount Spent',
@@ -1457,10 +2775,16 @@ const en = {
       refundDate: 'Refund Dated',
       cashAdvanceAutoLinesNote:
         'Account lines are generated automatically from the Summary of Expenses once expenses are logged — use the receipt icon on the Vouchers list after saving this voucher.',
-      autoCalculatedField: 'Auto-calculated from Summary of Expenses.'
+      autoCalculatedField: 'Auto-calculated from Summary of Expenses.',
+      unbalancedHint:
+        'Out of balance — Debit {{debit}} vs Credit {{credit}}. Every voucher must balance: total debits = total credits.'
     },
     toast: {
       missingFields: 'Payee and at least one account line with an amount are required',
+      unbalanced:
+        'Debit and credit totals don’t match (₱{{debit}} vs ₱{{credit}}) — every entry must balance before it can be saved',
+      cashAdvanceSourceRequired:
+        'Select which Check Voucher actually released this cash advance before liquidating it',
       created: 'Voucher created',
       updated: 'Voucher updated',
       deleted: 'Voucher deleted',
@@ -1621,106 +2945,28 @@ const en = {
       wordGenerated: 'Word document generated'
     }
   },
-  invoices: {
-    title: 'Invoices',
-    newInvoiceButton: 'New Invoice',
-    searchPlaceholder: 'Search invoices…',
-    markAsPaidButton: 'Mark as Paid',
-    voidButton: 'Void',
-    defaultMemo: 'Thank you for your business.',
-    status: {
-      partially_paid: 'Partially Paid',
-      void: 'Void'
-    },
-    filter: {
-      all: 'All'
-    },
-    summary: {
-      overdue: 'Overdue',
-      notDueYet: 'Not due yet',
-      paid: 'Paid'
-    },
-    table: {
-      number: 'Number',
-      customer: 'Customer',
-      issueDate: 'Issue Date',
-      dueDate: 'Due Date',
-      status: 'Status',
-      total: 'Total',
-      balanceDue: 'Balance Due',
-      amount: 'Amount',
-      empty: 'No invoices found'
-    },
-    detail: {
-      issued: 'Issued',
-      due: 'Due',
-      description: 'Description',
-      qty: 'Qty',
-      rate: 'Rate',
-      subtotal: 'Subtotal',
-      total: 'Total'
-    },
-    form: {
-      saveAsDraft: 'Save as Draft',
-      saveAndSend: 'Save and Send',
-      saveButton: 'Save',
-      selectCustomer: 'Select customer',
-      searchCustomer: 'Search by name, company, or email',
-      useAsManualCustomer: 'Use "{{name}}" (not in system)',
-      manualCustomerBadge: 'Manual entry',
-      lineItems: 'Line Items',
-      addLine: 'Add Line',
-      descriptionPlaceholder: 'Description'
-    },
+  // Shared "which receipt template, what breakdown" fields — used by both Invoices' Record
+  // Payment and Troops & Membership's Record Bulk Payment (see ReceiptFieldsSection).
+  receipts: {
+    printButton: 'Print Receipt',
+    reprintButton: 'Reprint Receipt',
+    tabServiceInvoice: 'Service Invoice',
+    tabAcknowledgmentReceipt: 'Acknowledgment Receipt',
+    receiptNumber: 'SI/AR Number',
+    tin: 'TIN',
+    address: 'Address',
+    businessStyle: 'Engaged in Business Style of',
+    modeOfPayment: 'Mode of Payment',
+    othersPlaceholder: 'Others (specify)',
+    breakdownTotal: 'Breakdown Total / Target Amount',
+    descriptionColumn: 'Particulars',
+    amountColumn: 'Amount',
     toast: {
-      customerRequired: 'Please select a customer.',
-      dueDateRequired: 'Please set a due date.',
-      lineItemRequired: 'Add at least one line item.',
-      sent: '{{number}} sent to {{customer}}',
-      savedAsDraft: '{{number}} saved as draft',
-      markedPaid: '{{number}} marked as paid',
-      voided: '{{number}} voided',
-      deleted: '{{number}} deleted',
-      cannotDeletePaid: "A paid invoice can't be deleted — void it instead."
-    },
-    confirmDelete: {
-      title: 'Delete Invoice',
-      message: 'Delete invoice {{number}}? This cannot be undone.'
-    }
-  },
-  customers: {
-    title: 'Customers',
-    newCustomerButton: 'New Customer',
-    searchPlaceholder: 'Search customers…',
-    fields: {
-      company: 'Company',
-      email: 'Email',
-      phone: 'Phone',
-      status: 'Status',
-      openBalance: 'Open Balance'
-    },
-    table: {
-      name: 'Customer',
-      empty: 'No customers found'
-    },
-    detail: {
-      totalBilled: 'Total Billed',
-      invoices: 'Invoices',
-      noInvoices: 'No invoices for this customer yet.'
-    },
-    form: {
-      fullName: 'Full Name',
-      fullNamePlaceholder: 'Juan Dela Cruz',
-      companyPlaceholder: 'Company name',
-      emailPlaceholder: 'name@company.ph',
-      phonePlaceholder: '+63 9XX XXX XXXX',
-      address: 'Address',
-      addressPlaceholder: 'City, Province',
-      saveButton: 'Save Customer'
-    },
-    toast: {
-      missingFields: 'Name and email are required.',
-      created: '{{name}} added to customers'
+      receiptNumberRequired: 'Please enter the SI/AR number.',
+      breakdownRequired: 'Add at least one amount.',
+      breakdownMismatch: 'The breakdown total must equal the total amount.',
+      printFailed:
+        "Receipt was recorded, but couldn't print — check that the printer is connected and configured in Settings"
     }
   },
   vendors: {
@@ -1761,14 +3007,13 @@ const en = {
     title: 'Reports',
     tabs: {
       pnl: 'Profit & Loss',
-      balanceSheet: 'Balance Sheet',
       dailyCollections: 'Daily Collections'
     },
     pnl: {
       chartTitle: 'Income vs Expenses',
       chartSubtitle: 'Last 6 months · cash basis',
       cardTitle: 'Profit & Loss',
-      cardSubtitle: 'Cash basis · paid invoices and paid expenses',
+      cardSubtitle: 'Cash basis · paid expenses',
       income: 'Income',
       expenses: 'Expenses',
       totalIncome: 'Total Income',
@@ -1781,26 +3026,15 @@ const en = {
         word: 'Income Statement exported as Word document'
       }
     },
-    balanceSheet: {
-      exportLabel: 'Export Balance Sheet',
-      assets: 'Assets',
-      liabilities: 'Liabilities',
-      equity: 'Equity',
-      totalAssets: 'Total Assets',
-      totalLiabilities: 'Total Liabilities',
-      totalLiabilitiesEquity: 'Total Liabilities & Equity',
-      toast: {
-        excel: 'Balance Sheet exported to Excel',
-        pdf: 'Balance Sheet exported as PDF',
-        word: 'Balance Sheet exported as Word document'
-      }
-    },
     dailyCollections: {
       cardTitle: 'Daily Cash Collection Report',
       cardSubtitle: 'Beginning balance, receipts, and bank deposits for one day',
+      rangeSubtitle:
+        'Consolidated view across the selected dates — switch to a single day to edit or save.',
       exportLabel: 'Export Daily Collections',
       saved: 'Saved',
       draft: 'Unsaved draft',
+      rangeBadge: 'Range (read-only)',
       beginningBalance: 'Beginning Balance',
       addCashReceipts: 'Add: Cash Receipts',
       lessCashDeposit: 'Less: Cash Deposit',
@@ -1815,6 +3049,9 @@ const en = {
       noAttachments: 'No files attached yet',
       uploadAttachment: 'Attach File',
       saveButton: 'Save Report',
+      deleteAttachmentTitle: 'Delete Attachment',
+      deleteAttachmentMessage:
+        'Are you sure you want to delete "{{name}}"? This will permanently remove the file. This action cannot be undone.',
       table: {
         siNo: 'SI No.',
         receivedFrom: 'Received From',
@@ -1822,16 +3059,30 @@ const en = {
         total: 'Total',
         bank: 'Bank',
         saNo: 'S/A No.',
-        purpose: 'Purpose'
+        purpose: 'Purpose',
+        covers: 'Covers',
+        coversHint:
+          'Date range this deposit represents. Defaults to this day only — widen it when depositing accumulated cash from several undeposited days in one bank trip.'
       },
       walkIn: 'Walk-in',
       toast: {
         saved: 'Daily Collection Report saved',
         attachmentUploaded: 'Attachment uploaded',
         attachmentFailed: 'Failed to upload attachment',
+        attachmentDeleted: 'Attachment deleted',
         excel: 'Daily Collection Report exported to Excel',
         pdf: 'Daily Collection Report exported as PDF',
         word: 'Daily Collection Report exported as Word document'
+      },
+      depositReceipt: {
+        printButton: 'Print Receipt',
+        title: 'Print Deposit Receipt',
+        hint: 'Proof that this cash was handed over for deposit — not a new sale, so it is not posted as income again. The amount collected was already counted once, when it was originally received.',
+        payorLabel: 'Received From (handed over the cash)',
+        cashierLabel: 'Received By (acknowledging for deposit)',
+        toast: {
+          payorRequired: 'Please enter who handed over the cash.'
+        }
       }
     }
   },
@@ -1876,6 +3127,7 @@ const en = {
       particulars: 'Particulars',
       reference: 'Ref #',
       category: 'Category',
+      receiptType: 'Receipt Used',
       bankAccount: 'Bank Account',
       amount: 'Amount'
     },
@@ -1929,6 +3181,7 @@ const en = {
       itemsCount: '{{count}} item(s)',
       printButton: 'Print',
       voidButton: 'Void',
+      deleteButton: 'Delete',
       table: {
         saleNumber: 'Sale #',
         date: 'Date',
@@ -1948,7 +3201,7 @@ const en = {
     cart: {
       title: 'Cart ({{count}})',
       empty: 'Cart is empty — scan or click a product to add.',
-      noMember: 'No member',
+      memberSearchPlaceholder: 'Search member or type a name…',
       printReceipt: 'Print receipt',
       subtotal: 'Subtotal',
       discount: 'Discount',
@@ -1967,7 +3220,8 @@ const en = {
       silentPrintFailed:
         "Couldn't print the receipt — check that the receipt printer is connected and configured in Settings",
       saleVoided: 'Sale {{saleNumber}} voided — stock restored',
-      voidReasonRequired: 'Please enter a reason for voiding this sale'
+      voidReasonRequired: 'Please enter a reason for voiding this sale',
+      saleDeleted: 'Sale {{saleNumber}} deleted'
     },
     modal: {
       saleCompleteTitle: 'Sale Complete — {{saleNumber}}',
@@ -1978,7 +3232,10 @@ const en = {
       undoSaleConfirmMessage:
         'Sale {{saleNumber}} will be voided and the items returned to stock. This cannot be undone.',
       undoSaleReasonLabel: 'Reason for void/refund',
-      undoSaleReasonPlaceholder: 'e.g. Wrong item rung up, customer requested refund…'
+      undoSaleReasonPlaceholder: 'e.g. Wrong item rung up, customer requested refund…',
+      deleteSaleConfirmTitle: 'Delete this sale?',
+      deleteSaleConfirmMessage:
+        'Sale {{saleNumber}} will be permanently deleted. This cannot be undone.'
     }
   },
   products: {
@@ -2429,6 +3686,11 @@ const en = {
       email: 'Email Address',
       homeAddress: 'Home Address',
       roles: 'Position/Role in the GSP Ilocos Sur Council',
+      whichTroop: 'Which Troop',
+      whichTroopPlaceholder: 'Select troop',
+      troopRole: 'Position on that Troop',
+      troopRoleLeader: 'Troop Leader',
+      troopRoleAssistant: 'Assistant Troop Leader',
       completedTrainings: 'Completed Training',
       otherCompletedTraining: 'Others (please specify)',
       ageLevelSpecialization: 'For Age-Level Specialization Course Completers Only',

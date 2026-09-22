@@ -58,13 +58,17 @@ export function integerToWords(value: number): string {
   return groups.join(' ')
 }
 
-/** "ONE THOUSAND EIGHT HUNDRED TWELVE PESOS & 00/100 ONLY" — the acknowledgment-receipt
- *  wording printed on the Council's real Disbursement Voucher form. */
+/** "ONE THOUSAND EIGHT HUNDRED TWELVE PESOS & 50/100 ONLY" — the acknowledgment-receipt
+ *  wording printed on the Council's real Disbursement Voucher form. A whole-peso amount
+ *  drops the "& 00/100" fraction entirely (e.g. "FIFTY PESOS ONLY"), matching how it's
+ *  actually written by hand on the real booklets — the fraction only appears when there
+ *  are real centavos to spell out. */
 export function amountToWords(amount: number): string {
   const safe = Math.max(0, amount)
   const pesos = Math.floor(safe)
   const centavos = Math.round((safe - pesos) * 100)
   const pesoWord = pesos === 1 ? 'PESO' : 'PESOS'
+  if (centavos === 0) return `${integerToWords(pesos)} ${pesoWord} ONLY`
   const centavosStr = String(centavos).padStart(2, '0')
   return `${integerToWords(pesos)} ${pesoWord} & ${centavosStr}/100 ONLY`
 }

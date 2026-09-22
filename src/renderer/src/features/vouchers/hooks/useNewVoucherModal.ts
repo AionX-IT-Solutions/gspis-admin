@@ -36,6 +36,9 @@ function emptyForm(suggestedVoucherNumber: string) {
     checkNumber: '',
     payee: '',
     payeeAddress: '',
+    // Left unset on purpose — a voucher with no bank chosen falls back to "Cash on Hand"
+    // everywhere SCRD/Reports read bankAccountRef (see receiptVouchers.ts, useBankBalances.ts),
+    // so leaving this blank is itself a valid, meaningful choice rather than a gap to force-fill.
     bankAccountRef: '',
     particulars: '',
     debitLines: [emptyAccountLine()],
@@ -124,6 +127,19 @@ export function useNewVoucherModal(
   // replaced by a note instead for this case.
   const isCashAdvanceLiquidation = form.voucherType === 'journal_voucher' && !!form.relatedVoucherId
 
+  // Double-entry: every voucher must balance (total debits == total credits) — e.g. Dr Cash
+  // 1000 / Cr Sales 1000, or Dr Trainings-Meals 100 + Trainings-Gas 1000 / Cr Cash 1100. The
+  // one exception is a Check Voucher whose credit side was left blank — its credit is then
+  // implicit (the bank/cash account in `bankAccountRef`, for the full debit total), which
+  // balances by construction without needing a manual line. Itemizing the credit side at all
+  // (optional on a Check Voucher, always required on a Journal Voucher) means it must match
+  // the debit total exactly like any real double-entry.
+  const creditIsItemized = form.creditLines.some((l) => l.account.trim() && l.amount > 0)
+  const isBalanced =
+    isCashAdvanceLiquidation ||
+    (form.voucherType === 'check_voucher' && !creditIsItemized) ||
+    totalDebit === totalCredit
+
   // Every Check Voucher on record that actually granted a cash advance — the only
   // vouchers a Journal Voucher's liquidation section can reference back to.
   const cashAdvanceSources = vouchers.filter(isCashAdvanceDisbursement)
@@ -188,8 +204,29 @@ export function useNewVoucherModal(
     }
     const totalDebitValid = validDebitLines.reduce((sum, l) => sum + l.amount, 0)
     const totalCreditValid = validCreditLines.reduce((sum, l) => sum + l.amount, 0)
+    const creditValidIsItemized = validCreditLines.length > 0
+    const isValidBalanced =
+      isCashAdvanceLiquidation ||
+      (form.voucherType === 'check_voucher' && !creditValidIsItemized) ||
+      totalDebitValid === totalCreditValid
+    if (!isValidBalanced) {
+      toast.error(
+        t('vouchers.toast.unbalanced', {
+          debit: totalDebitValid.toFixed(2),
+          credit: totalCreditValid.toFixed(2)
+        })
+      )
+      return
+    }
     const isJournalVoucher = form.voucherType === 'journal_voucher'
     const hasCashAdvance = isJournalVoucher && form.cashAdvanceAmount > 0
+    // A cash advance can only be liquidated against a real Check Voucher that actually
+    // disbursed it — otherwise the JV would be clearing an advance that was never really
+    // released, with no paper trail behind it.
+    if (hasCashAdvance && !form.relatedVoucherId) {
+      toast.error(t('vouchers.toast.cashAdvanceSourceRequired'))
+      return
+    }
 
     const payload = {
       voucherType: form.voucherType,
@@ -247,6 +284,7 @@ export function useNewVoucherModal(
     totalDebit,
     totalCredit,
     isCashAdvanceLiquidation,
+    isBalanced,
     addLine,
     removeLine,
     updateLine,

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAppStore } from '@/app/store/app.store'
 import { useToast } from '@/app/hooks/useToast'
-import { uploadFile } from '@/shared/lib/storageSync'
+import { uploadFile, deleteFile } from '@/shared/lib/storageSync'
 import { setStaffUserPhoto } from '@/features/users/lib/staffUserFunctions'
 
 export function useProfile() {
@@ -18,8 +18,10 @@ export function useProfile() {
     try {
       const path = `userPhotos/${currentUser.id}/${Date.now()}-${file.name}`
       const url = await uploadFile(path, file)
-      await setStaffUserPhoto(currentUser.id, url)
-      setCurrentUserPhoto(url)
+      await setStaffUserPhoto(currentUser.id, url, path)
+      const previousPath = currentUser.photoStoragePath
+      setCurrentUserPhoto(url, path)
+      if (previousPath) deleteFile(previousPath)
       toast.success(t('profile.toast.photoUpdated'))
     } catch {
       toast.error(t('profile.toast.photoFailed'))

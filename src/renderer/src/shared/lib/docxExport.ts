@@ -174,6 +174,27 @@ export function signatoryTable(columns: DocxSignatoryColumn[]): Table {
   })
 }
 
+/** A borderless single-row, two-cell line — left text flush left, right text flush right —
+ *  for header details that sit at opposite corners of the page rather than centered (e.g. a
+ *  form's "No./Series" control-number block on the left and "(Regional Copy)" designation on
+ *  the right). */
+export function headerLineSplit(leftText: string, rightText: string): Table {
+  const lineCell = (text: string, align: (typeof AlignmentType)[keyof typeof AlignmentType]) =>
+    new TableCell({
+      borders: noBorders,
+      children: [new Paragraph({ alignment: align, children: [new TextRun({ text, size: 16 })] })]
+    })
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    borders: noBorders,
+    rows: [
+      new TableRow({
+        children: [lineCell(leftText, AlignmentType.LEFT), lineCell(rightText, AlignmentType.RIGHT)]
+      })
+    ]
+  })
+}
+
 export function spacer(): Paragraph {
   return new Paragraph({ text: '', spacing: { after: 120 } })
 }

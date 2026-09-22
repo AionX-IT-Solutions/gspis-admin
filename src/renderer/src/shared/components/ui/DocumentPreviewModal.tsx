@@ -11,6 +11,9 @@ interface DocumentPreviewModalProps {
   onDownloadExcel?: () => void
   onDownloadPdf?: () => void
   onDownloadWord?: () => void
+  /** Single generic download action — used for previewing an already-uploaded file
+   *  (e.g. an attachment) rather than one of the Excel/PDF/Word report exports above. */
+  onDownload?: () => void
 }
 
 /** The "View" counterpart to ExportMenu's download buttons — renders a jsPDF-generated
@@ -25,7 +28,8 @@ export function DocumentPreviewModal({
   url,
   onDownloadExcel,
   onDownloadPdf,
-  onDownloadWord
+  onDownloadWord,
+  onDownload
 }: DocumentPreviewModalProps) {
   const { t } = useTranslation()
 
@@ -68,6 +72,16 @@ export function DocumentPreviewModal({
               onClick={onDownloadWord}
             >
               Word
+            </Button>
+          )}
+          {onDownload && (
+            <Button
+              variant="secondary"
+              size="sm"
+              leftIcon={<Download size={13} />}
+              onClick={onDownload}
+            >
+              {t('common.download')}
             </Button>
           )}
           {(onDownloadExcel || onDownloadPdf || onDownloadWord) && (

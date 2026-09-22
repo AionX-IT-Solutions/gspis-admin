@@ -7,6 +7,7 @@ import {
 } from '@/shared/lib/firestoreSync'
 import { appendAuditLog } from '@/app/store/auditLog.store'
 import { useAppStore } from '@/app/store/app.store'
+import { useExpenseSummaryStore } from '@/features/expenseSummary/store/expenseSummary.store'
 import type { Voucher, VoucherStatus } from '../types/vouchers.types'
 
 function actorName() {
@@ -17,7 +18,10 @@ interface VouchersState {
   vouchers: Voucher[]
   hydrated: boolean
   hydrate: (force?: boolean) => Promise<void>
-  addVoucher: (voucher: Omit<Voucher, 'id' | 'status' | 'createdAt' | 'createdBy'>) => void
+  addVoucher: (
+    voucher: Omit<Voucher, 'id' | 'status' | 'createdAt' | 'createdBy'>,
+    options?: { autoApprove?: boolean }
+  ) => void
   updateVoucher: (id: string, patch: Partial<Voucher>) => void
   deleteVoucher: (id: string) => void
   decideVoucher: (id: string, status: VoucherStatus) => void
@@ -37,11 +41,13 @@ export const useVouchersStore = create<VouchersState>()((set, get) => ({
     }
   },
 
-  addVoucher: (voucher) => {
+  addVoucher: (voucher, options) => {
+    const autoApprove = options?.autoApprove ?? false
     const created: Voucher = {
       ...voucher,
       id: crypto.randomUUID(),
-      status: 'pending',
+      status: autoApprove ? 'approved' : 'pending',
+      approvedBy: autoApprove ? actorName() : undefined,
       createdBy: actorName(),
       createdAt: new Date().toISOString()
     }
@@ -73,6 +79,11 @@ export const useVouchersStore = create<VouchersState>()((set, get) => ({
     const voucher = get().vouchers.find((v) => v.id === id)
     set((s) => ({ vouchers: s.vouchers.filter((v) => v.id !== id) }))
     deleteDocById('vouchers', id)
+    // Expense Summary is a 1:1 itemized backup of this voucher's own cash-advance
+    // liquidation (id === voucherId, see firestore.rules) — never meaningful without the
+    // voucher it backs, so it's always cleaned up alongside it. A voucher with no summary
+    // simply has nothing to delete here.
+    useExpenseSummaryStore.getState().deleteSummary(id)
     appendAuditLog({
       action: 'voucher_deleted',
       actorName: actorName(),

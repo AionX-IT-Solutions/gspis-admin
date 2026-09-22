@@ -4,6 +4,9 @@ import { useSkeletonLoading } from '@/shared/hooks/useSkeletonLoading'
 import { useToast } from '@/app/hooks/useToast'
 import { usePermissions } from '@/app/hooks/usePermissions'
 import { useDocumentPreview } from '@/shared/hooks/useDocumentPreview'
+import { usePrinterDeviceName } from '@/shared/hooks/usePrinterDeviceName'
+import { printReceipt } from '@/shared/lib/receiptPrint'
+import { RECEIPT_KIND_LABELS, type ReceiptRecord } from '@/shared/types/receipt.types'
 import { useVouchersStore } from '../store/vouchers.store'
 import {
   exportDisbursementVoucher,
@@ -23,9 +26,11 @@ export function useVouchers() {
   const toast = useToast()
   const { hasPermission } = usePermissions()
   const canManage = hasPermission('manage:vouchers')
+  const printerDeviceName = usePrinterDeviceName()
   const vouchers = useVouchersStore((s) => s.vouchers)
   const decideVoucher = useVouchersStore((s) => s.decideVoucher)
   const deleteVoucher = useVouchersStore((s) => s.deleteVoucher)
+  const updateVoucher = useVouchersStore((s) => s.updateVoucher)
 
   const [showDialog, setShowDialog] = useState(false)
   const [editTarget, setEditTarget] = useState<Voucher | null>(null)
@@ -117,6 +122,47 @@ export function useVouchers() {
     toast.success(t('vouchers.toast.wordGenerated'))
   }
 
+  // Prints a Service Invoice from any approved voucher's own recorded lines — a
+  // receipt-direction Journal Voucher (orNumber set, see NewVoucherModal) already carries
+  // everything a Service Invoice needs (Dr Cash on Hand / Cr income category lines, the
+  // physical receipt number), so those are used as-is. Any other voucher (a Check Voucher's
+  // disbursement, a cash-advance liquidation JV) has no credit-side breakdown worth printing,
+  // so its debit lines — what the payment was actually for — are used instead, and the
+  // voucher's own number stands in for a physical OR #.
+  async function handlePrintReceipt(v: Voucher) {
+    const creditLines = v.accountLines
+      .filter((l) => l.credit > 0)
+      .map((l) => ({ label: l.account, amount: l.credit }))
+    const lines =
+      creditLines.length > 0
+        ? creditLines
+        : v.accountLines
+            .filter((l) => l.debit > 0)
+            .map((l) => ({ label: l.account, amount: l.debit }))
+    const receiptNumber = v.orNumber || v.voucherNumber
+    const receipt: ReceiptRecord = {
+      receiptType: 'service_invoice',
+      receiptNumber,
+      date: v.date,
+      referenceNote: v.particulars,
+      payorName: v.payee,
+      address: v.payeeAddress,
+      modeOfPayment: v.modeOfPayment,
+      lines,
+      cashierName: v.approvedBy ?? v.createdBy
+    }
+    const result = await printReceipt(receipt, printerDeviceName)
+    if (!result.ok) toast.error(t('receipts.toast.printFailed'))
+    // Remembers which booklet this voucher's receipt came from so SCRD's Cash Receipts
+    // Journal can show it later — only needed the first time (a reprint already has both).
+    if (!v.orNumber || !v.receiptType) {
+      updateVoucher(v.id, {
+        orNumber: receiptNumber,
+        receiptType: RECEIPT_KIND_LABELS.service_invoice
+      })
+    }
+  }
+
   return {
     loading,
     canManage,
@@ -139,6 +185,7 @@ export function useVouchers() {
     handleExportPdf,
     handleExportWord,
     handleView,
+    handlePrintReceipt,
     preview,
     previewVoucher
   }

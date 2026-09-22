@@ -30,6 +30,17 @@ function permissionsEqual(a: Permission[], b: Permission[]): boolean {
   return b.every((p) => setA.has(p))
 }
 
+const ALL_PERMISSIONS_SET = new Set<string>(ALL_PERMISSIONS)
+
+// A role's stored permission list can outlive the permission strings themselves — a module
+// rename/removal (e.g. a `view:foo` becoming `view:fooRegistration`) leaves the old string
+// stuck in Firestore since nothing prunes it automatically. Filtering against the current
+// ALL_PERMISSIONS here is what keeps the "granted / total" count from reading impossible
+// values like "80 / 72", and self-heals the stored list the next time someone hits Done.
+function currentPermissionsOnly(permissions: Permission[] | undefined): Permission[] {
+  return (permissions ?? []).filter((p) => ALL_PERMISSIONS_SET.has(p))
+}
+
 export function RolePermissionsSection() {
   const { t } = useTranslation()
   const {
@@ -66,7 +77,7 @@ export function RolePermissionsSection() {
 
   useEffect(() => {
     if (!permTarget) return
-    setDraftPermissions(rolePermissions[permTarget] ?? [])
+    setDraftPermissions(currentPermissionsOnly(rolePermissions[permTarget]))
     setDraftBaseRole(permTargetCustomRole?.baseRole ?? null)
     // Only re-seed when the modal opens for a (possibly new) role — not on every store
     // update, or an in-progress edit would get clobbered by its own unsaved changes.
@@ -131,7 +142,7 @@ export function RolePermissionsSection() {
         <Card padding="0px">
           <div>
             {roleRows.map((row, i) => {
-              const granted = rolePermissions[row.value]?.length ?? 0
+              const granted = currentPermissionsOnly(rolePermissions[row.value]).length
               return (
                 <div
                   key={row.value}

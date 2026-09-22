@@ -47,6 +47,9 @@ export interface CurrentUser {
   customRoleId?: string
   email: string
   photoUrl?: string
+  /** The Firebase Storage path backing `photoUrl`, if any — lets a later photo change
+   *  delete the old file instead of leaking it (see features/profile/hooks/useProfile.ts). */
+  photoStoragePath?: string
 }
 
 export type AccentColor = 'indigo' | 'cyan' | 'emerald' | 'rose'
@@ -73,7 +76,7 @@ interface AppState {
   login: (email: string, password: string) => Promise<LoginResult>
   logout: () => void
   setSession: (user: CurrentUser | null) => void
-  setCurrentUserPhoto: (photoUrl: string) => void
+  setCurrentUserPhoto: (photoUrl: string, photoStoragePath: string) => void
   setAuthLoading: (loading: boolean) => void
   setSidebarCollapsed: (collapsed: boolean) => void
   toggleSidebar: () => void
@@ -125,6 +128,7 @@ export const useAppStore = create<AppState>()(
                 customRoleId?: string
                 isActive?: boolean
                 photoUrl?: string
+                photoStoragePath?: string
               }
             | undefined
 
@@ -141,7 +145,8 @@ export const useAppStore = create<AppState>()(
               fullName: profile.fullName ?? credential.user.displayName ?? email,
               role: profile.role ?? 'manager',
               customRoleId: profile.customRoleId,
-              photoUrl: profile.photoUrl
+              photoUrl: profile.photoUrl,
+              photoStoragePath: profile.photoStoragePath
             }
           })
           return { ok: true }
@@ -154,9 +159,11 @@ export const useAppStore = create<AppState>()(
         set({ isAuthenticated: false, currentUser: null })
       },
       setSession: (currentUser) => set({ isAuthenticated: !!currentUser, currentUser }),
-      setCurrentUserPhoto: (photoUrl) =>
+      setCurrentUserPhoto: (photoUrl, photoStoragePath) =>
         set((s) => ({
-          currentUser: s.currentUser ? { ...s.currentUser, photoUrl } : s.currentUser
+          currentUser: s.currentUser
+            ? { ...s.currentUser, photoUrl, photoStoragePath }
+            : s.currentUser
         })),
       setAuthLoading: (authLoading) => set({ authLoading }),
       setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),

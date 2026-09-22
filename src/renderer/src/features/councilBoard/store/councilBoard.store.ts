@@ -7,6 +7,7 @@ import {
 } from '@/shared/lib/firestoreSync'
 import { appendAuditLog } from '@/app/store/auditLog.store'
 import { useAppStore } from '@/app/store/app.store'
+import { deleteFile } from '@/shared/lib/storageSync'
 import type { CouncilBoardMember } from '../types/councilBoard.types'
 
 function actorName() {
@@ -78,6 +79,7 @@ export const useCouncilBoardStore = create<CouncilBoardState>()((set, get) => ({
     const member = get().members.find((m) => m.id === id)
     set((s) => ({ members: s.members.filter((m) => m.id !== id) }))
     deleteDocById('councilBoardMembers', id)
+    if (member?.photoStoragePath) deleteFile(member.photoStoragePath)
     appendAuditLog({
       action: 'council_board_member_deleted',
       actorName: actorName(),

@@ -31,6 +31,7 @@ export function useFirebaseAuthBridge() {
               customRoleId?: string
               isActive?: boolean
               photoUrl?: string
+              photoStoragePath?: string
             }
           | undefined
 
@@ -46,7 +47,8 @@ export function useFirebaseAuthBridge() {
           fullName: profile.fullName ?? firebaseUser.displayName ?? firebaseUser.email ?? '',
           role: profile.role ?? 'manager',
           customRoleId: profile.customRoleId,
-          photoUrl: profile.photoUrl
+          photoUrl: profile.photoUrl,
+          photoStoragePath: profile.photoStoragePath
         })
       } catch {
         setSession(null)

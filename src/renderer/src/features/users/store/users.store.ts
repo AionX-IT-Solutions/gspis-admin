@@ -23,6 +23,9 @@ export interface StaffUser {
   customRoleId?: string
   isActive: boolean
   photoUrl?: string
+  /** The Firebase Storage path backing `photoUrl`, if any — lets a later photo change
+   *  delete the old file instead of leaking it (see features/profile/hooks/useProfile.ts). */
+  photoStoragePath?: string
   /** For the Dashboard's Upcoming Birthdays widget — admin/super_admin-editable directly
    *  (see setStaffUserBirthDate), unlike role/password which need the CLI/service-account path. */
   birthDate?: string
@@ -38,6 +41,7 @@ function toStaffUser(id: string, data: Partial<StaffUser> & { createdAt?: unknow
     customRoleId: data.customRoleId,
     isActive: data.isActive ?? true,
     photoUrl: data.photoUrl,
+    photoStoragePath: data.photoStoragePath,
     birthDate: data.birthDate
   }
 }

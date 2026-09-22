@@ -83,6 +83,28 @@ export const useBanksStore = create<BanksState>()((set, get) => ({
           set({ banks: seeded, hydrated: true })
           return
         }
+        // "Cash on Hand" was added to SEED_BANKS after some installs' `banks` collection was
+        // already populated, so the empty-collection seed above never ran for them — every
+        // receipt/disbursement with no bank chosen still falls back to that exact account name
+        // (see receiptVouchers.ts/useBankBalances.ts), so without a real doc for it here, that
+        // cash has nowhere to show an opening balance or a persisted closing one. Patch it in
+        // once so every install ends up with the same account SCRD/Reports already assume.
+        if (!banks.some((b) => bankDisplayName(b) === 'Cash on Hand')) {
+          const seed = SEED_BANKS.find((b) => b.name === 'Cash on Hand')
+          if (seed) {
+            const now = new Date().toISOString()
+            const cashOnHand: Bank = {
+              id: crypto.randomUUID(),
+              ...seed,
+              currentBalance: seed.openingBalance,
+              isActive: true,
+              createdAt: now,
+              updatedAt: now
+            }
+            persistDoc('banks', cashOnHand.id, cashOnHand)
+            banks.unshift(cashOnHand)
+          }
+        }
         set({ banks, hydrated: true })
       } catch (err) {
         reportHydrateFailure('[banks.store] Failed to hydrate', err)

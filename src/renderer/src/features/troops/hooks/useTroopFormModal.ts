@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useToast } from '@/app/hooks/useToast'
 import { usePermissions } from '@/app/hooks/usePermissions'
-import { useTrainingProfilesStore } from '@/features/trainingProfiles/store/trainingProfiles.store'
-import type { TrainingProfile } from '@/features/trainingProfiles/types/trainingProfiles.types'
 import { useTroopsStore } from '../store/troops.store'
 import type { Troop } from '../types/troop.types'
 
@@ -13,12 +11,23 @@ function emptyForm() {
     troopName: '',
     level: '',
     leaderName: '',
-    leaderProfileId: '',
     assistantLeaderName: '',
-    assistantLeaderProfileId: '',
     school: '',
     barangay: '',
-    meetingPlace: ''
+    meetingPlace: '',
+    troopAddress: '',
+    troopTelNo: '',
+    districtCommitteeName: '',
+    district: '',
+    barangayCommitteeName: '',
+    sponsoringGroup: '',
+    completeMailingAddress: '',
+    troopBirthday: '',
+    troopType: '' as '' | 'school' | 'community',
+    leaderBeneficiary: '',
+    leaderRboStatus: '' as '' | 'old' | 'new',
+    assistantLeaderBeneficiary: '',
+    assistantLeaderRboStatus: '' as '' | 'old' | 'new'
   }
 }
 
@@ -28,12 +37,23 @@ function formFromTroop(troop: Troop) {
     troopName: troop.troopName ?? '',
     level: troop.level,
     leaderName: troop.leaderName,
-    leaderProfileId: troop.leaderProfileId ?? '',
     assistantLeaderName: troop.assistantLeaderName ?? '',
-    assistantLeaderProfileId: troop.assistantLeaderProfileId ?? '',
     school: troop.school ?? '',
     barangay: troop.barangay ?? '',
-    meetingPlace: troop.meetingPlace ?? ''
+    meetingPlace: troop.meetingPlace ?? '',
+    troopAddress: troop.troopAddress ?? '',
+    troopTelNo: troop.troopTelNo ?? '',
+    districtCommitteeName: troop.districtCommitteeName ?? '',
+    district: troop.district ?? '',
+    barangayCommitteeName: troop.barangayCommitteeName ?? '',
+    sponsoringGroup: troop.sponsoringGroup ?? '',
+    completeMailingAddress: troop.completeMailingAddress ?? '',
+    troopBirthday: troop.troopBirthday ?? '',
+    troopType: (troop.troopType ?? '') as '' | 'school' | 'community',
+    leaderBeneficiary: troop.leaderBeneficiary ?? '',
+    leaderRboStatus: (troop.leaderRboStatus ?? '') as '' | 'old' | 'new',
+    assistantLeaderBeneficiary: troop.assistantLeaderBeneficiary ?? '',
+    assistantLeaderRboStatus: (troop.assistantLeaderRboStatus ?? '') as '' | 'old' | 'new'
   }
 }
 
@@ -47,40 +67,11 @@ export function useTroopFormModal(
   const { hasPermission } = usePermissions()
   const addTroop = useTroopsStore((s) => s.addTroop)
   const updateTroop = useTroopsStore((s) => s.updateTroop)
-  const profiles = useTrainingProfilesStore((s) => s.profiles)
   const [form, setForm] = useState(emptyForm())
 
   useEffect(() => {
     if (open) setForm(editTarget ? formFromTroop(editTarget) : emptyForm())
   }, [open, editTarget])
-
-  // Only people the registry actually lists as a Troop Leader — the same role checkbox
-  // on their Training Profile.
-  const leaderCandidates = profiles.filter((p) => p.roles.includes('troop_leader'))
-
-  function selectLeader(profile: TrainingProfile) {
-    setForm((f) => ({ ...f, leaderName: profile.name, leaderProfileId: profile.id }))
-  }
-  function clearLeaderProfile() {
-    setForm((f) => ({ ...f, leaderProfileId: '' }))
-  }
-  function setLeaderName(name: string) {
-    setForm((f) => ({ ...f, leaderName: name, leaderProfileId: '' }))
-  }
-
-  function selectAssistantLeader(profile: TrainingProfile) {
-    setForm((f) => ({
-      ...f,
-      assistantLeaderName: profile.name,
-      assistantLeaderProfileId: profile.id
-    }))
-  }
-  function clearAssistantLeaderProfile() {
-    setForm((f) => ({ ...f, assistantLeaderProfileId: '' }))
-  }
-  function setAssistantLeaderName(name: string) {
-    setForm((f) => ({ ...f, assistantLeaderName: name, assistantLeaderProfileId: '' }))
-  }
 
   function handleSubmit() {
     if (!hasPermission('manage:troops')) return
@@ -93,12 +84,23 @@ export function useTroopFormModal(
       troopName: form.troopName.trim() || undefined,
       level: form.level.trim(),
       leaderName: form.leaderName.trim(),
-      leaderProfileId: form.leaderProfileId || undefined,
       assistantLeaderName: form.assistantLeaderName.trim() || undefined,
-      assistantLeaderProfileId: form.assistantLeaderProfileId || undefined,
       school: form.school.trim() || undefined,
       barangay: form.barangay.trim() || undefined,
-      meetingPlace: form.meetingPlace.trim() || undefined
+      meetingPlace: form.meetingPlace.trim() || undefined,
+      troopAddress: form.troopAddress.trim() || undefined,
+      troopTelNo: form.troopTelNo.trim() || undefined,
+      districtCommitteeName: form.districtCommitteeName.trim() || undefined,
+      district: form.district || undefined,
+      barangayCommitteeName: form.barangayCommitteeName.trim() || undefined,
+      sponsoringGroup: form.sponsoringGroup.trim() || undefined,
+      completeMailingAddress: form.completeMailingAddress.trim() || undefined,
+      troopBirthday: form.troopBirthday || undefined,
+      troopType: form.troopType || undefined,
+      leaderBeneficiary: form.leaderBeneficiary.trim() || undefined,
+      leaderRboStatus: form.leaderRboStatus || undefined,
+      assistantLeaderBeneficiary: form.assistantLeaderBeneficiary.trim() || undefined,
+      assistantLeaderRboStatus: form.assistantLeaderRboStatus || undefined
     }
     if (editTarget) {
       updateTroop(editTarget.id, payload)
@@ -113,13 +115,6 @@ export function useTroopFormModal(
   return {
     form,
     setForm,
-    leaderCandidates,
-    selectLeader,
-    clearLeaderProfile,
-    setLeaderName,
-    selectAssistantLeader,
-    clearAssistantLeaderProfile,
-    setAssistantLeaderName,
     handleSubmit
   }
 }

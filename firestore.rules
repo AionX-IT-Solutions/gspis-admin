@@ -1,289 +1,379 @@
-rules_version = '2';
+  rules_version = '2';
 
-// Security model:
-// - `role` is a custom claim set only by the Admin SDK — via scripts/bootstrapSuperAdmin.mjs
-//   and scripts/manageStaffUser.mjs, run manually from a developer machine that holds the
-//   service account key. Never writable by clients, never shipped inside the app.
-// - The fine-grained, admin-editable permission matrix on the "Role Permissions" screen
-//   is mirrored to the `rolePermissions` collection below purely so gspi-app (mobile) can
-//   read it for its own UI/module visibility — it is NOT the security boundary here. These
-//   rules are the actual server-enforced boundary and intentionally use the coarser role,
-//   not the editable matrix. A custom role (Role Permissions screen) is never a `role`
-//   value itself — every account's real `role` custom claim is always one of the 7 built-in
-//   roles below; a custom role resolves to one of them as its "base role" (see
-//   resolveRoleAssignment in app/lib/permissions.ts) and is carried separately as the
-//   cosmetic `customRoleId` field on `users/{uid}`.
-// - Account creation, role changes, and password resets-by-admin all happen via the CLI
-//   scripts (Admin SDK, bypasses these rules). The exceptions clients CAN do directly are
-//   toggling `isActive` (Enable/Disable) and renaming (`fullName`) — see the narrow rule
-//   below. Renaming never touches the `role` custom claim, so it's safe client-side.
-service cloud.firestore {
-  match /databases/{database}/documents {
-    function isSignedIn() {
-      return request.auth != null;
-    }
+  // Security model:
+  // - `role` is a custom claim set only by the Admin SDK — via scripts/bootstrapSuperAdmin.mjs
+  //   and scripts/manageStaffUser.mjs, run manually from a developer machine that holds the
+  //   service account key. Never writable by clients, never shipped inside the app.
+  // - The fine-grained, admin-editable permission matrix on the "Role Permissions" screen
+  //   is mirrored to the `rolePermissions` collection below purely so gspi-app (mobile) can
+  //   read it for its own UI/module visibility — it is NOT the security boundary here. These
+  //   rules are the actual server-enforced boundary and intentionally use the coarser role,
+  //   not the editable matrix. A custom role (Role Permissions screen) is never a `role`
+  //   value itself — every account's real `role` custom claim is always one of the 7 built-in
+  //   roles below; a custom role resolves to one of them as its "base role" (see
+  //   resolveRoleAssignment in app/lib/permissions.ts) and is carried separately as the
+  //   cosmetic `customRoleId` field on `users/{uid}`.
+  // - Account creation, role changes, and password resets-by-admin all happen via the CLI
+  //   scripts (Admin SDK, bypasses these rules). The exceptions clients CAN do directly are
+  //   toggling `isActive` (Enable/Disable) and renaming (`fullName`) — see the narrow rule
+  //   below. Renaming never touches the `role` custom claim, so it's safe client-side.
+  service cloud.firestore {
+    match /databases/{database}/documents {
+      function isSignedIn() {
+        return request.auth != null;
+      }
 
-    function role() {
-      return request.auth.token.role;
-    }
+      function role() {
+        return request.auth.token.role;
+      }
 
-    function hasAnyRole(roles) {
-      return isSignedIn() && role() in roles;
-    }
+      function hasAnyRole(roles) {
+        return isSignedIn() && role() in roles;
+      }
 
-    function isOwner(uid) {
-      return isSignedIn() && request.auth.uid == uid;
-    }
+      function isOwner(uid) {
+        return isSignedIn() && request.auth.uid == uid;
+      }
 
-    // Staff directory — profile documents mirroring Firebase Auth users, created/edited
-    // only by the Admin SDK CLI scripts. The client-writable exceptions are toggling
-    // `isActive` (Enable/Disable), `fullName` (rename), and `birthDate` (Dashboard's
-    // Upcoming Birthdays widget) — scoped so no other field, especially `role`, can be
-    // smuggled into the same write.
-    match /users/{uid} {
-      allow read: if isOwner(uid) || hasAnyRole(['super_admin', 'admin']);
-      allow update: if (hasAnyRole(['super_admin', 'admin'])
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isActive', 'fullName', 'birthDate', 'updatedAt']))
-        || (isOwner(uid) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['photoUrl', 'updatedAt']));
-      allow create, delete: if false;
-    }
+      // Staff directory — profile documents mirroring Firebase Auth users, created/edited
+      // only by the Admin SDK CLI scripts. The client-writable exceptions are toggling
+      // `isActive` (Enable/Disable), `fullName` (rename), and `birthDate` (Dashboard's
+      // Upcoming Birthdays widget) — scoped so no other field, especially `role`, can be
+      // smuggled into the same write.
+      match /users/{uid} {
+        allow read: if isOwner(uid) || hasAnyRole(['super_admin', 'admin']);
+        allow update: if (hasAnyRole(['super_admin', 'admin'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isActive', 'fullName', 'birthDate', 'updatedAt']))
+          || (isOwner(uid) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['photoUrl', 'photoStoragePath', 'updatedAt']));
+        allow create, delete: if false;
+      }
 
-    // Role Permissions screen's view/manage matrix, one doc per role (built-in or
-    // custom) — mirrored here purely so gspi-app (mobile) can read a role's checklist
-    // for its own module visibility. Not the security boundary (see note at top):
-    // every signed-in user can read every role's doc, only admins can edit.
-    match /rolePermissions/{roleId} {
-      allow read: if isSignedIn();
-      allow write: if hasAnyRole(['super_admin', 'admin']);
-    }
+      // Role Permissions screen's view/manage matrix, one doc per role (built-in or
+      // custom) — mirrored here purely so gspi-app (mobile) can read a role's checklist
+      // for its own module visibility. Not the security boundary (see note at top):
+      // every signed-in user can read every role's doc, only admins can edit.
+      match /rolePermissions/{roleId} {
+        allow read: if isSignedIn();
+        allow write: if hasAnyRole(['super_admin', 'admin']);
+      }
 
-    // Custom role definitions (id/label/baseRole) added via the Role Permissions screen's
-    // "Add Role" — mirrored here so every device/session sees the same set of custom roles,
-    // not just the one that created them (see CustomRole in app/lib/permissions.ts).
-    match /customRoles/{roleId} {
-      allow read: if isSignedIn();
-      allow write: if hasAnyRole(['super_admin', 'admin']);
-    }
+      // Custom role definitions (id/label/baseRole) added via the Role Permissions screen's
+      // "Add Role" — mirrored here so every device/session sees the same set of custom roles,
+      // not just the one that created them (see CustomRole in app/lib/permissions.ts).
+      match /customRoles/{roleId} {
+        allow read: if isSignedIn();
+        allow write: if hasAnyRole(['super_admin', 'admin']);
+      }
 
-    // HR module: Employees, Attendance, Biometric Enrollments, Leave, Payroll. 'manager' is
-    // deliberately absent from all of these — neither this app nor gspi-app's Role Permissions
-    // ever grant Manager any HR visibility, so this rule now matches that instead of quietly
-    // exceeding it.
-    match /employees/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr']);
-    }
-    match /councilBoardMembers/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr']);
-    }
-    match /attendance/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr']);
-    }
-    match /biometricEnrollments/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr']);
-    }
-    match /leaveTypes/{id} {
-      allow read: if hasAnyRole(['super_admin', 'admin', 'hr']);
-      allow write: if hasAnyRole(['super_admin', 'admin', 'hr']);
-    }
-    match /leaveRequests/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr']);
-    }
-    match /leaveCreditGrants/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr']);
-    }
-    match /payroll/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'accountant']);
-    }
-    match /employeeDocuments/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr']);
-    }
+      // HR module: Employees, Attendance, Biometric Enrollments, Leave, Payroll. 'manager' is
+      // deliberately absent from all of these — neither this app nor gspi-app's Role Permissions
+      // ever grant Manager any HR visibility, so this rule now matches that instead of quietly
+      // exceeding it.
+      match /employees/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr']);
+      }
+      match /councilBoardMembers/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr']);
+      }
+      match /attendance/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr']);
+      }
+      match /biometricEnrollments/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr']);
+      }
+      match /leaveTypes/{id} {
+        allow read: if hasAnyRole(['super_admin', 'admin', 'hr']);
+        allow write: if hasAnyRole(['super_admin', 'admin', 'hr']);
+      }
+      match /leaveRequests/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr']);
+      }
+      match /leaveCreditGrants/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr']);
+      }
+      match /payroll/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'accountant']);
+      }
+      match /employeeDocuments/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr']);
+      }
 
-    // Troops & Membership: Troops and their Girl Scout member rosters.
-    match /troops/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
-    }
+      // Troops & Membership: Troops and their Girl Scout member rosters.
+      match /troops/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      // Troops & Membership: filed national Troop Registration Forms — same role set as
+      // `troops` itself, one record per troop per school year (see features/troopRegistration).
+      match /troopRegistrations/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
 
-    // Council Programs: Activities (troop camps, trainings, meetings, community service).
-    match /activities/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
-    }
-    // Read also granted to accountant — Reports > Daily Collections rolls up each
-    // member's recorded payments as cash-collection lines.
-    match /scoutMembers/{id} {
-      allow read: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager', 'accountant']);
-      allow write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
-    }
+      // Troops & Membership: District Committees and their roster — same "same logic as
+      // Troops" role gate (see features/districtCommittee).
+      match /districtCommittees/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /districtCommitteeMembers/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      // Filed national District Committee Registration Forms — one record per committee per
+      // school year.
+      match /districtCommitteeRegistrations/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
 
-    // Council Programs: Program Reports (Badgework/Troop Camps/Improved Image/Int'l Affairs
-    // monthly detail) and Training Reports — same role gate as Troops.
-    match /programReportLineItems/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
-    }
-    // Per-section report title / Goal heading shown on Program Reports exports — admin-
-    // editable since Goal numbering/wording is set by National HQ and can change between
-    // program years. Same role gate as the line items they're printed above.
-    match /programReportSectionMeta/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
-    }
-    match /trainingReports/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
-    }
-    // Per-person credential registry (Troop Leaders, Field Advisers, Trainers) — same
-    // role gate as trainingReports since it's edited by the same HR/program staff.
-    match /trainingProfiles/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
-    }
+      // Troops & Membership: Barangay Committees and their roster — same role gate as District
+      // Committee (see features/barangayCommittee).
+      match /barangayCommittees/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /barangayCommitteeMembers/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      // Filed national Barangay Committee Registration Forms — one record per committee per
+      // school year.
+      match /barangayCommitteeRegistrations/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
 
-    // Accounting module: Customers, Vendors, Invoices, Expenses, Accounts.
-    match /customers/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
-    }
-    match /vendors/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
-    }
-    match /invoices/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
-    }
-    match /expenses/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
-    }
-    match /accounts/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
-    }
+      // Troops & Membership: Trefoil Guilds and their roster — same role gate as Barangay/
+      // District Committee (see features/trefoilGuild).
+      match /trefoilGuilds/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /trefoilGuildMembers/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      // Filed national Trefoil Guild Registration Forms — one record per guild per school year.
+      match /trefoilGuildRegistrations/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
 
-    // POS / Inventory module: Products, Members, Sales, Purchases.
-    match /products/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'cashier', 'inventory_clerk', 'accountant']);
-    }
-    // Shipped system catalog (product categories, seeded once) — every signed-in
-    // user reads it (both desktop and gspi-app's product form/pickers resolve
-    // categoryId against it), nobody writes it client-side.
-    match /categories/{id} {
-      allow read: if isSignedIn();
-      allow write: if false;
-    }
-    match /members/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'cashier', 'manager']);
-    }
-    // Read also granted to accountant — Reports > Daily Collections rolls up
-    // POS sales as a cash-collection source.
-    match /sales/{id} {
-      allow read: if hasAnyRole(['super_admin', 'admin', 'cashier', 'accountant']);
-      allow write: if hasAnyRole(['super_admin', 'admin', 'cashier']);
-    }
-    match /purchases/{id} {
-      // Matches /products above — an accountant with manage:products sees the Restock
-      // button, so they need write access to the purchase-log entry it also creates.
-      allow read, write: if hasAnyRole([
-        'super_admin', 'admin', 'cashier', 'inventory_clerk', 'accountant'
-      ]);
-    }
-    // Vendor-linked restocking (gspi-app only) — same role gate as that app's
-    // canManageVendors/canReceivePurchaseOrder permission checks.
-    match /purchaseOrders/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'manager', 'inventory_clerk']);
-    }
+      // Troops & Membership: OAVF/Career Woman and Honorary Member Registrations — same
+      // Member + yearly-Registration split as District/Barangay Committee/Trefoil Guild, just
+      // with no roster (this module's "roster" is always exactly one applicant).
+      // Same role gate as the committee-style registration modules above.
+      match /oavfMembers/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /oavfRegistrations/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /honoraryMembers/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /honoraryMemberRegistrations/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /associateMembers/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /associateMemberRegistrations/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      // Troops & Membership: filed national ICCG (Catholic Guiding Section) Membership
+      // Registration Forms, one per school/troop per school year — same role gate as every
+      // other registration module above (see features/iccgRegistration).
+      match /iccgRegistrations/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      // ICCG's persistent per-troop roster (girls + adults), synced from filed registrations —
+      // the Payment tab's ongoing fee ledger reads/writes this, same role gate and same
+      // Registration+Members split as Trefoil Guild/Barangay/District Committee above.
+      match /iccgMembers/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      // Membership Status Report's editable per-year Goal targets — same role gate as every
+      // other Troops & Membership module above.
+      match /membershipGoals/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
 
-    // Facility module: Rental Spaces, Bookings.
-    // Read also granted to accountant — Reports > Daily Collections rolls up
-    // confirmed/completed bookings as a cash-collection source.
-    match /rentalSpaces/{id} {
-      allow read: if hasAnyRole(['super_admin', 'admin', 'cashier', 'manager', 'accountant']);
-      allow write: if hasAnyRole(['super_admin', 'admin', 'cashier', 'manager']);
-    }
-    match /rentalBookings/{id} {
-      allow read: if hasAnyRole(['super_admin', 'admin', 'cashier', 'manager', 'accountant']);
-      allow write: if hasAnyRole(['super_admin', 'admin', 'cashier', 'manager']);
-    }
+      // Council Programs: Activities (troop camps, trainings, meetings, community service).
+      match /activities/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      // Read also granted to accountant — Reports > Daily Collections rolls up each
+      // member's recorded payments as cash-collection lines.
+      match /scoutMembers/{id} {
+        allow read: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager', 'accountant']);
+        allow write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
 
-    // Front desk: Visitors Logbook.
-    match /visitors/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'manager', 'hr', 'cashier']);
-    }
+      // Council Programs: Program Reports (Badgework/Troop Camps/Improved Image/Int'l Affairs
+      // monthly detail) and Training Reports — same role gate as Troops.
+      match /programReportLineItems/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      // Per-section report title / Goal heading shown on Program Reports exports — admin-
+      // editable since Goal numbering/wording is set by National HQ and can change between
+      // program years. Same role gate as the line items they're printed above.
+      match /programReportSectionMeta/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /trainingReports/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      // Per-person credential registry (Troop Leaders, Field Advisers, Trainers) — same
+      // role gate as trainingReports since it's edited by the same HR/program staff.
+      match /trainingProfiles/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
 
-    // Vouchers, Cash Receipts & Disbursements, Goals & Objectives.
-    match /vouchers/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant', 'manager']);
-    }
-    match /cashReceipts/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant', 'manager']);
-    }
-    // Bank accounts + their live balances — read broadly (both desktop and
-    // gspi-app's dashboard show a total), but only SCRD-tier roles can edit
-    // an account or its opening balance. `currentBalance` is recomputed and
-    // written by useScrdComputations, not typed in by a user, but it's the
-    // same write path so no separate rule for it.
-    match /banks/{id} {
-      allow read: if isSignedIn();
-      allow write: if hasAnyRole(['super_admin', 'admin', 'accountant', 'manager']);
-    }
-    match /goals/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant', 'manager']);
-    }
-    // Reports > Daily Collections — one saved report per date (beginning balance,
-    // manually-entered receipt lines, bank deposits, attachments). Same role gate as
-    // the rest of the Accounting module.
-    match /dailyCollectionReports/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
-    }
+      // Accounting module: Vendors, Expenses, Accounts.
+      match /vendors/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
+      }
+      match /expenses/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
+      }
+      match /accounts/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
+      }
 
-    // Org-wide shared settings (e.g. the membership year renewal cycle) — every signed-in
-    // user reads the same value so renewal status computes consistently on every device;
-    // only admins can change it.
-    match /orgSettings/{id} {
-      allow read: if isSignedIn();
-      allow write: if hasAnyRole(['super_admin', 'admin']);
-    }
+      // POS / Inventory module: Products, Members, Sales, Purchases.
+      match /products/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'cashier', 'inventory_clerk', 'accountant']);
+      }
+      // Shipped system catalog (product categories, seeded once) — every signed-in
+      // user reads it (both desktop and gspi-app's product form/pickers resolve
+      // categoryId against it), nobody writes it client-side.
+      match /categories/{id} {
+        allow read: if isSignedIn();
+        allow write: if false;
+      }
+      match /members/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'cashier', 'manager']);
+      }
+      // Read also granted to accountant — Reports > Daily Collections rolls up
+      // POS sales as a cash-collection source.
+      match /sales/{id} {
+        allow read: if hasAnyRole(['super_admin', 'admin', 'cashier', 'accountant']);
+        allow write: if hasAnyRole(['super_admin', 'admin', 'cashier']);
+      }
+      match /purchases/{id} {
+        // Matches /products above — an accountant with manage:products sees the Restock
+        // button, so they need write access to the purchase-log entry it also creates.
+        allow read, write: if hasAnyRole([
+          'super_admin', 'admin', 'cashier', 'inventory_clerk', 'accountant'
+        ]);
+      }
+      // Vendor-linked restocking (gspi-app only) — same role gate as that app's
+      // canManageVendors/canReceivePurchaseOrder permission checks.
+      match /purchaseOrders/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'manager', 'inventory_clerk']);
+      }
 
-    // Org-wide Announcements board, highlighted on the Dashboard — every signed-in user
-    // reads it (desktop and gspi-app alike), only admins can post/edit/delete.
-    match /announcements/{id} {
-      allow read: if isSignedIn();
-      allow write: if hasAnyRole(['super_admin', 'admin']);
-    }
+      // Facility module: Rental Spaces, Bookings.
+      // Read also granted to accountant — Reports > Daily Collections rolls up
+      // confirmed/completed bookings as a cash-collection source.
+      match /rentalSpaces/{id} {
+        allow read: if hasAnyRole(['super_admin', 'admin', 'cashier', 'manager', 'accountant']);
+        allow write: if hasAnyRole(['super_admin', 'admin', 'cashier', 'manager']);
+      }
+      match /rentalBookings/{id} {
+        allow read: if hasAnyRole(['super_admin', 'admin', 'cashier', 'manager', 'accountant']);
+        allow write: if hasAnyRole(['super_admin', 'admin', 'cashier', 'manager']);
+      }
 
-    // Council Budget — approved budget vs. actual-to-date per line item, one doc per
-    // category per fiscal year. Read broadly (dashboard highlight + Budget page for
-    // anyone with view access), edited only by SCRD-tier roles.
-    match /budgetCategories/{id} {
-      allow read: if isSignedIn();
-      allow write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
-    }
+      // Front desk: Visitors Logbook.
+      match /visitors/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'manager', 'hr', 'cashier']);
+      }
 
-    // Program & Training Development Grant applications — requested FROM the Regional
-    // Office and funded from the Region's own PTDG allocation, not the Council budget
-    // (see budgetCategories above), so it's a separate collection with no cross-reads
-    // between the two. Same role gate as the rest of the Accounting module.
-    match /ptdgApplications/{id} {
-      allow read: if isSignedIn();
-      allow write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
-    }
+      // Vouchers, Cash Receipts & Disbursements, Goals & Objectives.
+      match /vouchers/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant', 'manager']);
+      }
+      match /cashReceipts/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant', 'manager']);
+      }
+      // Bank accounts + their live balances — read broadly (both desktop and
+      // gspi-app's dashboard show a total), but only SCRD-tier roles can edit
+      // an account or its opening balance. `currentBalance` is recomputed and
+      // written by useScrdComputations, not typed in by a user, but it's the
+      // same write path so no separate rule for it.
+      match /banks/{id} {
+        allow read: if isSignedIn();
+        allow write: if hasAnyRole(['super_admin', 'admin', 'accountant', 'manager']);
+      }
+      match /goals/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant', 'manager']);
+      }
+      // Reports > Daily Collections — one saved report per date (beginning balance,
+      // manually-entered receipt lines, bank deposits, attachments). Same role gate as
+      // the rest of the Accounting module.
+      match /dailyCollectionReports/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
+      }
 
-    // Council Deposits (RHQ) — PTDG/MMAF/Escoda Memento Fund balances retained at the
-    // Regional Office, manually re-entered from RHQ's own periodic statement. Single
-    // doc ("current"), same role gate as the rest of the Accounting module.
-    match /councilDeposits/{id} {
-      allow read: if isSignedIn();
-      allow write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
-    }
+      // Org-wide shared settings (e.g. the membership year renewal cycle) — every signed-in
+      // user reads the same value so renewal status computes consistently on every device;
+      // only admins can change it.
+      match /orgSettings/{id} {
+        allow read: if isSignedIn();
+        allow write: if hasAnyRole(['super_admin', 'admin']);
+      }
 
-    // Expense Summary — itemized receipt-level backup for a Journal Voucher's cash-advance
-    // liquidation (one doc per voucher, id === voucherId). Same role gate as vouchers itself.
-    match /expenseSummaries/{id} {
-      allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant', 'manager']);
-    }
+      // Org-wide Announcements board, highlighted on the Dashboard — every signed-in user
+      // reads it (desktop and gspi-app alike), only admins can post/edit/delete.
+      match /announcements/{id} {
+        allow read: if isSignedIn();
+        allow write: if hasAnyRole(['super_admin', 'admin']);
+      }
 
-    // Audit Log — append-only from any signed-in user (every module writes to it), but
-    // only readable/viewable by admins, and never editable/deletable by anyone client-side.
-    match /auditLog/{id} {
-      allow read: if hasAnyRole(['super_admin', 'admin']);
-      allow create: if isSignedIn();
-      allow update, delete: if false;
-    }
+      // Council Budget — approved budget vs. actual-to-date per line item, one doc per
+      // category per fiscal year. Read broadly (dashboard highlight + Budget page for
+      // anyone with view access), edited only by SCRD-tier roles.
+      match /budgetCategories/{id} {
+        allow read: if isSignedIn();
+        allow write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
+      }
 
-    // Everything else defaults to deny until it's explicitly migrated off mock data.
-    match /{document=**} {
-      allow read, write: if false;
+      // User-configured "where does this line's actual come from" rules (see
+      // EditBudgetCategoryModal's Source section / budgetSourceMappings.store.ts), for both
+      // income and expense lines — one doc per budget category name, same role gate as
+      // budgetCategories above since editing one is effectively editing the Budget page's own
+      // computed figures.
+      match /budgetSourceMappings/{id} {
+        allow read: if isSignedIn();
+        allow write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
+      }
+
+      // Program & Training Development Grant applications — requested FROM the Regional
+      // Office and funded from the Region's own PTDG allocation, not the Council budget
+      // (see budgetCategories above), so it's a separate collection with no cross-reads
+      // between the two. Same role gate as the rest of the Accounting module.
+      match /ptdgApplications/{id} {
+        allow read: if isSignedIn();
+        allow write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
+      }
+
+      // Council Deposits (RHQ) — PTDG/MMAF/Escoda Memento Fund balances retained at the
+      // Regional Office, manually re-entered from RHQ's own periodic statement. Single
+      // doc ("current"), same role gate as the rest of the Accounting module.
+      match /councilDeposits/{id} {
+        allow read: if isSignedIn();
+        allow write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
+      }
+
+      // Expense Summary — itemized receipt-level backup for a Journal Voucher's cash-advance
+      // liquidation (one doc per voucher, id === voucherId). Same role gate as vouchers itself.
+      match /expenseSummaries/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant', 'manager']);
+      }
+
+      // Audit Log — append-only from any signed-in user (every module writes to it), but
+      // only readable/viewable by admins, and never editable/deletable by anyone client-side.
+      match /auditLog/{id} {
+        allow read: if hasAnyRole(['super_admin', 'admin']);
+        allow create: if isSignedIn();
+        allow update, delete: if false;
+      }
+
+      // Everything else defaults to deny until it's explicitly migrated off mock data.
+      match /{document=**} {
+        allow read, write: if false;
+      }
     }
   }
-}

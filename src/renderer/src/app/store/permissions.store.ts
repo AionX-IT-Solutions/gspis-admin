@@ -42,7 +42,10 @@ const AUTO_BACKFILL_SUFFIXES = [
   ':budget',
   ':activities',
   ':ptdg',
-  ':councilBoard'
+  ':councilBoard',
+  ':troopRegistration',
+  ':invoices',
+  ':customers'
 ]
 
 /** Adds any of `role`'s default permissions matching AUTO_BACKFILL_SUFFIXES that `existing`
@@ -283,7 +286,7 @@ export const usePermissionsStore = create<PermissionsState>()(
         rolePermissions: state.rolePermissions,
         customRoles: state.customRoles
       }),
-      version: 14,
+      version: 15,
       migrate: (persistedState) => {
         const state = persistedState as PermissionsState
         const rolePermissions = { ...state.rolePermissions }

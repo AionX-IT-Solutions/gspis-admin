@@ -7,29 +7,12 @@ import { FormField, FieldInput, FieldSelect, FieldTextArea } from '@/shared/comp
 import { SuggestInput } from '@/shared/components/ui/SuggestInput'
 import { formatCurrency } from '@/shared/lib/utils'
 import { useBanksStore, bankDisplayName } from '@/features/scrd/store/banks.store'
+import { CASH_RECEIPT_CATEGORIES } from '@/features/scrd/types/cashReceipts.types'
 import { useAccountingStore } from '@/features/accounting/store/accounting.store'
 import { useBudgetStore } from '@/features/budget/store/budget.store'
 import { stripCategoryNumbering } from '../lib/expenseVouchers'
 import type { ModeOfPayment, Voucher, VoucherType } from '../types/vouchers.types'
 import { useNewVoucherModal, type VoucherAccountLineForm } from '../hooks/useNewVoucherModal'
-
-// Suggested Account Title options for a receipt (credit-direction Journal Voucher) — mirrors
-// CashReceiptCategory (scrd/types/cashReceipts.types.ts), the categories
-// CASH_RECEIPT_CATEGORIES_BY_BUDGET_LINE (budgetAutoActuals.ts) recognizes for a Council Budget
-// income line. Free text is still allowed for anything outside this list.
-const INCOME_ACCOUNT_SUGGESTIONS = [
-  'Council Support Fund',
-  'Troop Fees',
-  'Barangay Committee',
-  'Associate',
-  'Career Woman',
-  'Honorary Member',
-  'Thinking Day Fund',
-  'Training Fees',
-  'Camping Fees',
-  'Interest Income',
-  'Other Operations'
-]
 
 interface NewVoucherModalProps {
   open: boolean
@@ -46,6 +29,7 @@ export function NewVoucherModal({ open, onOpenChange, editTarget }: NewVoucherMo
     totalDebit,
     totalCredit,
     isCashAdvanceLiquidation,
+    isBalanced,
     addLine,
     removeLine,
     updateLine,
@@ -77,7 +61,7 @@ export function NewVoucherModal({ open, onOpenChange, editTarget }: NewVoucherMo
   // from, while a Journal Voucher's is usually an income category — offer both so the
   // one list works whichever voucher type is selected.
   const creditAccountSuggestions = useMemo(
-    () => ['Cash on Hand', ...banks.map((b) => bankDisplayName(b)), ...INCOME_ACCOUNT_SUGGESTIONS],
+    () => ['Cash on Hand', ...banks.map((b) => bankDisplayName(b)), ...CASH_RECEIPT_CATEGORIES],
     [banks]
   )
   const allVendors = useAccountingStore((s) => s.vendors)
@@ -295,6 +279,25 @@ export function NewVoucherModal({ open, onOpenChange, editTarget }: NewVoucherMo
               totalLabel={t('vouchers.form.totalCredit')}
               total={totalCredit}
             />
+            {!isBalanced && (
+              <div
+                className="col-span-2"
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: '#f87171',
+                  padding: '8px 10px',
+                  borderRadius: 8,
+                  background: 'rgba(239,68,68,0.08)',
+                  border: '1px solid rgba(239,68,68,0.3)'
+                }}
+              >
+                {t('vouchers.form.unbalancedHint', {
+                  debit: formatCurrency(totalDebit),
+                  credit: formatCurrency(totalCredit)
+                })}
+              </div>
+            )}
           </>
         ) : (
           <div
@@ -350,13 +353,20 @@ export function NewVoucherModal({ open, onOpenChange, editTarget }: NewVoucherMo
                   setForm((f) => ({ ...f, cashAdvanceAmount: parseFloat(e.target.value) || 0 }))
                 }
                 placeholder="0.00"
+                disabled={!form.relatedVoucherId}
               />
+              {!form.relatedVoucherId && (
+                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                  {t('vouchers.form.cashAdvanceSourceRequiredHint')}
+                </span>
+              )}
             </FormField>
             <FormField label={t('vouchers.form.cashAdvanceDate')}>
               <FieldInput
                 type="date"
                 value={form.cashAdvanceDate}
                 onChange={(e) => setForm((f) => ({ ...f, cashAdvanceDate: e.target.value }))}
+                disabled={!form.relatedVoucherId}
               />
             </FormField>
             <FormField label={t('vouchers.form.totalAmountSpent')}>
@@ -368,13 +378,13 @@ export function NewVoucherModal({ open, onOpenChange, editTarget }: NewVoucherMo
                   setForm((f) => ({ ...f, totalAmountSpent: parseFloat(e.target.value) || 0 }))
                 }
                 placeholder="0.00"
-                disabled={isCashAdvanceLiquidation}
+                disabled
               />
-              {isCashAdvanceLiquidation && (
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                  {t('vouchers.form.autoCalculatedField')}
-                </span>
-              )}
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                {isCashAdvanceLiquidation
+                  ? t('vouchers.form.autoCalculatedField')
+                  : t('vouchers.form.cashAdvanceSourceRequiredHint')}
+              </span>
             </FormField>
             <FormField label={t('vouchers.form.amountRefunded')}>
               <FieldInput
@@ -385,13 +395,13 @@ export function NewVoucherModal({ open, onOpenChange, editTarget }: NewVoucherMo
                   setForm((f) => ({ ...f, amountRefunded: parseFloat(e.target.value) || 0 }))
                 }
                 placeholder="0.00"
-                disabled={isCashAdvanceLiquidation}
+                disabled
               />
-              {isCashAdvanceLiquidation && (
-                <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                  {t('vouchers.form.autoCalculatedField')}
-                </span>
-              )}
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                {isCashAdvanceLiquidation
+                  ? t('vouchers.form.autoCalculatedField')
+                  : t('vouchers.form.cashAdvanceSourceRequiredHint')}
+              </span>
             </FormField>
             <FormField label={t('vouchers.form.refundOrNumber')}>
               <FieldInput

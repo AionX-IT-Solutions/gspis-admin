@@ -13,7 +13,10 @@ function emptyForm() {
     level: '',
     guardianName: '',
     guardianContact: '',
-    address: ''
+    address: '',
+    patrol: '',
+    gradeYear: '',
+    beneficiary: ''
   }
 }
 
@@ -24,7 +27,10 @@ function formFromMember(member: ScoutMember) {
     level: member.level ?? '',
     guardianName: member.guardianName ?? '',
     guardianContact: member.guardianContact ?? '',
-    address: member.address ?? ''
+    address: member.address ?? '',
+    patrol: member.patrol ?? '',
+    gradeYear: member.gradeYear ?? '',
+    beneficiary: member.beneficiary ?? ''
   }
 }
 
@@ -58,7 +64,10 @@ export function useScoutMemberFormModal(
       level: form.level.trim() || undefined,
       guardianName: form.guardianName.trim() || undefined,
       guardianContact: form.guardianContact.trim() || undefined,
-      address: form.address.trim() || undefined
+      address: form.address.trim() || undefined,
+      patrol: form.patrol.trim() || undefined,
+      gradeYear: form.gradeYear.trim() || undefined,
+      beneficiary: form.beneficiary.trim() || undefined
     }
     if (editTarget) {
       updateScoutMember(editTarget.id, payload)

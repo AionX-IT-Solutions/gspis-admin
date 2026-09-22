@@ -15,6 +15,10 @@ interface POSState {
   purchases: Purchase[]
   cart: CartLine[]
   selectedMemberId: string | null
+  /** Free-text name typed in the member picker when it doesn't match a registered Member
+   *  (a walk-in customer) — printed on the receipt same as a real member's name, just with
+   *  no loyalty discount applied. Cleared whenever a real member gets selected instead. */
+  manualMemberName: string
   hydrated: boolean
 
   hydrate: (force?: boolean) => Promise<void>
@@ -31,12 +35,20 @@ interface POSState {
   removeFromCart: (productId: string) => void
   setCartQuantity: (productId: string, quantity: number) => void
   setSelectedMember: (memberId: string | null) => void
+  setManualMemberName: (name: string) => void
   clearCart: () => void
   checkout: (cashierName: string, paymentMethod: PaymentMethod) => Sale | null
   voidSale: (saleId: string, actorName: string, reason: string) => void
+  deleteSale: (saleId: string, actorName: string) => void
 }
 
-let saleCounter = 1000
+// Matches the Sales Invoice booklet's own plain 5-digit control number (e.g. "00001"),
+// not an internal id — see features/pos/lib/receipt.ts.
+let saleCounter = 1
+
+function formatSaleNumber(n: number): string {
+  return String(n).padStart(5, '0')
+}
 
 export const usePOSStore = create<POSState>()((set, get) => ({
   products: [],
@@ -45,6 +57,7 @@ export const usePOSStore = create<POSState>()((set, get) => ({
   purchases: [],
   cart: [],
   selectedMemberId: null,
+  manualMemberName: '',
   hydrated: false,
 
   hydrate: async (force = false) => {
@@ -56,13 +69,13 @@ export const usePOSStore = create<POSState>()((set, get) => ({
         hydrateCollection<Sale>('sales'),
         hydrateCollection<Purchase>('purchases')
       ])
-      // Sale numbers used to reset to SALE-1000 on every launch (sales never persisted).
-      // Now that they do, resume from the highest known number to avoid collisions.
+      // Resume from the highest known number (across both the old "SALE-1000" and current
+      // "00001" formats) to avoid collisions.
       saleCounter =
         sales.reduce((max, s) => {
           const n = Number(s.saleNumber?.replace('SALE-', ''))
           return Number.isFinite(n) ? Math.max(max, n) : max
-        }, 999) + 1
+        }, 0) + 1
       set({ products, members, sales, purchases, hydrated: true })
     } catch (err) {
       reportHydrateFailure('[pos.store] Failed to hydrate', err)
@@ -189,6 +202,7 @@ export const usePOSStore = create<POSState>()((set, get) => ({
               productId: product.id,
               sku: product.sku,
               name: product.name,
+              unit: product.unit,
               unitPrice: product.sellingPrice,
               quantity
             }
@@ -207,8 +221,9 @@ export const usePOSStore = create<POSState>()((set, get) => ({
           ? s.cart.filter((l) => l.productId !== productId)
           : s.cart.map((l) => (l.productId === productId ? { ...l, quantity } : l))
     })),
-  setSelectedMember: (memberId) => set({ selectedMemberId: memberId }),
-  clearCart: () => set({ cart: [], selectedMemberId: null }),
+  setSelectedMember: (memberId) => set({ selectedMemberId: memberId, manualMemberName: '' }),
+  setManualMemberName: (name) => set({ manualMemberName: name, selectedMemberId: null }),
+  clearCart: () => set({ cart: [], selectedMemberId: null, manualMemberName: '' }),
 
   checkout: (cashierName, paymentMethod) => {
     const state = get()
@@ -221,18 +236,19 @@ export const usePOSStore = create<POSState>()((set, get) => ({
 
     const sale: Sale = {
       id: crypto.randomUUID(),
-      saleNumber: `SALE-${saleCounter++}`,
+      saleNumber: formatSaleNumber(saleCounter++),
       cashierName,
       items: state.cart.map((l) => ({
         productId: l.productId,
         sku: l.sku,
         name: l.name,
+        unit: l.unit,
         quantity: l.quantity,
         unitPrice: l.unitPrice,
         subtotal: l.unitPrice * l.quantity
       })),
       memberId: member?.id,
-      memberName: member?.name,
+      memberName: member?.name ?? (state.manualMemberName.trim() || undefined),
       discountAmount,
       subtotal,
       totalAmount,
@@ -255,7 +271,8 @@ export const usePOSStore = create<POSState>()((set, get) => ({
       sales: [sale, ...state.sales],
       products: updatedProducts,
       cart: [],
-      selectedMemberId: null
+      selectedMemberId: null,
+      manualMemberName: ''
     }))
 
     persistDoc('sales', sale.id, sale)
@@ -316,6 +333,49 @@ export const usePOSStore = create<POSState>()((set, get) => ({
       actorName,
       entityType: 'sale',
       summary: `Sale ${sale.saleNumber} voided — stock restored. Reason: ${reason}`
+    })
+  },
+
+  // Permanently removes a sale record — unlike voidSale (which keeps it, flagged, for the
+  // audit trail), this actually deletes it, e.g. to clean up test/junk entries. A voided
+  // sale's stock was already restored when it was voided, so only an un-voided one gets its
+  // stock given back here.
+  deleteSale: (saleId, actorName) => {
+    const state = get()
+    const sale = state.sales.find((s) => s.id === saleId)
+    if (!sale) return
+
+    const updatedProducts = sale.voided
+      ? state.products
+      : state.products.map((p) => {
+          const item = sale.items.find((i) => i.productId === p.id)
+          return item
+            ? {
+                ...p,
+                stockQuantity: p.stockQuantity + item.quantity,
+                updatedAt: new Date().toISOString()
+              }
+            : p
+        })
+
+    set(() => ({
+      sales: state.sales.filter((s) => s.id !== saleId),
+      products: updatedProducts
+    }))
+
+    deleteDocById('sales', saleId)
+    if (!sale.voided) {
+      for (const item of sale.items) {
+        const updated = updatedProducts.find((p) => p.id === item.productId)
+        if (updated) persistDoc('products', updated.id, updated)
+      }
+    }
+
+    appendAuditLog({
+      action: 'sale_deleted',
+      actorName,
+      entityType: 'sale',
+      summary: `Sale ${sale.saleNumber} deleted.`
     })
   }
 }))

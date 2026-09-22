@@ -1,10 +1,8 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, FileText, Receipt } from 'lucide-react'
+import { ArrowRight, Receipt } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/shared/components/ui/Card'
 import { formatCurrency, formatDate } from '@/shared/lib/utils'
-import type { Invoice } from '@/features/accounting/types/accounting.types'
-import type { Voucher } from '@/features/vouchers/types/vouchers.types'
 import { voucherCategory } from '@/features/vouchers/lib/expenseVouchers'
 import { useRecentActivityCard } from '../hooks/useRecentActivityCard'
 
@@ -52,7 +50,7 @@ export function RecentActivityCard({ loading }: RecentActivityCardProps) {
               {t('dashboard.recentActivityTitle')}
             </h2>
             <button
-              onClick={() => navigate('/invoices')}
+              onClick={() => navigate('/vouchers')}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -72,11 +70,7 @@ export function RecentActivityCard({ loading }: RecentActivityCardProps) {
       >
         <div>
           {recentActivity.map((row, i) => {
-            const isInvoice = row.kind === 'invoice'
-            const title = isInvoice
-              ? `${(row.data as Invoice).number} · ${(row.data as Invoice).customerName}`
-              : `${voucherCategory(row.data as Voucher)} · ${(row.data as Voucher).payee}`
-            const amount = isInvoice ? (row.data as Invoice).total : (row.data as Voucher).amount
+            const title = `${voucherCategory(row.data)} · ${row.data.payee}`
             return (
               <motion.div
                 key={`${row.kind}-${row.data.id}`}
@@ -97,16 +91,16 @@ export function RecentActivityCard({ loading }: RecentActivityCardProps) {
                     width: '32px',
                     height: '32px',
                     borderRadius: '9px',
-                    background: isInvoice ? 'rgba(99,102,241,0.12)' : 'rgba(239,68,68,0.12)',
-                    border: `1px solid ${isInvoice ? 'rgba(99,102,241,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                    background: 'rgba(239,68,68,0.12)',
+                    border: '1px solid rgba(239,68,68,0.3)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: isInvoice ? '#818cf8' : '#f87171',
+                    color: '#f87171',
                     flexShrink: 0
                   }}
                 >
-                  {isInvoice ? <FileText size={14} /> : <Receipt size={14} />}
+                  <Receipt size={14} />
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -124,15 +118,8 @@ export function RecentActivityCard({ loading }: RecentActivityCardProps) {
                   </span>
                 </div>
 
-                <p
-                  style={{
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: isInvoice ? 'var(--text-primary)' : '#f87171'
-                  }}
-                >
-                  {isInvoice ? '' : '-'}
-                  {formatCurrency(amount)}
+                <p style={{ fontSize: 13, fontWeight: 700, color: '#f87171' }}>
+                  -{formatCurrency(row.data.amount)}
                 </p>
               </motion.div>
             )

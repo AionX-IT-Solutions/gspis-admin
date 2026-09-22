@@ -86,6 +86,26 @@ export function ScoutMemberFormModal({
             onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
           />
         </FormField>
+        <FormField label={t('troops.roster.form.patrol')}>
+          <FieldInput
+            value={form.patrol}
+            onChange={(e) => setForm((f) => ({ ...f, patrol: e.target.value }))}
+            placeholder="Patrol 1"
+          />
+        </FormField>
+        <FormField label={t('troops.roster.form.gradeYear')}>
+          <FieldInput
+            value={form.gradeYear}
+            onChange={(e) => setForm((f) => ({ ...f, gradeYear: e.target.value }))}
+            placeholder="VI"
+          />
+        </FormField>
+        <FormField label={t('troops.roster.form.beneficiary')} className="col-span-2">
+          <FieldInput
+            value={form.beneficiary}
+            onChange={(e) => setForm((f) => ({ ...f, beneficiary: e.target.value }))}
+          />
+        </FormField>
       </div>
     </Modal>
   )

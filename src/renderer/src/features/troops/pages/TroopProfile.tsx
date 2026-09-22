@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowLeft, Banknote, Eye, Plus, Pencil, RefreshCw, UserX, Trash2 } from 'lucide-react'
+import { ArrowLeft, Eye, Plus, Pencil, RefreshCw, UserX, Trash2 } from 'lucide-react'
 import { PageHeader } from '@/shared/components/ui/PageHeader'
 import { Button } from '@/shared/components/ui/Button'
 import { Badge } from '@/shared/components/ui/Badge'
@@ -20,7 +20,6 @@ import { useTrainingProfilesStore } from '@/features/trainingProfiles/store/trai
 import { useTroopsStore } from '../store/troops.store'
 import { useTroopProfile } from '../hooks/useTroopProfile'
 import { ScoutMemberFormModal } from '../components/ScoutMemberFormModal'
-import { RecordMemberPaymentModal } from '../components/RecordMemberPaymentModal'
 import { ViewMemberModal } from '../components/ViewMemberModal'
 import { RosterExportMenu } from '../components/RosterExportMenu'
 import type { RosterExportRow } from '../lib/rosterExport'
@@ -32,11 +31,15 @@ export function TroopProfile() {
   const { t } = useTranslation()
   const troop = useTroopsStore((s) => s.troops.find((tr) => tr.id === id) ?? null)
   const trainingProfiles = useTrainingProfilesStore((s) => s.profiles)
-  const leaderProfile = troop?.leaderProfileId
-    ? (trainingProfiles.find((p) => p.id === troop.leaderProfileId) ?? null)
+  // Reverse lookup — Training Profile is the one that picks a Troop (see
+  // TrainingProfileFormModal's "Which Troop" field), not the other way around, so this
+  // side just searches for whoever currently claims to lead this troop.
+  const leaderProfile = troop
+    ? (trainingProfiles.find((p) => p.troopId === troop.id && p.troopRole === 'leader') ?? null)
     : null
-  const assistantLeaderProfile = troop?.assistantLeaderProfileId
-    ? (trainingProfiles.find((p) => p.id === troop.assistantLeaderProfileId) ?? null)
+  const assistantLeaderProfile = troop
+    ? (trainingProfiles.find((p) => p.troopId === troop.id && p.troopRole === 'assistant_leader') ??
+      null)
     : null
 
   const {
@@ -62,8 +65,6 @@ export function TroopProfile() {
     setForceDeleteTarget,
     handleConfirmForceDelete,
     handleRenew,
-    paymentTarget,
-    setPaymentTarget,
     viewMemberId,
     setViewMemberId
   } = useTroopProfile(troop)
@@ -130,16 +131,6 @@ export function TroopProfile() {
           {canManage && (
             <Button size="sm" variant="ghost" onClick={() => openEdit(r)} title={t('common.edit')}>
               <Pencil size={13} />
-            </Button>
-          )}
-          {canManage && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setPaymentTarget(r)}
-              title={t('troops.roster.paymentButton')}
-            >
-              <Banknote size={13} />
             </Button>
           )}
           {canManage && (
@@ -310,12 +301,6 @@ export function TroopProfile() {
         troopId={troop.id}
         currentMembershipYear={currentMembershipYear}
         editTarget={editTarget}
-      />
-
-      <RecordMemberPaymentModal
-        open={!!paymentTarget}
-        onOpenChange={(open) => !open && setPaymentTarget(null)}
-        member={paymentTarget}
       />
 
       <ViewMemberModal memberId={viewMemberId} onClose={() => setViewMemberId(null)} />

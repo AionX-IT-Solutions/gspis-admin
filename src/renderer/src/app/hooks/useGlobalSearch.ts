@@ -22,9 +22,7 @@ import {
 
 export type SearchResultType =
   | 'module'
-  | 'customer'
   | 'vendor'
-  | 'invoice'
   | 'employee'
   | 'troop'
   | 'member'
@@ -58,9 +56,7 @@ const MAX_RESULTS = 20
  *  that module's list page; employees and troops have real detail routes. */
 export function useGlobalSearch(query: string): SearchResult[] {
   const { hasPermission } = usePermissions()
-  const customers = useAccountingStore((s) => s.customers)
   const vendors = useAccountingStore((s) => s.vendors)
-  const invoices = useAccountingStore((s) => s.invoices)
   const employees = useHRStore((s) => s.employees)
   const leaveRequests = useHRStore((s) => s.leaveRequests)
   const leaveTypes = useHRStore((s) => s.leaveTypes)
@@ -96,20 +92,6 @@ export function useGlobalSearch(query: string): SearchResult[] {
       }
     }
 
-    if (hasPermission('view:customers')) {
-      for (const c of customers) {
-        if (matches(c.name, c.company, c.email)) {
-          results.push({
-            id: `customer-${c.id}`,
-            type: 'customer',
-            title: c.company ?? c.name,
-            subtitle: c.name,
-            path: '/customers'
-          })
-        }
-      }
-    }
-
     if (hasPermission('view:vendors')) {
       for (const v of vendors) {
         if (matches(v.name, v.company, v.email)) {
@@ -119,20 +101,6 @@ export function useGlobalSearch(query: string): SearchResult[] {
             title: v.company ?? v.name,
             subtitle: v.name,
             path: '/vendors'
-          })
-        }
-      }
-    }
-
-    if (hasPermission('view:invoices')) {
-      for (const i of invoices) {
-        if (matches(i.number, i.customerName)) {
-          results.push({
-            id: `invoice-${i.id}`,
-            type: 'invoice',
-            title: i.number,
-            subtitle: i.customerName,
-            path: '/invoices'
           })
         }
       }
@@ -375,9 +343,7 @@ export function useGlobalSearch(query: string): SearchResult[] {
   }, [
     query,
     hasPermission,
-    customers,
     vendors,
-    invoices,
     employees,
     leaveRequests,
     leaveTypes,

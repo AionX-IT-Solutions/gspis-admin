@@ -28,12 +28,6 @@ const Announcements = lazy(() =>
 const Budget = lazy(() =>
   import('@/features/budget/pages/Budget').then((m) => ({ default: m.Budget }))
 )
-const Invoices = lazy(() =>
-  import('@/features/accounting/pages/Invoices').then((m) => ({ default: m.Invoices }))
-)
-const Customers = lazy(() =>
-  import('@/features/accounting/pages/Customers').then((m) => ({ default: m.Customers }))
-)
 const Vendors = lazy(() =>
   import('@/features/accounting/pages/Vendors').then((m) => ({ default: m.Vendors }))
 )
@@ -80,6 +74,67 @@ const Troops = lazy(() =>
 )
 const TroopProfile = lazy(() =>
   import('@/features/troops/pages/TroopProfile').then((m) => ({ default: m.TroopProfile }))
+)
+const TroopRegistrationForm = lazy(() =>
+  import('@/features/troopRegistration/pages/TroopRegistrationForm').then((m) => ({
+    default: m.TroopRegistrationForm
+  }))
+)
+const DistrictCommittees = lazy(() =>
+  import('@/features/districtCommittee/pages/DistrictCommittees').then((m) => ({
+    default: m.DistrictCommittees
+  }))
+)
+const DistrictCommitteeRegistrationForm = lazy(() =>
+  import('@/features/districtCommittee/pages/DistrictCommitteeRegistrationForm').then((m) => ({
+    default: m.DistrictCommitteeRegistrationForm
+  }))
+)
+const BarangayCommittees = lazy(() =>
+  import('@/features/barangayCommittee/pages/BarangayCommittees').then((m) => ({
+    default: m.BarangayCommittees
+  }))
+)
+const BarangayCommitteeRegistrationForm = lazy(() =>
+  import('@/features/barangayCommittee/pages/BarangayCommitteeRegistrationForm').then((m) => ({
+    default: m.BarangayCommitteeRegistrationForm
+  }))
+)
+const TrefoilGuilds = lazy(() =>
+  import('@/features/trefoilGuild/pages/TrefoilGuilds').then((m) => ({ default: m.TrefoilGuilds }))
+)
+const TrefoilGuildRegistrationForm = lazy(() =>
+  import('@/features/trefoilGuild/pages/TrefoilGuildRegistrationForm').then((m) => ({
+    default: m.TrefoilGuildRegistrationForm
+  }))
+)
+const OavfRegistrations = lazy(() =>
+  import('@/features/oavf/pages/OavfRegistrations').then((m) => ({ default: m.OavfRegistrations }))
+)
+const HonoraryMembers = lazy(() =>
+  import('@/features/honoraryMember/pages/HonoraryMembers').then((m) => ({
+    default: m.HonoraryMembers
+  }))
+)
+const AssociateMembers = lazy(() =>
+  import('@/features/associateMember/pages/AssociateMembers').then((m) => ({
+    default: m.AssociateMembers
+  }))
+)
+const IccgRegistrations = lazy(() =>
+  import('@/features/iccgRegistration/pages/IccgRegistrations').then((m) => ({
+    default: m.IccgRegistrations
+  }))
+)
+const IccgRegistrationForm = lazy(() =>
+  import('@/features/iccgRegistration/pages/IccgRegistrationForm').then((m) => ({
+    default: m.IccgRegistrationForm
+  }))
+)
+const MembershipStatusReport = lazy(() =>
+  import('@/features/membershipStatusReport/pages/MembershipStatusReport').then((m) => ({
+    default: m.MembershipStatusReport
+  }))
 )
 const Activities = lazy(() =>
   import('@/features/activities/pages/Activities').then((m) => ({ default: m.Activities }))
@@ -283,6 +338,110 @@ function AuthenticatedShell() {
                   }
                 />
                 <Route
+                  path="/troop-registration/:id"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.troopRegistration}>
+                      <TroopRegistrationForm />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="/district-committee"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.districtCommittee}>
+                      <DistrictCommittees />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="/district-committee-registration/:id"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.districtCommittee}>
+                      <DistrictCommitteeRegistrationForm />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="/barangay-committee"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.barangayCommittee}>
+                      <BarangayCommittees />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="/barangay-committee-registration/:id"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.barangayCommittee}>
+                      <BarangayCommitteeRegistrationForm />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="/trefoil-guild"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.trefoilGuild}>
+                      <TrefoilGuilds />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="/trefoil-guild-registration/:id"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.trefoilGuild}>
+                      <TrefoilGuildRegistrationForm />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="/oavf"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.oavf}>
+                      <OavfRegistrations />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="/honorary-members"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.honoraryMember}>
+                      <HonoraryMembers />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="/associate-members"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.associateMember}>
+                      <AssociateMembers />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="/iccg-registrations"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.iccgRegistration}>
+                      <IccgRegistrations />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="/iccg-registration/:id"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.iccgRegistration}>
+                      <IccgRegistrationForm />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="/membership-status-report"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.membershipStatusReport}>
+                      <MembershipStatusReport />
+                    </RequirePermission>
+                  }
+                />
+                <Route
                   path="/activities"
                   element={
                     <RequirePermission permission={MODULE_PERMISSIONS.activities}>
@@ -399,22 +558,6 @@ function AuthenticatedShell() {
                   element={
                     <RequirePermission permission={MODULE_PERMISSIONS.scrd}>
                       <SCRD />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path="/invoices"
-                  element={
-                    <RequirePermission permission={MODULE_PERMISSIONS.invoices}>
-                      <Invoices />
-                    </RequirePermission>
-                  }
-                />
-                <Route
-                  path="/customers"
-                  element={
-                    <RequirePermission permission={MODULE_PERMISSIONS.customers}>
-                      <Customers />
                     </RequirePermission>
                   }
                 />

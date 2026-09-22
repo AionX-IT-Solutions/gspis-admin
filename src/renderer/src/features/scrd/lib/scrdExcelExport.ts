@@ -37,6 +37,10 @@ export interface JournalRow {
   category: string
   bankAccount: string
   amount: number
+  /** Which receipt booklet was used for this entry (Service Invoice, Acknowledgment Receipt,
+   *  Sales Invoice) — see CashReceipt.receiptType. Unset for disbursements and any receipt
+   *  with no associated booklet (rentals, cash-advance reimbursements). */
+  receiptType?: string
 }
 
 // Pivots a flat list of journal entries into the Council's real wide-ledger
@@ -253,13 +257,14 @@ export async function exportCashReceiptsJournalDocx(
 }
 
 // ─── Cash Disbursement Journal — bank-first + expense-category layout ──────
-// Disbursements always leave through an actual bank account (checks are drawn
-// against a real bank, never petty cash), so unlike Cash Receipts (whose
-// Cash on Hand column absorbs undeposited sales), this report drops Cash on
-// Hand entirely and reads "which bank, then which expense category" — the
-// reverse column order from Cash Receipts.
+// A voucher's Mode of Payment can be "Cash" as well as "Check" (see
+// vouchers.types.ts), and either kind can leave with no specific bank chosen
+// (falls back to "Cash on Hand" — same as Cash Receipts' undeposited-sales
+// column), so this needs a Cash on Hand column too or those disbursements'
+// amounts would land in no bank column at all. Reads "which bank, then which
+// expense category" — the reverse column order from Cash Receipts.
 function disbursementBankNames(bankAccountNames: string[]): string[] {
-  return bankAccountNames.filter((name) => name !== 'Cash on Hand')
+  return bankAccountNames
 }
 
 export async function exportCashDisbursementJournal(

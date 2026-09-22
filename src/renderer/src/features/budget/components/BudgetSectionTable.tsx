@@ -4,8 +4,14 @@ import { useTranslation } from 'react-i18next'
 import { Tooltip } from '@/shared/components/ui/Tooltip'
 import { formatCurrency } from '@/shared/lib/utils'
 import { actualToDate, groupTotalLabel, type BudgetGroupSummary } from '../lib/budgetCalculations'
-import type { AutoActualSourceKey } from '../lib/budgetAutoActuals'
+import { PAYROLL_FIELD_OPTIONS, type AutoActualSourceKey } from '../lib/budgetAutoActuals'
 import type { BudgetCategory, BudgetSection } from '../types/budget.types'
+import type {
+  BudgetSourceMapping,
+  BudgetSourceRule,
+  BudgetSourceType
+} from '../types/budgetSourceMapping.types'
+import type { TFunction } from 'i18next'
 
 const GRID = '1fr 130px 130px 110px 56px'
 
@@ -49,6 +55,36 @@ function varianceColor(variance: number, section: BudgetSection): string {
   return favorable ? '#34d399' : '#f87171'
 }
 
+/** One source kind's own piece of a rule's description (e.g. "Rentals: hall") — a rule can
+ *  combine more than one kind at once (see BudgetSourceRule.sourceTypes). */
+function describeSourceType(type: BudgetSourceType, rule: BudgetSourceRule, t: TFunction): string {
+  const typeKey = `sourceType${type[0].toUpperCase()}${type.slice(1)}`
+  const typeLabel = t(`budget.editModal.source.${typeKey}`)
+  let detail = ''
+  if (type === 'voucher' && rule.voucherCategories?.length) {
+    detail = rule.voucherCategories.join(', ')
+  } else if (type === 'troopPayment' && rule.troopPaymentCategories?.length) {
+    detail = rule.troopPaymentCategories.join(', ')
+  } else if (type === 'rental' && rule.rentalSpaceCategory) {
+    detail = rule.rentalSpaceCategory
+  } else if (type === 'payroll' && rule.payrollField) {
+    detail = PAYROLL_FIELD_OPTIONS.find((o) => o.field === rule.payrollField)?.label ?? ''
+  }
+  return detail ? `${typeLabel}: ${detail}` : typeLabel
+}
+
+/** What the source-linked (⚡) tooltip shows — which source kind(s) this line pulls its
+ *  actual from, and the specific categories named on each, so hovering answers "where is
+ *  this linked" without needing to open Edit. */
+function describeRule(rule: BudgetSourceRule, t: TFunction): string {
+  if (rule.sourceTypes.length === 0) return t('budget.editModal.source.sourceTypeNotSpecified')
+  return rule.sourceTypes.map((type) => describeSourceType(type, rule, t)).join(' + ')
+}
+
+function describeSourceMapping(mapping: BudgetSourceMapping, t: TFunction): string {
+  return mapping.rules.map((r) => describeRule(r, t)).join('; ')
+}
+
 interface BudgetSectionTableProps {
   section: BudgetSection
   groups: BudgetGroupSummary[]
@@ -62,6 +98,8 @@ interface BudgetSectionTableProps {
    *  (with a tooltip naming the source) so it's clear which lines are wired up and
    *  where their figure actually comes from. */
   autoActualSourceByCategory?: Map<string, AutoActualSourceKey>
+  /** Looks up a category's configured Source rules by name, for the ⚡ tooltip's detail text. */
+  getSourceMapping?: (categoryName: string) => BudgetSourceMapping | undefined
 }
 
 export function BudgetSectionTable({
@@ -71,7 +109,8 @@ export function BudgetSectionTable({
   onEdit,
   onDelete,
   onAddLine,
-  autoActualSourceByCategory
+  autoActualSourceByCategory,
+  getSourceMapping
 }: BudgetSectionTableProps) {
   const { t } = useTranslation()
 
@@ -103,6 +142,10 @@ export function BudgetSectionTable({
                 const actual = actualToDate(item)
                 const variance = actual - item.budgetedAmount
                 const sourceKey = autoActualSourceByCategory?.get(item.id)
+                const sourceMapping = sourceKey ? getSourceMapping?.(item.name) : undefined
+                const sourceTooltip = sourceMapping
+                  ? describeSourceMapping(sourceMapping, t)
+                  : t('budget.autoSource.userConfigured')
                 return (
                   <div
                     key={item.id}
@@ -127,7 +170,7 @@ export function BudgetSectionTable({
                     >
                       {item.name}
                       {sourceKey && (
-                        <Tooltip content={t(`budget.autoSource.${sourceKey}`)}>
+                        <Tooltip content={sourceTooltip}>
                           <Zap size={10} color="var(--accent-primary)" style={{ flexShrink: 0 }} />
                         </Tooltip>
                       )}

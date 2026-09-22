@@ -1,11 +1,16 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useBanksStore, bankDisplayName } from '../store/banks.store'
 import { useVouchersStore } from '@/features/vouchers/store/vouchers.store'
-import { getExpenseVouchers } from '@/features/vouchers/lib/expenseVouchers'
+import {
+  getExpenseVouchers,
+  hasCashAdvance,
+  cashAdvanceReimbursement
+} from '@/features/vouchers/lib/expenseVouchers'
 import { getReceiptRowsFromVouchers } from '@/features/vouchers/lib/receiptVouchers'
 import { usePOSStore } from '@/features/pos/store/pos.store'
 import { useRentalsStore } from '@/features/rentals/store/rentals.store'
 import { useTroopsStore } from '@/features/troops/store/troops.store'
+import { useDailyCollectionsStore } from '@/features/accounting/store/dailyCollections.store'
 import type { BankAccountBalance } from '../lib/scrdExcelExport'
 
 /**
@@ -44,6 +49,27 @@ export function useBankBalances() {
   const purchases = usePOSStore((s) => s.purchases)
   const bookings = useRentalsStore((s) => s.bookings)
   const scoutMembers = useTroopsStore((s) => s.scoutMembers)
+  const dailyCollectionReports = useDailyCollectionsStore((s) => s.reports)
+  // Every deposit logged under Reports > Daily Collections > Cash Deposits — a *transfer*,
+  // not new money (the cash was already counted once, as "Cash on Hand", when the underlying
+  // sale/booking/payment/receipt happened). So it's subtracted from Cash on Hand and added to
+  // the named bank below, rather than being its own separate receipt.
+  const deposits = useMemo(
+    () => dailyCollectionReports.flatMap((r) => r.deposits),
+    [dailyCollectionReports]
+  )
+  // Daily Collections' hand-entered rows — only BC Fee/CSF/ICCG, the categories with no
+  // automated source of their own; the NES/Mem. Reg./Rentals columns on the same form are
+  // real cash too, but already counted below from their actual sale/booking/payment records.
+  const manualReceiptsTotal = useMemo(
+    () =>
+      dailyCollectionReports.reduce(
+        (sum, r) =>
+          sum + r.manualReceipts.reduce((s, line) => s + line.bcFee + line.csf + line.iccg, 0),
+        0
+      ),
+    [dailyCollectionReports]
+  )
 
   const receiptsByAccount = useMemo(() => {
     const map = new Map<string, number>()
@@ -59,8 +85,10 @@ export function useBankBalances() {
       // totalAmount there (matches the old assume-paid-in-full behavior).
       .forEach((b) => add('Cash on Hand', b.amountPaid ?? b.totalAmount))
     scoutMembers.forEach((m) => (m.payments ?? []).forEach((p) => add('Cash on Hand', p.amount)))
+    deposits.forEach((d) => add(d.bankName, d.amount))
+    add('Cash on Hand', manualReceiptsTotal)
     return map
-  }, [cashReceipts, sales, bookings, scoutMembers])
+  }, [cashReceipts, sales, bookings, scoutMembers, deposits, manualReceiptsTotal])
 
   const disbursementsByAccount = useMemo(() => {
     const map = new Map<string, number>()
@@ -68,9 +96,29 @@ export function useBankBalances() {
       map.set(account, (map.get(account) ?? 0) + safeAmount(amount))
     getExpenseVouchers(vouchers).forEach((v) => add(v.bankAccountRef ?? 'Cash on Hand', v.amount))
     purchases.forEach((p) => add('Cash on Hand', p.amount))
+    deposits.forEach((d) => add('Cash on Hand', d.amount))
+    // A cash-advance liquidation JV that overspent its advance owes the payee the excess
+    // back in real cash — the mirror image of an underspent one's leftover refund, which
+    // getReceiptRowsFromVouchers already counts as a "Cash Advance Refund" receipt above.
+    // Journal Vouchers are otherwise never disbursements (see getExpenseVouchers), so this
+    // reimbursement leg is the one JV amount that has to be added here explicitly.
+    vouchers
+      .filter(
+        (v) => v.voucherType === 'journal_voucher' && v.status === 'approved' && hasCashAdvance(v)
+      )
+      .forEach((v) => {
+        const reimbursement = cashAdvanceReimbursement(v, v.totalAmountSpent ?? 0)
+        if (reimbursement > 0) add(v.bankAccountRef ?? 'Cash on Hand', reimbursement)
+      })
     return map
-  }, [vouchers, purchases])
+  }, [vouchers, purchases, deposits])
 
+  // Every real registered bank — "Cash on Hand" is one of these too (see banks.store.ts's
+  // hydrate, which backfills it for any install that predates it being added to SEED_BANKS),
+  // so the fallback bucket every receipt/disbursement lands in when no bank was chosen (the
+  // `?? 'Cash on Hand'` / literal 'Cash on Hand' calls feeding receiptsByAccount and
+  // disbursementsByAccount above) always has a real doc here to read its opening balance from
+  // and persist a closing one back to, same as any other account.
   const bankAccountBalances: BankAccountBalance[] = useMemo(
     () =>
       banks.map((bank) => {

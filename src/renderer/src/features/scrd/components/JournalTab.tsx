@@ -62,6 +62,11 @@ export function JournalTab({
     { key: 'particulars', header: t('scrd.columns.particulars') },
     { key: 'reference', header: t('scrd.columns.reference'), render: (r) => r.reference ?? '—' },
     { key: 'category', header: t('scrd.columns.category') },
+    {
+      key: 'receiptType',
+      header: t('scrd.columns.receiptType'),
+      render: (r) => r.receiptType ?? '—'
+    },
     { key: 'bankAccount', header: t('scrd.columns.bankAccount') },
     {
       key: 'amount',

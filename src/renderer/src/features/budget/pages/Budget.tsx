@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Wallet, Plus } from 'lucide-react'
+import { Wallet, Plus, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/shared/components/ui/Card'
 import { Button } from '@/shared/components/ui/Button'
@@ -48,9 +48,15 @@ export function Budget() {
     editingCategory,
     setEditingCategory,
     handleSaveCategory,
+    getSourceMapping,
+    handleSaveSourceMapping,
+    expenseVoucherCategorySuggestions,
     deleteTarget,
     setDeleteTarget,
     handleConfirmDeleteCategory,
+    deleteYearTarget,
+    setDeleteYearTarget,
+    handleConfirmDeleteFiscalYear,
     showAddLine,
     setShowAddLine,
     addLineContext,
@@ -93,6 +99,16 @@ export function Budget() {
                 options={availableFiscalYears.map((y) => ({ value: y, label: y }))}
                 style={{ width: 140 }}
               />
+            )}
+            {canManage && availableFiscalYears.length > 1 && (
+              <Button
+                variant="secondary"
+                size="sm"
+                title={t('budget.deleteFiscalYearButton')}
+                onClick={() => setDeleteYearTarget(fiscalYear)}
+              >
+                <Trash2 size={13} />
+              </Button>
             )}
             {canManage && (
               <Button
@@ -207,6 +223,7 @@ export function Budget() {
                 onDelete={setDeleteTarget}
                 onAddLine={(group, subGroup) => openAddLine({ section: 'income', group, subGroup })}
                 autoActualSourceByCategory={autoActualSourceByCategory}
+                getSourceMapping={getSourceMapping}
               />
             </Card>
           </div>
@@ -226,6 +243,7 @@ export function Budget() {
               onDelete={setDeleteTarget}
               onAddLine={(group, subGroup) => openAddLine({ section: 'expense', group, subGroup })}
               autoActualSourceByCategory={autoActualSourceByCategory}
+              getSourceMapping={getSourceMapping}
             />
           </Card>
         </>
@@ -236,8 +254,11 @@ export function Budget() {
         autoMonthlyActuals={
           editingCategory ? autoActualsByCategory.get(editingCategory.id)?.months : undefined
         }
+        getSourceMapping={getSourceMapping}
+        expenseVoucherCategorySuggestions={expenseVoucherCategorySuggestions}
         onClose={() => setEditingCategory(null)}
         onSave={handleSaveCategory}
+        onSaveSourceMapping={handleSaveSourceMapping}
       />
 
       <ConfirmDialog
@@ -248,6 +269,16 @@ export function Budget() {
         danger
         onConfirm={handleConfirmDeleteCategory}
         onCancel={() => setDeleteTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={!!deleteYearTarget}
+        title={t('budget.confirmDeleteYear.title')}
+        message={t('budget.confirmDeleteYear.message', { year: deleteYearTarget ?? '' })}
+        confirmLabel={t('common.delete')}
+        danger
+        onConfirm={handleConfirmDeleteFiscalYear}
+        onCancel={() => setDeleteYearTarget(null)}
       />
 
       <AddBudgetCategoryModal

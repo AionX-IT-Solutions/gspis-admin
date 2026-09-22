@@ -74,9 +74,19 @@ export async function setStaffUserFullName(uid: string, fullName: string): Promi
 }
 
 /** Self-service profile photo — Firestore rules narrowly allow a signed-in user to update
- *  only this field (plus `updatedAt`) on their own `users/{uid}` document. */
-export async function setStaffUserPhoto(uid: string, photoUrl: string): Promise<void> {
-  await updateDoc(doc(db, 'users', uid), { photoUrl, updatedAt: serverTimestamp() })
+ *  only these fields (plus `updatedAt`) on their own `users/{uid}` document. `photoStoragePath`
+ *  is carried alongside the URL so a later photo change can delete the old file from Storage
+ *  instead of leaking it (see features/profile/hooks/useProfile.ts). */
+export async function setStaffUserPhoto(
+  uid: string,
+  photoUrl: string,
+  photoStoragePath: string
+): Promise<void> {
+  await updateDoc(doc(db, 'users', uid), {
+    photoUrl,
+    photoStoragePath,
+    updatedAt: serverTimestamp()
+  })
 }
 
 /** Birthdate is non-sensitive (unlike role/password), so — like renaming — Firestore rules

@@ -37,7 +37,8 @@ import {
   CalendarRange,
   Award,
   Landmark,
-  IdCard
+  IdCard,
+  ClipboardCheck
 } from 'lucide-react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -109,20 +110,62 @@ const coreNavItems: NavItem[] = [
 
 const navGroups: NavGroup[] = [
   {
-    titleKey: 'sidebar.groups.crm',
-    icon: <Users size={16} />,
+    titleKey: 'sidebar.groups.troopsMembership',
+    icon: <Tent size={16} />,
     items: [
       {
-        path: '/invoices',
-        labelKey: 'sidebar.nav.invoices',
-        icon: <FileText size={16} />,
-        permission: MODULE_PERMISSIONS.invoices
+        path: '/troops',
+        labelKey: 'sidebar.nav.troops',
+        icon: <Tent size={16} />,
+        permission: MODULE_PERMISSIONS.troops
       },
       {
-        path: '/customers',
-        labelKey: 'sidebar.nav.customers',
-        icon: <Users size={16} />,
-        permission: MODULE_PERMISSIONS.customers
+        path: '/district-committee',
+        labelKey: 'sidebar.nav.districtCommittee',
+        icon: <Landmark size={16} />,
+        permission: MODULE_PERMISSIONS.districtCommittee
+      },
+      {
+        path: '/barangay-committee',
+        labelKey: 'sidebar.nav.barangayCommittee',
+        icon: <Landmark size={16} />,
+        permission: MODULE_PERMISSIONS.barangayCommittee
+      },
+      {
+        path: '/trefoil-guild',
+        labelKey: 'sidebar.nav.trefoilGuild',
+        icon: <Landmark size={16} />,
+        permission: MODULE_PERMISSIONS.trefoilGuild
+      },
+      {
+        path: '/oavf',
+        labelKey: 'sidebar.nav.oavf',
+        icon: <Briefcase size={16} />,
+        permission: MODULE_PERMISSIONS.oavf
+      },
+      {
+        path: '/honorary-members',
+        labelKey: 'sidebar.nav.honoraryMember',
+        icon: <Award size={16} />,
+        permission: MODULE_PERMISSIONS.honoraryMember
+      },
+      {
+        path: '/associate-members',
+        labelKey: 'sidebar.nav.associateMember',
+        icon: <UserCheck size={16} />,
+        permission: MODULE_PERMISSIONS.associateMember
+      },
+      {
+        path: '/iccg-registrations',
+        labelKey: 'sidebar.nav.iccgRegistration',
+        icon: <IdCard size={16} />,
+        permission: MODULE_PERMISSIONS.iccgRegistration
+      },
+      {
+        path: '/membership-status-report',
+        labelKey: 'sidebar.nav.membershipStatusReport',
+        icon: <ClipboardCheck size={16} />,
+        permission: MODULE_PERMISSIONS.membershipStatusReport
       }
     ]
   },
@@ -183,12 +226,6 @@ const navGroups: NavGroup[] = [
         labelKey: 'sidebar.nav.trainingProfiles',
         icon: <IdCard size={16} />,
         permission: MODULE_PERMISSIONS.trainingProfiles
-      },
-      {
-        path: '/troops',
-        labelKey: 'sidebar.nav.troops',
-        icon: <Tent size={16} />,
-        permission: MODULE_PERMISSIONS.troops
       },
       {
         path: '/goals',

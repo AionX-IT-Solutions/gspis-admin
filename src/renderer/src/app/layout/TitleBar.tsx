@@ -7,9 +7,7 @@ import {
   Bell,
   Search,
   Compass,
-  Users,
   Truck,
-  FileText,
   UserCog,
   Tent,
   UserCheck,
@@ -140,9 +138,7 @@ function ThemeToggle() {
 
 const searchTypeIcon: Record<SearchResultType, ReactNode> = {
   module: <Compass size={13} />,
-  customer: <Users size={13} />,
   vendor: <Truck size={13} />,
-  invoice: <FileText size={13} />,
   employee: <UserCog size={13} />,
   troop: <Tent size={13} />,
   member: <UserCheck size={13} />,

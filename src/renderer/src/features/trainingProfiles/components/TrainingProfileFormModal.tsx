@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Modal } from '@/shared/components/ui/Modal'
 import { Button } from '@/shared/components/ui/Button'
 import { FormField, FieldInput, FieldSelect } from '@/shared/components/ui/FormField'
+import { useTroopsStore } from '@/features/troops/store/troops.store'
 import {
   COUNCIL_ROLES,
   COMPLETED_TRAININGS,
@@ -68,8 +69,17 @@ export function TrainingProfileFormModal({
   editTarget
 }: TrainingProfileFormModalProps) {
   const { t } = useTranslation()
-  const { form, setForm, canManage, toggleRole, toggleTraining, toggleCertificate, handleSubmit } =
-    useTrainingProfileFormModal(open, onOpenChange, editTarget)
+  const {
+    form,
+    setForm,
+    canManage,
+    toggleRole,
+    toggleTraining,
+    toggleCertificate,
+    totalYearsInScouting,
+    handleSubmit
+  } = useTrainingProfileFormModal(open, onOpenChange, editTarget)
+  const troops = useTroopsStore((s) => s.troops)
 
   function setField<K extends keyof TrainingProfileFormState>(
     key: K,
@@ -81,6 +91,7 @@ export function TrainingProfileFormModal({
   const showAgeLevelSpecialization = form.completedTrainings.includes(
     'age_level_specialization_course'
   )
+  const showTroopPicker = form.roles.includes('troop_leader')
 
   return (
     <Modal
@@ -160,6 +171,39 @@ export function TrainingProfileFormModal({
           />
         </FormField>
 
+        {showTroopPicker && (
+          <>
+            <FormField label={t('trainingProfiles.form.whichTroop')}>
+              <FieldSelect
+                value={form.troopId}
+                onChange={(e) => setField('troopId', e.target.value)}
+                options={troops
+                  .filter((tr) => tr.isActive)
+                  .map((tr) => ({
+                    value: tr.id,
+                    label: tr.troopName ? `${tr.troopNumber} — ${tr.troopName}` : tr.troopNumber
+                  }))}
+                placeholder={t('trainingProfiles.form.whichTroopPlaceholder')}
+              />
+            </FormField>
+            <FormField label={t('trainingProfiles.form.troopRole')}>
+              <FieldSelect
+                value={form.troopRole}
+                onChange={(e) =>
+                  setField('troopRole', e.target.value as TrainingProfileFormState['troopRole'])
+                }
+                options={[
+                  { value: 'leader', label: t('trainingProfiles.form.troopRoleLeader') },
+                  {
+                    value: 'assistant_leader',
+                    label: t('trainingProfiles.form.troopRoleAssistant')
+                  }
+                ]}
+              />
+            </FormField>
+          </>
+        )}
+
         <FormField label={t('trainingProfiles.form.completedTrainings')} className="col-span-2">
           <CheckboxGroup<CompletedTraining>
             values={COMPLETED_TRAININGS}
@@ -209,15 +253,13 @@ export function TrainingProfileFormModal({
 
         <FormField label={t('trainingProfiles.form.firstRegistrationDate')}>
           <FieldInput
+            type="date"
             value={form.firstRegistrationDate}
             onChange={(e) => setField('firstRegistrationDate', e.target.value)}
           />
         </FormField>
         <FormField label={t('trainingProfiles.form.totalYearsInScouting')}>
-          <FieldInput
-            value={form.totalYearsInScouting}
-            onChange={(e) => setField('totalYearsInScouting', e.target.value)}
-          />
+          <FieldInput value={form.firstRegistrationDate ? totalYearsInScouting : ''} readOnly />
         </FormField>
       </div>
     </Modal>

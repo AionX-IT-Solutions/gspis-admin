@@ -13,6 +13,7 @@ import { useBanksStore, bankDisplayName } from '../store/banks.store'
 import { useVouchersStore } from '@/features/vouchers/store/vouchers.store'
 import { usePOSStore } from '@/features/pos/store/pos.store'
 import { useRentalsStore } from '@/features/rentals/store/rentals.store'
+import { useDailyCollectionsStore } from '@/features/accounting/store/dailyCollections.store'
 import {
   exportCashReceiptsJournal,
   exportCashReceiptsJournalPdf,
@@ -43,6 +44,7 @@ export function SCRD() {
   const hydrateVouchers = useVouchersStore((s) => s.hydrate)
   const hydratePOS = usePOSStore((s) => s.hydrate)
   const hydrateRentals = useRentalsStore((s) => s.hydrate)
+  const hydrateDailyCollections = useDailyCollectionsStore((s) => s.hydrate)
 
   const bankAccountNames = data.banks.map(bankDisplayName)
 
@@ -52,7 +54,8 @@ export function SCRD() {
       hydrateBanks(true),
       hydrateVouchers(true),
       hydratePOS(true),
-      hydrateRentals(true)
+      hydrateRentals(true),
+      hydrateDailyCollections(true)
     ])
   }
 

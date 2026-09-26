@@ -5,12 +5,9 @@ import { usePermissions } from '@/app/hooks/usePermissions'
 import { useAppStore } from '@/app/store/app.store'
 import { todayLocalIso } from '@/shared/lib/utils'
 import { useReceiptFields } from '@/shared/hooks/useReceiptFields'
-import { usePrinterDeviceName } from '@/shared/hooks/usePrinterDeviceName'
-import { printReceipt } from '@/shared/lib/receiptPrint'
-import type { ReceiptBreakdownLine, ReceiptRecord } from '@/shared/types/receipt.types'
+import type { ReceiptBreakdownLine, ReceiptKind, ReceiptRecord } from '@/shared/types/receipt.types'
 import { useOavfStore } from '../store/oavf.store'
 import { useOavfMemberStore } from '../store/oavfMember.store'
-import { syncOavfRegistrationVoucher } from '../lib/oavfVoucher'
 import type { OavfRegistration } from '../types/oavf.types'
 
 function emptyForm() {
@@ -27,7 +24,8 @@ function emptyForm() {
 export function useRecordOavfPaymentModal(
   open: boolean,
   onOpenChange: (open: boolean) => void,
-  registration: OavfRegistration | null
+  registration: OavfRegistration | null,
+  initialReceiptType?: ReceiptKind
 ) {
   const { t } = useTranslation()
   const toast = useToast()
@@ -37,8 +35,7 @@ export function useRecordOavfPaymentModal(
   const updateRegistration = useOavfStore((s) => s.updateRegistration)
   const members = useOavfMemberStore((s) => s.members)
   const [form, setForm] = useState(emptyForm())
-  const receiptFields = useReceiptFields({}, open)
-  const printerDeviceName = usePrinterDeviceName()
+  const receiptFields = useReceiptFields({}, open, initialReceiptType)
 
   useEffect(() => {
     if (!open) return
@@ -62,8 +59,11 @@ export function useRecordOavfPaymentModal(
 
   useEffect(() => {
     receiptFields.autoFillBreakdown({}, { label: t('oavf.payment.feeLabel'), amount: totalAmount })
+    // `open` is deliberately included even though it's not read in the body — the "Others" row
+    // otherwise never re-fills after the fields reset on open, since this fee's amount defaults
+    // to the same fixed total every time and so this effect wouldn't otherwise re-run.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalAmount])
+  }, [totalAmount, open])
 
   function handleSubmit() {
     if (!canManage || !registration) return
@@ -114,21 +114,7 @@ export function useRecordOavfPaymentModal(
     }
     updateRegistration(registration.id, updated)
 
-    // Firestore only lets super_admin/admin/accountant/manager write `vouchers` — skipped
-    // entirely rather than attempted-and-denied when the signed-in user lacks
-    // 'manage:vouchers'.
-    if (hasPermission('manage:vouchers')) {
-      const linkedVoucherId = syncOavfRegistrationVoucher(member, updated)
-      if (linkedVoucherId !== updated.linkedVoucherId) {
-        updateRegistration(registration.id, { linkedVoucherId })
-      }
-    }
-
     toast.success(t('oavf.payment.toast.recorded'))
-
-    printReceipt(receipt, printerDeviceName).then((result) => {
-      if (!result.ok) toast.error(t('receipts.toast.printFailed'))
-    })
 
     onOpenChange(false)
   }

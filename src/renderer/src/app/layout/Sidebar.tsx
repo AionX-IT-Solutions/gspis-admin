@@ -166,6 +166,18 @@ const navGroups: NavGroup[] = [
         labelKey: 'sidebar.nav.membershipStatusReport',
         icon: <ClipboardCheck size={16} />,
         permission: MODULE_PERMISSIONS.membershipStatusReport
+      },
+      {
+        path: '/membership-reports',
+        labelKey: 'sidebar.nav.membershipReports',
+        icon: <BarChart3 size={16} />,
+        permission: MODULE_PERMISSIONS.membershipReports
+      },
+      {
+        path: '/troop-leader-submissions',
+        labelKey: 'sidebar.nav.troopLeaderSubmissions',
+        icon: <ClipboardList size={16} />,
+        permission: MODULE_PERMISSIONS.troopLeaderSubmissions
       }
     ]
   },

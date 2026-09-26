@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode
+} from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -213,6 +221,46 @@ export function DataTable<T extends { id?: string }>({
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
 
+  // Column resizing — drag a column's right edge to widen/narrow it. Widths are
+  // session-local (not persisted) and stored by key so they survive column
+  // show/hide toggling and re-sorting.
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>({})
+  const thRefs = useRef<Record<string, HTMLTableCellElement | null>>({})
+  const resizeState = useRef<{ key: string; startX: number; startWidth: number } | null>(null)
+
+  const handleResizeMove = useCallback((e: MouseEvent) => {
+    const state = resizeState.current
+    if (!state) return
+    const next = Math.max(60, state.startWidth + (e.clientX - state.startX))
+    setColumnWidths((prev) => ({ ...prev, [state.key]: next }))
+  }, [])
+
+  const handleResizeEnd = useCallback(() => {
+    resizeState.current = null
+    document.removeEventListener('mousemove', handleResizeMove)
+    document.removeEventListener('mouseup', handleResizeEnd)
+  }, [handleResizeMove])
+
+  const handleResizeStart = useCallback(
+    (e: ReactMouseEvent, key: string) => {
+      e.preventDefault()
+      e.stopPropagation()
+      const startWidth = columnWidths[key] ?? thRefs.current[key]?.offsetWidth ?? 120
+      resizeState.current = { key, startX: e.clientX, startWidth }
+      document.addEventListener('mousemove', handleResizeMove)
+      document.addEventListener('mouseup', handleResizeEnd)
+    },
+    [columnWidths, handleResizeMove, handleResizeEnd]
+  )
+
+  // Defensive cleanup if the table unmounts mid-drag.
+  useEffect(() => {
+    return () => {
+      document.removeEventListener('mousemove', handleResizeMove)
+      document.removeEventListener('mouseup', handleResizeEnd)
+    }
+  }, [handleResizeMove, handleResizeEnd])
+
   useEffect(() => {
     setPage(1)
   }, [data, sortKey, pageSize])
@@ -277,15 +325,21 @@ export function DataTable<T extends { id?: string }>({
               }}
             >
               {visibleColumns.map((col, i) => {
+                const key = String(col.key)
                 const sortable = col.sortable !== false
-                const isActive = sortKey === String(col.key)
+                const isActive = sortKey === key
                 return (
                   <th
-                    key={String(col.key)}
+                    key={key}
+                    ref={(el) => {
+                      thRefs.current[key] = el
+                    }}
                     className={cn(col.width)}
-                    onClick={sortable ? () => handleSort(String(col.key)) : undefined}
+                    onClick={sortable ? () => handleSort(key) : undefined}
                     style={{
+                      position: 'relative',
                       padding: '11px 16px',
+                      width: columnWidths[key],
                       textAlign:
                         col.align === 'right'
                           ? 'right'
@@ -323,6 +377,24 @@ export function DataTable<T extends { id?: string }>({
                         </span>
                       )}
                     </span>
+                    {/* Drag handle to resize this column — separate from the header's own
+                        sort-toggle onClick above, so a resize drag never also flips the sort. */}
+                    <div
+                      onMouseDown={(e) => handleResizeStart(e, key)}
+                      onClick={(e) => e.stopPropagation()}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--c-accent)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        right: -3,
+                        width: 6,
+                        height: '100%',
+                        cursor: 'col-resize',
+                        userSelect: 'none',
+                        zIndex: 1
+                      }}
+                    />
                   </th>
                 )
               })}
@@ -378,11 +450,13 @@ export function DataTable<T extends { id?: string }>({
                   onDoubleClick={() => onRowDoubleClick?.(row)}
                 >
                   {visibleColumns.map((col, ci) => {
-                    const rawVal = (row as Record<string, unknown>)[String(col.key)]
+                    const key = String(col.key)
+                    const rawVal = (row as Record<string, unknown>)[key]
                     const val = col.render ? col.render(row) : String(rawVal ?? '-')
+                    const resizedWidth = columnWidths[key]
                     return (
                       <td
-                        key={String(col.key)}
+                        key={key}
                         style={{
                           padding: '11px 16px',
                           color: 'var(--c-text-2)',
@@ -395,7 +469,8 @@ export function DataTable<T extends { id?: string }>({
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
-                          maxWidth: 240,
+                          width: resizedWidth,
+                          maxWidth: resizedWidth ?? 240,
                           borderRight:
                             ci < visibleColumns.length - 1 ? '1px solid var(--c-divider)' : 'none',
                           fontSize: 13

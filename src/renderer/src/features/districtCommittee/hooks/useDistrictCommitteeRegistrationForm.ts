@@ -8,7 +8,6 @@ import { getMembershipYearLabel } from '@/features/troops/lib/membershipYear'
 import { todayLocalIso } from '@/shared/lib/utils'
 import { useDistrictCommitteeStore } from '../store/districtCommittee.store'
 import { useDistrictCommitteeRegistrationStore } from '../store/districtCommitteeRegistration.store'
-import { syncRegistrationRemittanceVoucher } from '../lib/dcVoucher'
 import {
   emptyRemittance,
   type RegistrationMember,
@@ -266,17 +265,6 @@ export function useDistrictCommitteeRegistrationForm() {
     } else {
       updateRegistration(registrationId, fullRegistration)
       toast.success(t('districtCommitteeRegistration.toast.updated'))
-    }
-
-    // Keeps the Council-retained-income Journal Voucher (D.C. Group Fee only) in sync with
-    // this filing. Firestore only lets super_admin/admin/accountant/manager write `vouchers`
-    // — hr can file a registration but not this — so this is skipped entirely rather than
-    // attempted-and-denied when the signed-in user lacks 'manage:vouchers'.
-    if (hasPermission('manage:vouchers')) {
-      const linkedVoucherId = syncRegistrationRemittanceVoucher(fullRegistration, committee)
-      if (linkedVoucherId !== fullRegistration.linkedVoucherId) {
-        updateRegistration(registrationId, { linkedVoucherId })
-      }
     }
 
     // Registrations live as a tab on the District Committee page, not a standalone route —

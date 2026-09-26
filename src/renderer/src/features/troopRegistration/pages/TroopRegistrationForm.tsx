@@ -62,11 +62,7 @@ export function TroopRegistrationForm() {
     removeLeaderRow,
     updateLeaderRow,
     members,
-    patrolGroups,
-    addPatrolGroup,
-    removePatrolGroup,
-    renamePatrol,
-    addMemberToPatrol,
+    addMemberRow,
     removeMemberRow,
     updateMemberRow,
     submittedByName,
@@ -326,123 +322,77 @@ export function TroopRegistrationForm() {
                 size="sm"
                 variant="ghost"
                 leftIcon={<Plus size={13} />}
-                onClick={addPatrolGroup}
+                onClick={addMemberRow}
               >
-                {t('troopRegistration.form.addPatrol')}
+                {t('troopRegistration.form.addMember')}
               </Button>
             )}
           </div>
         }
         style={{ marginTop: 16 }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {patrolGroups.map(([patrol, rows]) => (
-            <div key={patrol}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {members.map((member) => (
               <div
+                key={member.rowId}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
+                  display: 'grid',
+                  gridTemplateColumns: '1.6fr 1fr 0.7fr 1fr 1.3fr auto',
                   gap: 10,
-                  marginBottom: 8
+                  alignItems: 'end'
                 }}
               >
-                <FieldInput
-                  value={patrol}
-                  onChange={(e) => renamePatrol(patrol, e.target.value)}
-                  style={{ maxWidth: 220, fontWeight: 700 }}
-                />
+                <FormField label={t('troopRegistration.form.name')}>
+                  <FieldInput
+                    value={member.fullName}
+                    onChange={(e) => updateMemberRow(member.rowId, { fullName: e.target.value })}
+                  />
+                </FormField>
+                <FormField label={t('troopRegistration.form.birthdate')}>
+                  <FieldInput
+                    type="date"
+                    value={member.birthdate}
+                    onChange={(e) => updateMemberRow(member.rowId, { birthdate: e.target.value })}
+                  />
+                </FormField>
+                <FormField label={t('troopRegistration.form.gradeYear')}>
+                  <FieldInput
+                    value={member.gradeYear ?? ''}
+                    onChange={(e) => updateMemberRow(member.rowId, { gradeYear: e.target.value })}
+                    placeholder="VI"
+                  />
+                </FormField>
+                <FormField label={t('troopRegistration.form.regStatus')}>
+                  <FieldSelect
+                    value={member.regStatus}
+                    onChange={(e) =>
+                      updateMemberRow(member.rowId, {
+                        regStatus: e.target.value as typeof member.regStatus
+                      })
+                    }
+                    options={REG_STATUS_OPTIONS}
+                  />
+                </FormField>
+                <FormField label={t('troopRegistration.form.beneficiary')}>
+                  <FieldInput
+                    value={member.beneficiary ?? ''}
+                    onChange={(e) => updateMemberRow(member.rowId, { beneficiary: e.target.value })}
+                  />
+                </FormField>
                 {canManage && (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      leftIcon={<Plus size={12} />}
-                      onClick={() => addMemberToPatrol(patrol)}
-                    >
-                      {t('troopRegistration.form.addMember')}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => removePatrolGroup(patrol)}
-                      title={t('troopRegistration.form.removePatrol')}
-                    >
-                      <Trash2 size={13} />
-                    </Button>
-                  </>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => removeMemberRow(member.rowId)}
+                    title={t('common.delete')}
+                  >
+                    <Trash2 size={13} />
+                  </Button>
                 )}
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {rows.map((member) => (
-                  <div
-                    key={member.rowId}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1.6fr 1fr 0.7fr 1fr 1.3fr auto',
-                      gap: 10,
-                      alignItems: 'end'
-                    }}
-                  >
-                    <FormField label={t('troopRegistration.form.name')}>
-                      <FieldInput
-                        value={member.fullName}
-                        onChange={(e) =>
-                          updateMemberRow(member.rowId, { fullName: e.target.value })
-                        }
-                      />
-                    </FormField>
-                    <FormField label={t('troopRegistration.form.birthdate')}>
-                      <FieldInput
-                        type="date"
-                        value={member.birthdate}
-                        onChange={(e) =>
-                          updateMemberRow(member.rowId, { birthdate: e.target.value })
-                        }
-                      />
-                    </FormField>
-                    <FormField label={t('troopRegistration.form.gradeYear')}>
-                      <FieldInput
-                        value={member.gradeYear ?? ''}
-                        onChange={(e) =>
-                          updateMemberRow(member.rowId, { gradeYear: e.target.value })
-                        }
-                        placeholder="VI"
-                      />
-                    </FormField>
-                    <FormField label={t('troopRegistration.form.regStatus')}>
-                      <FieldSelect
-                        value={member.regStatus}
-                        onChange={(e) =>
-                          updateMemberRow(member.rowId, {
-                            regStatus: e.target.value as typeof member.regStatus
-                          })
-                        }
-                        options={REG_STATUS_OPTIONS}
-                      />
-                    </FormField>
-                    <FormField label={t('troopRegistration.form.beneficiary')}>
-                      <FieldInput
-                        value={member.beneficiary ?? ''}
-                        onChange={(e) =>
-                          updateMemberRow(member.rowId, { beneficiary: e.target.value })
-                        }
-                      />
-                    </FormField>
-                    {canManage && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => removeMemberRow(member.rowId)}
-                        title={t('common.delete')}
-                      >
-                        <Trash2 size={13} />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </Card>
 

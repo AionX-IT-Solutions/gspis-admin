@@ -1,15 +1,10 @@
 import type { ReceiptRecord } from '@/shared/types/receipt.types'
 
-// GSP's age-based program levels, offered as a dropdown on the Troop and roster forms.
-// Kept as plain strings (not a union type) so a pre-existing troop/member whose `level`
-// was typed in before this became a dropdown still displays and saves correctly.
-export const TROOP_LEVELS = [
-  'Star Scout',
-  'Junior Scout',
-  'Cadet Scout',
-  'Senior Scout',
-  'Ambassador Scout'
-] as const
+// GSP's age-based program levels, offered as a dropdown on the Troop and roster forms — same
+// taxonomy/order as troopRegistration's REGISTRATION_AGE_LEVELS. Kept as plain strings (not a
+// union type) so a pre-existing troop/member whose `level` was typed in before this became a
+// dropdown still displays and saves correctly.
+export const TROOP_LEVELS = ['Twinkler', 'Star', 'Junior', 'Senior', 'Cadet'] as const
 
 /** Dropdown options for a level field — includes `currentValue` as its own option when it's
  *  set but isn't one of TROOP_LEVELS, so a legacy/custom value never gets silently dropped. */
@@ -136,6 +131,12 @@ export interface MemberPayment {
   /** The receipt printed for this transaction — see FlatFeePayment.receipt above for the
    *  full rationale; same pattern here. */
   receipt?: ReceiptRecord
+  /** Only ever set on a 'membership' payment — the SECOND, internal receipt documenting the
+   *  Council's own retained share of this Membership Fee remittance (see
+   *  PrintCouncilShareReceiptModal), printed on demand from the Payments tab after the
+   *  member-facing AR/SI above was already issued. Stamped identically onto every entry
+   *  sharing `bulkPaymentId`, same reprint pattern as `receipt`. */
+  councilShareReceipt?: ReceiptRecord
 }
 
 export interface ScoutMember {

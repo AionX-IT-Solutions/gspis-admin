@@ -1,6 +1,6 @@
 import { useRef, useState, type CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Plus, Trash2, Paperclip, Eye, Lock, Printer } from 'lucide-react'
+import { Plus, Trash2, Paperclip, Eye, Lock } from 'lucide-react'
 import { Card } from '@/shared/components/ui/Card'
 import { Button } from '@/shared/components/ui/Button'
 import { Badge } from '@/shared/components/ui/Badge'
@@ -11,23 +11,41 @@ import { ConfirmDialog } from '@/shared/components/ui/ConfirmDialog'
 import { downloadFile } from '@/shared/lib/storageSync'
 import { formatCurrency, formatDate } from '@/shared/lib/utils'
 import { bankDisplayName } from '@/features/scrd/store/banks.store'
-import { useAppStore } from '@/app/store/app.store'
 import { useDailyCollectionsTab } from '../hooks/useDailyCollectionsTab'
-import { PrintDepositReceiptModal } from './PrintDepositReceiptModal'
-import type { CashDepositLine, DailyCollectionAttachment } from '../types/dailyCollection.types'
+import type { DailyCollectionAttachment } from '../types/dailyCollection.types'
 
 const categoryCols: {
-  key: 'nes' | 'bcFee' | 'csf' | 'iccg' | 'memReg' | 'rentals' | 'refundOfCa' | 'others'
+  key:
+    | 'nes'
+    | 'bcFee'
+    | 'dcFee'
+    | 'tgFee'
+    | 'csf'
+    | 'iccg'
+    | 'memReg'
+    | 'rentals'
+    | 'refundOfCa'
+    | 'troopFee'
+    | 'thinkingDay'
+    | 'oavfFee'
+    | 'honoraryFee'
+    | 'associateMemberFee'
   label: string
 }[] = [
   { key: 'nes', label: 'NES' },
   { key: 'bcFee', label: 'BC Fee' },
+  { key: 'dcFee', label: 'DC Fee' },
+  { key: 'tgFee', label: 'TG Fee' },
   { key: 'csf', label: 'CSF' },
   { key: 'iccg', label: 'ICCG' },
   { key: 'memReg', label: 'Mem. Reg.' },
   { key: 'rentals', label: 'Rentals' },
   { key: 'refundOfCa', label: 'Refund of CA' },
-  { key: 'others', label: 'Others' }
+  { key: 'troopFee', label: 'Troop Fee' },
+  { key: 'thinkingDay', label: 'Thinking Day' },
+  { key: 'oavfFee', label: 'OAVF Fee' },
+  { key: 'honoraryFee', label: 'Honorary Fee' },
+  { key: 'associateMemberFee', label: 'Assoc. Member Fee' }
 ]
 
 const th: CSSProperties = {
@@ -45,8 +63,6 @@ const tdLeft: CSSProperties = { ...td, textAlign: 'left' }
 export function DailyCollectionsTab() {
   const { t } = useTranslation()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const currentUser = useAppStore((s) => s.currentUser)
-  const [printingDeposit, setPrintingDeposit] = useState<CashDepositLine | null>(null)
   const [previewAttachment, setPreviewAttachment] = useState<{ url: string; name: string } | null>(
     null
   )
@@ -88,8 +104,7 @@ export function DailyCollectionsTab() {
     handleView,
     handleExportExcel,
     handleExportPdf,
-    handleExportWord,
-    preparedByDisplay
+    handleExportWord
   } = useDailyCollectionsTab()
 
   return (
@@ -185,7 +200,7 @@ export function DailyCollectionsTab() {
           {t('reports.dailyCollections.addCashReceipts')}
         </p>
         <div style={{ overflowX: 'auto', marginBottom: 8 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 860 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 1340 }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                 <th style={thLeft}>{t('reports.dailyCollections.table.siNo')}</th>
@@ -255,12 +270,18 @@ export function DailyCollectionsTab() {
                     {formatCurrency(
                       l.nes +
                         l.bcFee +
+                        l.dcFee +
+                        l.tgFee +
                         l.csf +
                         l.iccg +
                         l.memReg +
                         l.rentals +
                         l.refundOfCa +
-                        l.others
+                        l.troopFee +
+                        l.thinkingDay +
+                        l.oavfFee +
+                        l.honoraryFee +
+                        l.associateMemberFee
                     )}
                   </td>
                   <td style={td}>
@@ -446,25 +467,6 @@ export function DailyCollectionsTab() {
                     )}
                   </td>
                   <td style={{ ...td, display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
-                    {!isRange && canManage && d.amount > 0 && (
-                      <button
-                        onClick={() => setPrintingDeposit(d)}
-                        title={
-                          d.receipt
-                            ? t('receipts.reprintButton')
-                            : t('reports.dailyCollections.depositReceipt.printButton')
-                        }
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          color: 'var(--text-muted)',
-                          padding: 2
-                        }}
-                      >
-                        <Printer size={13} />
-                      </button>
-                    )}
                     {!isRange && canManage && (
                       <button
                         onClick={() => removeDeposit(d.id)}
@@ -666,16 +668,6 @@ export function DailyCollectionsTab() {
             ? () => downloadFile(previewAttachment.url, previewAttachment.name)
             : undefined
         }
-      />
-
-      <PrintDepositReceiptModal
-        deposit={printingDeposit}
-        defaultPayorName={preparedByDisplay}
-        defaultCashierName={currentUser?.fullName ?? ''}
-        onClose={() => setPrintingDeposit(null)}
-        onPrinted={(receipt) => {
-          if (printingDeposit) updateDeposit(printingDeposit.id, { receipt })
-        }}
       />
 
       <ConfirmDialog

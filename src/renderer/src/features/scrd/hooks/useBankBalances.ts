@@ -6,11 +6,10 @@ import {
   hasCashAdvance,
   cashAdvanceReimbursement
 } from '@/features/vouchers/lib/expenseVouchers'
-import { getReceiptRowsFromVouchers } from '@/features/vouchers/lib/receiptVouchers'
 import { usePOSStore } from '@/features/pos/store/pos.store'
 import { useRentalsStore } from '@/features/rentals/store/rentals.store'
-import { useTroopsStore } from '@/features/troops/store/troops.store'
 import { useDailyCollectionsStore } from '@/features/accounting/store/dailyCollections.store'
+import { useCashReceiptRows } from './useCashReceiptRows'
 import type { BankAccountBalance } from '../lib/scrdExcelExport'
 
 /**
@@ -44,11 +43,15 @@ export function useBankBalances() {
   // spiral into "Maximum update depth exceeded".
   const banks = useMemo(() => allBanks.filter((b) => b.isActive), [allBanks])
   const vouchers = useVouchersStore((s) => s.vouchers)
-  const cashReceipts = useMemo(() => getReceiptRowsFromVouchers(vouchers), [vouchers])
+  // Every real income source the app records — approved Journal Voucher credit lines plus all
+  // 9 registration modules' fee/payment records read directly instead of through a voucher
+  // (BC/DC/TG/OAVF/ICCG/Honorary/Associate/Troop council shares) — see
+  // registrationCashReceipts.ts. Without this, e.g. a Troop's Membership Fee council share
+  // never counted toward any bank's balance here at all.
+  const cashReceipts = useCashReceiptRows()
   const sales = usePOSStore((s) => s.sales)
   const purchases = usePOSStore((s) => s.purchases)
   const bookings = useRentalsStore((s) => s.bookings)
-  const scoutMembers = useTroopsStore((s) => s.scoutMembers)
   const dailyCollectionReports = useDailyCollectionsStore((s) => s.reports)
   // Every deposit logged under Reports > Daily Collections > Cash Deposits — a *transfer*,
   // not new money (the cash was already counted once, as "Cash on Hand", when the underlying
@@ -84,11 +87,10 @@ export function useBankBalances() {
       // down-payment feature have no amountPaid recorded, so fall back to
       // totalAmount there (matches the old assume-paid-in-full behavior).
       .forEach((b) => add('Cash on Hand', b.amountPaid ?? b.totalAmount))
-    scoutMembers.forEach((m) => (m.payments ?? []).forEach((p) => add('Cash on Hand', p.amount)))
     deposits.forEach((d) => add(d.bankName, d.amount))
     add('Cash on Hand', manualReceiptsTotal)
     return map
-  }, [cashReceipts, sales, bookings, scoutMembers, deposits, manualReceiptsTotal])
+  }, [cashReceipts, sales, bookings, deposits, manualReceiptsTotal])
 
   const disbursementsByAccount = useMemo(() => {
     const map = new Map<string, number>()

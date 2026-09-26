@@ -4,57 +4,66 @@ import { useToast } from '@/app/hooks/useToast'
 import { useReceiptFields } from '@/shared/hooks/useReceiptFields'
 import { usePrinterDeviceName } from '@/shared/hooks/usePrinterDeviceName'
 import { printReceipt } from '@/shared/lib/receiptPrint'
-import type { ReceiptBreakdownLine, ReceiptRecord } from '@/shared/types/receipt.types'
-import type { CashDepositLine } from '../types/dailyCollection.types'
+import { formatDate } from '@/shared/lib/utils'
+import type { ReceiptBreakdownLine, ReceiptKind, ReceiptRecord } from '@/shared/types/receipt.types'
+import type { BookingRow } from './useRentals'
 
 function todayInputDate() {
   return new Date().toISOString().slice(0, 10)
 }
 
-/** Prints an internal-transmittal receipt for handing collected cash over for deposit —
- *  deliberately does NOT touch the Vouchers store at all. The deposit itself already moves
- *  the amount from Cash on Hand to the named bank (see useBankBalances.ts's `deposits`
- *  handling), so posting a Journal Voucher here too would recognize the same cash as income
- *  a second time. This is proof of custody transfer only: who handed the cash over (payor),
- *  who received it for deposit (cashierName/signature), for how much, and why (referenceNote
- *  = the deposit's own purpose). */
-export function usePrintDepositReceiptModal(
-  deposit: CashDepositLine | null,
-  defaultPayorName: string,
+/** Prints the Council's official receipt for what a renter has paid on a facility booking —
+ *  reuses the same Service Invoice/Acknowledgment Receipt booklets as every other collection
+ *  point (see shared/lib/receiptPrint.ts). Unlike Daily Collections' deposit receipt, this
+ *  posts as new income: it's the first record of this money changing hands, not a proof of
+ *  custody transfer for cash already counted once. */
+export function usePrintBookingReceiptModal(
+  booking: BookingRow | null,
   defaultCashierName: string,
   onClose: () => void,
-  onPrinted: (receipt: ReceiptRecord) => void
+  onPrinted: (receipt: ReceiptRecord) => void,
+  initialReceiptType?: ReceiptKind
 ) {
   const { t } = useTranslation()
   const toast = useToast()
   const printerDeviceName = usePrinterDeviceName()
-  const receiptFields = useReceiptFields({}, deposit?.id ?? null)
+  const receiptFields = useReceiptFields({}, booking?.id ?? null, initialReceiptType)
 
   const [date, setDate] = useState(todayInputDate())
-  const [payorName, setPayorName] = useState(defaultPayorName)
+  const [payorName, setPayorName] = useState('')
   const [cashierName, setCashierName] = useState(defaultCashierName)
 
-  // Reseed whenever a different deposit is opened for printing.
+  // Reseed whenever a different booking is opened for printing.
   useEffect(() => {
-    if (!deposit) return
+    if (!booking) return
     setDate(todayInputDate())
-    setPayorName(deposit.receipt?.payorName ?? defaultPayorName)
-    setCashierName(deposit.receipt?.cashierName ?? defaultCashierName)
+    setPayorName(booking.receipt?.payorName ?? booking.renterName)
+    setCashierName(booking.receipt?.cashierName ?? defaultCashierName)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deposit?.id])
+  }, [booking?.id])
 
-  const officialReceiptLines: ReceiptBreakdownLine[] = deposit
-    ? [{ label: deposit.purpose.trim() || 'Cash Deposit', amount: deposit.amount }]
+  const receiptAmount = booking
+    ? booking.amountPaid && booking.amountPaid > 0
+      ? booking.amountPaid
+      : booking.totalAmount
+    : 0
+
+  const referenceNote = booking
+    ? `${t('rentals.bookingReceipt.lineLabel', { space: booking.spaceName })} — ${formatDate(booking.bookingDate)}`
+    : undefined
+
+  const officialReceiptLines: ReceiptBreakdownLine[] = booking
+    ? [{ label: referenceNote ?? booking.spaceName, amount: receiptAmount }]
     : []
 
   function handleSubmit() {
-    if (!deposit) return
+    if (!booking) return
     if (!receiptFields.receiptNumber.trim()) {
       toast.error(t('receipts.toast.receiptNumberRequired'))
       return
     }
     if (!payorName.trim()) {
-      toast.error(t('reports.dailyCollections.depositReceipt.toast.payorRequired'))
+      toast.error(t('rentals.bookingReceipt.toast.payorRequired'))
       return
     }
 
@@ -68,7 +77,7 @@ export function usePrintDepositReceiptModal(
       return
     }
     const collected = breakdownLines.reduce((s, l) => s + l.amount, 0)
-    if (Math.abs(collected - deposit.amount) > 0.01) {
+    if (Math.abs(collected - receiptAmount) > 0.01) {
       toast.error(t('receipts.toast.breakdownMismatch'))
       return
     }
@@ -77,7 +86,7 @@ export function usePrintDepositReceiptModal(
       receiptType: receiptFields.receiptType,
       receiptNumber: receiptFields.receiptNumber.trim(),
       date: new Date(date).toISOString(),
-      referenceNote: deposit.purpose.trim() || undefined,
+      referenceNote,
       payorName: payorName.trim(),
       tin: receiptFields.tin.trim() || undefined,
       address: receiptFields.address.trim() || undefined,
@@ -96,7 +105,7 @@ export function usePrintDepositReceiptModal(
   }
 
   return {
-    deposit,
+    booking,
     date,
     setDate,
     payorName,
@@ -104,6 +113,7 @@ export function usePrintDepositReceiptModal(
     cashierName,
     setCashierName,
     officialReceiptLines,
+    receiptAmount,
     handleSubmit,
     ...receiptFields
   }

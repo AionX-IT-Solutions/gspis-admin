@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Briefcase, Pencil, Plus, Printer, Trash2, UserPlus } from 'lucide-react'
+import { Briefcase, Landmark, Pencil, Plus, Printer, Trash2, UserPlus } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/shared/components/ui/Card'
@@ -21,8 +21,12 @@ import { RefreshButton } from '@/shared/components/ui/RefreshButton'
 import { formatDate } from '@/shared/lib/utils'
 import { isMembershipExpired, latestByDateApplied } from '@/shared/lib/membershipExpiry'
 import { useToast } from '@/app/hooks/useToast'
+import { useAppStore } from '@/app/store/app.store'
 import { usePrinterDeviceName } from '@/shared/hooks/usePrinterDeviceName'
 import { printReceipt } from '@/shared/lib/receiptPrint'
+import { PrintCouncilShareReceiptModal } from '@/shared/components/receipts/PrintCouncilShareReceiptModal'
+import type { CouncilShareReceiptTarget } from '@/shared/hooks/usePrintCouncilShareReceiptModal'
+import type { ReceiptKind } from '@/shared/types/receipt.types'
 import type { OavfMember } from '../types/oavfMember.types'
 import type { OavfRegistration } from '../types/oavf.types'
 import { OavfMemberFormModal } from '../components/OavfMemberFormModal'
@@ -110,6 +114,8 @@ export function OavfRegistrations() {
   } = useOavfRegistrations()
   const hydrateRegistrations = useOavfStore((s) => s.hydrate)
   const allRegistrations = useOavfStore((s) => s.registrations)
+  const updateRegistration = useOavfStore((s) => s.updateRegistration)
+  const currentUser = useAppStore((s) => s.currentUser)
   const displayedMembers = useMemo(
     () => (districtParam ? members.filter((m) => m.district === districtParam) : members),
     [members, districtParam]
@@ -117,6 +123,11 @@ export function OavfRegistrations() {
 
   const [paymentSearch, setPaymentSearch] = useState('')
   const [showPaymentPicker, setShowPaymentPicker] = useState(false)
+  // Record Payment always uses the Acknowledgment Receipt booklet (the OAVF fee goes under its
+  // free-text "Others" row, same as every other single-person module) — no picker. The Council
+  // Share Receipt below is the opposite: always Service Invoice.
+  const [paymentReceiptType, setPaymentReceiptType] =
+    useState<ReceiptKind>('acknowledgment_receipt')
   const paidRegistrations = useMemo(
     () => allRegistrations.filter((r) => r.arNumber),
     [allRegistrations]
@@ -137,6 +148,51 @@ export function OavfRegistrations() {
     if (!r.receipt) return
     const result = await printReceipt(r.receipt, printerDeviceName)
     if (!result.ok) toast.error(t('receipts.toast.printFailed'))
+  }
+
+  // Undoes "Record Payment" — there's no separate payment record to remove (unlike Troops'
+  // bulk-payment ledger), the fee/AR fields just live on the registration itself, so deleting
+  // the payment means clearing them back to their unpaid state. Reverts the registration to
+  // "Unpaid" on the Registrations tab and drops it out of this Payments list (paidRegistrations
+  // filters on arNumber).
+  const [deletePaymentTarget, setDeletePaymentTarget] = useState<OavfRegistration | null>(null)
+  function handleConfirmDeletePayment() {
+    if (!deletePaymentTarget) return
+    updateRegistration(deletePaymentTarget.id, {
+      membershipFeeTotal: 0,
+      membershipFeeCouncilShare: 0,
+      arNumber: '',
+      arDate: '',
+      processedByName: '',
+      receipt: undefined,
+      councilShareReceipt: undefined
+    })
+    setDeletePaymentTarget(null)
+  }
+
+  // The Membership Fee's council-retained share gets receipted a SECOND time in real life (the
+  // applicant-facing AR above already covers the full ₱100 collected) — same flow as Troops'
+  // Payments tab (see usePrintCouncilShareReceiptModal). Unlike the Acknowledgment Receipt
+  // recorded above, this internal share is always billed via Service Invoice — no picker.
+  const [councilReceiptType, setCouncilReceiptType] = useState<ReceiptKind>('service_invoice')
+  const [councilReceiptRegistration, setCouncilReceiptRegistration] =
+    useState<OavfRegistration | null>(null)
+  const councilReceiptTarget: CouncilShareReceiptTarget | null = councilReceiptRegistration
+    ? {
+        key: councilReceiptRegistration.id,
+        label: (() => {
+          const m = memberById.get(councilReceiptRegistration.oavfMemberId)
+          return m ? `${m.lastName}, ${m.firstName}` : '—'
+        })(),
+        councilShareAmount: councilReceiptRegistration.membershipFeeCouncilShare,
+        payorName: councilReceiptRegistration.receipt?.payorName ?? '',
+        existingReceipt: councilReceiptRegistration.councilShareReceipt
+      }
+    : null
+
+  function openCouncilShareReceipt(r: OavfRegistration) {
+    setCouncilReceiptType(r.councilShareReceipt?.receiptType ?? 'service_invoice')
+    setCouncilReceiptRegistration(r)
   }
 
   const columns: Column<OavfMember>[] = [
@@ -302,14 +358,41 @@ export function OavfRegistrations() {
               <Printer size={13} />
             </Button>
           )}
+          {r.membershipFeeCouncilShare > 0 && canManageReg && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => openCouncilShareReceipt(r)}
+              title={
+                r.councilShareReceipt
+                  ? t('receipts.councilShareReceipt.reprintButton')
+                  : t('receipts.councilShareReceipt.button')
+              }
+            >
+              <Landmark size={13} />
+            </Button>
+          )}
           {canManageReg && (
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => setPaymentTarget(r)}
+              onClick={() => {
+                setPaymentReceiptType('acknowledgment_receipt')
+                setPaymentTarget(r)
+              }}
               title={t('common.edit')}
             >
               <Pencil size={13} />
+            </Button>
+          )}
+          {canManageReg && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setDeletePaymentTarget(r)}
+              title={t('common.delete')}
+            >
+              <Trash2 size={13} />
             </Button>
           )}
         </div>
@@ -490,6 +573,7 @@ export function OavfRegistrations() {
         open={!!paymentTarget}
         onOpenChange={(open) => !open && setPaymentTarget(null)}
         registration={paymentTarget}
+        initialReceiptType={paymentReceiptType}
       />
 
       <OavfPaymentPickerModal
@@ -497,8 +581,21 @@ export function OavfRegistrations() {
         onOpenChange={setShowPaymentPicker}
         onPick={(r) => {
           setShowPaymentPicker(false)
+          setPaymentReceiptType('acknowledgment_receipt')
           setPaymentTarget(r)
         }}
+      />
+
+      <PrintCouncilShareReceiptModal
+        target={councilReceiptTarget}
+        defaultCashierName={currentUser?.fullName ?? ''}
+        onClose={() => setCouncilReceiptRegistration(null)}
+        onPrinted={(receipt) => {
+          if (councilReceiptRegistration) {
+            updateRegistration(councilReceiptRegistration.id, { councilShareReceipt: receipt })
+          }
+        }}
+        initialReceiptType={councilReceiptType}
       />
 
       <ConfirmDialog
@@ -540,6 +637,23 @@ export function OavfRegistrations() {
         danger
         onConfirm={handleConfirmDeleteRegistration}
         onCancel={() => setRegDeleteTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={!!deletePaymentTarget}
+        title={t('oavf.payment.confirmDelete.title')}
+        message={t('oavf.payment.confirmDelete.message', {
+          name: deletePaymentTarget
+            ? (() => {
+                const m = memberById.get(deletePaymentTarget.oavfMemberId)
+                return m ? `${m.lastName}, ${m.firstName}` : ''
+              })()
+            : ''
+        })}
+        confirmLabel={t('common.delete')}
+        danger
+        onConfirm={handleConfirmDeletePayment}
+        onCancel={() => setDeletePaymentTarget(null)}
       />
     </motion.div>
   )

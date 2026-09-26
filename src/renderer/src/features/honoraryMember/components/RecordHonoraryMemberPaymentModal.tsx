@@ -6,17 +6,20 @@ import { ReceiptFieldsSection } from '@/shared/components/receipts/ReceiptFields
 import { useHonoraryMemberStore } from '../store/honoraryMember.store'
 import { useRecordHonoraryMemberPaymentModal } from '../hooks/useRecordHonoraryMemberPaymentModal'
 import type { HonoraryMemberRegistration } from '../types/honoraryMemberRegistration.types'
+import type { ReceiptKind } from '@/shared/types/receipt.types'
 
 interface RecordHonoraryMemberPaymentModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   registration: HonoraryMemberRegistration | null
+  initialReceiptType?: ReceiptKind
 }
 
 export function RecordHonoraryMemberPaymentModal({
   open,
   onOpenChange,
-  registration
+  registration,
+  initialReceiptType
 }: RecordHonoraryMemberPaymentModalProps) {
   const { t } = useTranslation()
   const members = useHonoraryMemberStore((s) => s.members)
@@ -24,7 +27,7 @@ export function RecordHonoraryMemberPaymentModal({
     ? members.find((m) => m.id === registration.honoraryMemberId)
     : undefined
   const { form, setForm, totalAmount, officialReceiptLines, receiptFields, handleSubmit } =
-    useRecordHonoraryMemberPaymentModal(open, onOpenChange, registration)
+    useRecordHonoraryMemberPaymentModal(open, onOpenChange, registration, initialReceiptType)
 
   return (
     <Modal

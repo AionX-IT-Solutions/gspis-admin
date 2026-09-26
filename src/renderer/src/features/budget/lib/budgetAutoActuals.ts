@@ -3,7 +3,6 @@ import type { RentalBooking, RentalSpace } from '@/features/rentals/types/rental
 import type { Voucher } from '@/features/vouchers/types/vouchers.types'
 import type { PayrollEntry } from '@/features/hr/types/hr.types'
 import type { CashReceipt } from '@/features/scrd/types/cashReceipts.types'
-import type { ScoutMember } from '@/features/troops/types/troop.types'
 import {
   getExpenseVouchers,
   voucherCategory,
@@ -60,7 +59,6 @@ interface AutoActualSources {
   vouchers: Voucher[]
   payroll: PayrollEntry[]
   cashReceipts: CashReceipt[]
-  scoutMembers: ScoutMember[]
   /** User-configured overrides (see EditBudgetCategoryModal's "Source" section /
    *  budgetSourceMappings.store.ts) — a category with a non-empty mapping here is computed
    *  purely from its rules, taking over from the built-in defaults below entirely rather than
@@ -127,16 +125,6 @@ export function computeBudgetAutoActuals(
               if (!wanted.includes(r.category)) continue
               const idx = fiscalMonthIndex(r.date, fiscalYear)
               if (idx !== null) months[idx] += r.amount
-            }
-          }
-          if (rule.sourceTypes.includes('troopPayment')) {
-            const wanted = rule.troopPaymentCategories ?? []
-            for (const member of sources.scoutMembers) {
-              for (const payment of member.payments ?? []) {
-                if (!wanted.includes(payment.category)) continue
-                const idx = fiscalMonthIndex(payment.date, fiscalYear)
-                if (idx !== null) months[idx] += payment.amount
-              }
             }
           }
           if (rule.sourceTypes.includes('pos')) {

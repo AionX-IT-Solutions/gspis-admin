@@ -26,9 +26,9 @@ export interface RegistrationMember {
   beneficiary?: string
 }
 
-// The form's own top-right age-level checkboxes — a different, older taxonomy than the
-// app's TROOP_LEVELS (features/troops/types/troop.types.ts), which does not map 1:1 onto
-// this one. Kept as its own field rather than reusing TROOP_LEVELS for that reason.
+// The form's own top-right age-level checkboxes — same taxonomy/order as the app's
+// TROOP_LEVELS (features/troops/types/troop.types.ts), kept as its own field since this one
+// is frozen per filing while a Troop's `level` can keep changing year to year.
 export const REGISTRATION_AGE_LEVELS = ['Twinkler', 'Star', 'Junior', 'Senior', 'Cadet'] as const
 export type RegistrationAgeLevel = (typeof REGISTRATION_AGE_LEVELS)[number]
 
@@ -75,12 +75,22 @@ export function emptyRemittance(): RegistrationRemittance {
   }
 }
 
+/** What fraction of every peso of GSP Membership Fee actually stays with the Council (the rest
+ *  is a pass-through forwarded to National HQ) — e.g. ₱10 council share / ₱50 per-member total
+ *  = 0.2. Zero when the per-member total rate is unset/zero (avoids a divide-by-zero) rather
+ *  than throwing. Shared by councilRetainedMembershipShare below (applied to this filing's own
+ *  typed totals) and registrationPaymentStatus.ts's findRecordedMembershipPayment (applied to
+ *  what the Payment tab has actually collected so far, which can be less than the filing's
+ *  full typed total). */
+export function membershipFeeCouncilShareRatio(remittance: RegistrationRemittance): number {
+  if (remittance.membershipFeePerMemberTotal <= 0) return 0
+  return remittance.membershipFeePerMemberCouncilShare / remittance.membershipFeePerMemberTotal
+}
+
 /** The portion of the GSP Membership Fee lines that's actually the Council's own income
  *  (the rest is a pass-through forwarded to National HQ) — e.g. total remitted ₱2,000 ×
- *  (₱10 council share / ₱50 per-member total) = ₱400 retained. Zero when the per-member
- *  total rate is unset/zero (avoids a divide-by-zero) rather than throwing. */
+ *  (₱10 council share / ₱50 per-member total) = ₱400 retained. */
 export function councilRetainedMembershipShare(remittance: RegistrationRemittance): number {
-  if (remittance.membershipFeePerMemberTotal <= 0) return 0
   const totalRemitted =
     remittance.membershipFeeGirlsReReg +
     remittance.membershipFeeGirlsNew +
@@ -88,9 +98,7 @@ export function councilRetainedMembershipShare(remittance: RegistrationRemittanc
     remittance.membershipFeeLeaderNew +
     remittance.membershipFeeCoLeaderReReg +
     remittance.membershipFeeCoLeaderNew
-  const ratio =
-    remittance.membershipFeePerMemberCouncilShare / remittance.membershipFeePerMemberTotal
-  return totalRemitted * ratio
+  return totalRemitted * membershipFeeCouncilShareRatio(remittance)
 }
 
 export interface CardsIssued {
@@ -128,11 +136,8 @@ export interface TroopRegistration {
   processedByName?: string
   /** Council Executive. */
   approvedByName?: string
-  /** The approved Journal Voucher auto-created for this filing's Council-retained income
-   *  (council share of the membership fee + Troop Fee + Thinking Day Fee) — see
-   *  useTroopRegistrationForm.ts. Re-saving updates this same voucher instead of creating
-   *  a duplicate. Unset when no one with voucher-write permission has saved this filing
-   *  yet (see the permission-gated best-effort sync), or on a filing predating this. */
+  /** @deprecated Vestigial — the auto-voucher-on-save mechanism this backed was removed (see
+   *  registrationCashReceipts.ts's header comment); no code sets a new value here anymore. */
   linkedVoucherId?: string
   createdAt: string
   updatedAt: string

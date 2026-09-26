@@ -226,24 +226,26 @@ export const manualSections: ManualSection[] = [
           en: [
             'Open a troop to see its member roster, or add a new troop.',
             "Add or edit a scout member's record from within their troop's profile.",
-            'Record a Membership, Training, or Camping fee payment per member as they pay — each one feeds live into Daily Collections, SCRD, and the matching Council Budget income line (Troop/BC-DC Fees, Training Fees, or Camping Fees).',
+            "Record a Membership, Training, or Camping fee payment per member as they pay — the full amount collected always feeds Daily Collections. Training and Camping Fees (no National HQ split) also feed SCRD and their Council Budget line immediately; the GSP Membership Fee's Council-retained share only counts once its own second Council Share Receipt is printed from the Payment tab (see the tip below).",
             'Open View on a member to see their full profile alongside their payment history.'
           ],
           tl: [
             'Buksan ang troop para makita ang roster ng miyembro, o magdagdag ng bagong troop.',
             'Magdagdag o mag-edit ng record ng scout member mula sa profile ng kanilang troop.',
-            'I-record ang Membership, Training, o Camping fee ng bawat miyembro kapag nagbayad sila — direktang bahagi ito ng Daily Collections, SCRD, at ng tumutugmang income line sa Council Budget (Troop/BC-DC Fees, Training Fees, o Camping Fees).',
+            'I-record ang Membership, Training, o Camping fee ng bawat miyembro kapag nagbayad sila — palaging bahagi ng Daily Collections ang buong halagang nakolekta. Ang Training at Camping Fees (walang National HQ split) ay agad ding bahagi ng SCRD at ng Council Budget line nito; ang Council-retained share ng GSP Membership Fee ay nabibilang lang kapag na-print na ang sarili nitong pangalawang Council Share Receipt mula sa Payment tab (tingnan ang tip sa ibaba).',
             'Buksan ang View sa isang miyembro para makita ang buong profile kasama ang history ng bayad nila.'
           ]
         },
         tips: {
           en: [
             "A troop or member with any payment history can't be deleted outright — Daily Collections, SCRD, and the Council Budget all pull those payments live, so removing one would quietly shrink an already-reported day. Deactivate them instead; that hides them from the active roster without touching their history.",
-            'A payment posts to its Council Budget line the same way any other auto-tracked figure does — open Edit on that line in Budget and apply the live suggestion; it never fills in on its own.'
+            'A payment posts to its Council Budget line the same way any other auto-tracked figure does — open Edit on that line in Budget and apply the live suggestion; it never fills in on its own.',
+            "The Registrations tab's Paid/Unpaid badge is read-only — it just reflects whether the Payment tab has already recorded that troop's current Membership Fee remittance; there's no separate place to mark it paid. To recognize the Council's own retained share of that fee in SCRD/Budget, use \"Print Council Share Receipt\" on the matching row in the Payment tab — a second, internal receipt distinct from the Acknowledgment/Official Receipt already given for the full amount collected."
           ],
           tl: [
             'Hindi puwedeng burahin nang tuluyan ang troop o miyembrong may payment history — kinukuha ito nang live ng Daily Collections, SCRD, at ng Council Budget, kaya kapag tinanggal ay babawasan nito ang report ng araw na na-record na. I-deactivate na lang sila; itatago sila sa active roster nang hindi nawawala ang history.',
-            'Kapareho ng ibang auto-tracked figure, ang isang bayad ay nakikita sa Council Budget line nito — buksan ang Edit doon at i-apply ang live suggestion; hindi ito awtomatikong napupunan nang mag-isa.'
+            'Kapareho ng ibang auto-tracked figure, ang isang bayad ay nakikita sa Council Budget line nito — buksan ang Edit doon at i-apply ang live suggestion; hindi ito awtomatikong napupunan nang mag-isa.',
+            'Read-only lang ang Paid/Unpaid badge sa Registrations tab — sinasalamin lang nito kung na-record na ng Payment tab ang kasalukuyang Membership Fee remittance ng troop na iyon; walang hiwalay na lugar para markahan itong bayad na. Para mabilang ang Council-retained share ng fee na iyon sa SCRD/Budget, gamitin ang "Print Council Share Receipt" sa tumutugmang row sa Payment tab — pangalawa, internal na resibo na hiwalay sa Acknowledgment/Official Receipt na naibigay na para sa buong halagang nakolekta.'
           ]
         }
       },
@@ -256,18 +258,18 @@ export const manualSections: ManualSection[] = [
         },
         steps: {
           en: [
-            'Click New Registration and pick a troop — its header info and current roster (grouped by Patrol/Cluster) pre-fill automatically from the Troop page.',
+            'Click New Registration and pick a troop — its header info and current member roster pre-fill automatically from the Troop page (one flat list, not grouped by Patrol/Cluster).',
             "A member typed in fresh here (not yet on the roster) is added to that troop's roster automatically once saved.",
-            "Fill in the Leaders table, each Patrol/Cluster's members, the two signatures, and the Council Action Remittance section (fees, Troop No., card series, ROR/DCCR numbers).",
+            'Fill in the Leaders table, the member list, the two signatures, and the Council Action Remittance section (fees, Troop No., card series, ROR/DCCR numbers).',
             'Save to file it — each school year is kept as its own record, so a past year can always be reopened and reprinted exactly as filed.',
-            'Export prints the form in the same layout as the paper original, in Excel, PDF, or Word.'
+            'Export prints the form in the same layout as the paper original — including the "Name of Patrol/Cluster:" line, printed blank — in Excel, PDF, or Word.'
           ],
           tl: [
-            'I-click ang New Registration at pumili ng troop — awtomatikong mapupunan ang header info at kasalukuyang roster nito (nakagroup ayon sa Patrol/Cluster) mula sa Troop page.',
+            'I-click ang New Registration at pumili ng troop — awtomatikong mapupunan ang header info at kasalukuyang member roster nito (iisang flat na listahan, hindi nakagroup ayon sa Patrol/Cluster) mula sa Troop page.',
             'Ang miyembrong bagong itype dito (wala pa sa roster) ay awtomatikong madaragdag sa roster ng troop na iyon pagka-save.',
-            'Punan ang Leaders table, ang mga miyembro ng bawat Patrol/Cluster, ang dalawang lagda, at ang Council Action Remittance section (bayad, Troop No., card series, ROR/DCCR numbers).',
+            'Punan ang Leaders table, ang listahan ng miyembro, ang dalawang lagda, at ang Council Action Remittance section (bayad, Troop No., card series, ROR/DCCR numbers).',
             'I-save para maisumite ito — hiwalay na record ang bawat school year, kaya puwede palaging buksan at i-print muli ang nakaraang taon nang eksakto sa isinumite.',
-            'Ipi-print ng Export ang form gamit ang parehong layout ng orihinal na papel, sa Excel, PDF, o Word.'
+            'Ipi-print ng Export ang form gamit ang parehong layout ng orihinal na papel — kasama ang "Name of Patrol/Cluster:" na linya, naka-print na blangko — sa Excel, PDF, o Word.'
           ]
         },
         tips: {
@@ -330,10 +332,10 @@ export const manualSections: ManualSection[] = [
         },
         tips: {
           en: [
-            "Each officer's own membership fee (₱50 default, editable) is a pure pass-through to National HQ with no Council share, so it never posts to a Journal Voucher — only the B.C. Group Fee (₱15 default, one flat amount per committee, not × member count) is the Council's retained income."
+            "Each officer's own membership fee (₱50 default, editable) is a pure pass-through to National HQ with no Council share, so it never counts toward SCRD/Council Budget — only the B.C. Group Fee (₱15 default, one flat amount per committee, not × member count) is the Council's retained income, and it counts as soon as the Payment tab records it."
           ],
           tl: [
-            'Ang sariling membership fee ng bawat opisyal (₱50 default, pwedeng baguhin) ay pure pass-through sa National HQ na walang Council share, kaya hindi ito naka-post sa Journal Voucher — ang B.C. Group Fee lang (₱15 default, iisang flat amount bawat committee, hindi × bilang ng miyembro) ang retained income ng Council.'
+            'Ang sariling membership fee ng bawat opisyal (₱50 default, pwedeng baguhin) ay pure pass-through sa National HQ na walang Council share, kaya hindi ito nabibilang sa SCRD/Council Budget — ang B.C. Group Fee lang (₱15 default, iisang flat amount bawat committee, hindi × bilang ng miyembro) ang retained income ng Council, at nabibilang ito agad kapag na-record na ng Payment tab.'
           ]
         }
       },
@@ -358,10 +360,10 @@ export const manualSections: ManualSection[] = [
         },
         tips: {
           en: [
-            "Each member's own ₱50 membership fee is a pure pass-through to National HQ with no Council share, so it never posts to a Journal Voucher — only the T.G. Group Fee (₱200 default, one flat amount per guild, not × member count) is the Council's retained income."
+            "Each member's own ₱50 membership fee is a pure pass-through to National HQ with no Council share, so it never counts toward SCRD/Council Budget — only the T.G. Group Fee (₱200 default, one flat amount per guild, not × member count) is the Council's retained income, and it counts as soon as the Payment tab records it."
           ],
           tl: [
-            'Ang sariling ₱50 na membership fee ng bawat miyembro ay pure pass-through sa National HQ na walang Council share, kaya hindi ito naka-post sa Journal Voucher — ang T.G. Group Fee lang (₱200 default, iisang flat amount bawat guild, hindi × bilang ng miyembro) ang retained income ng Council.'
+            'Ang sariling ₱50 na membership fee ng bawat miyembro ay pure pass-through sa National HQ na walang Council share, kaya hindi ito nabibilang sa SCRD/Council Budget — ang T.G. Group Fee lang (₱200 default, iisang flat amount bawat guild, hindi × bilang ng miyembro) ang retained income ng Council, at nabibilang ito agad kapag na-record na ng Payment tab.'
           ]
         }
       },
@@ -386,14 +388,14 @@ export const manualSections: ManualSection[] = [
         },
         tips: {
           en: [
-            "The Membership Fee is ₱100 — only ₱25 of that is the Council's own retained income (the other ₱75 goes to National HQ), so only that ₱25 share posts to a Journal Voucher.",
+            "The Membership Fee is ₱100 — only ₱25 of that is the Council's own retained income (the other ₱75 goes to National HQ). That ₱25 only counts toward SCRD/Council Budget once its own second Council Share Receipt is printed from the Registration row — the Acknowledgment/Official Receipt given at Record Payment already covers the full ₱100 collected.",
             'The Members table shows an Active/Expired badge for each applicant based on their most recently filed Registration — the membership is treated as valid for 1 year from that date.',
-            "Deleting a Member also removes their Registrations and any Journal Voucher those posted — if payments were already collected, you'll be asked to confirm a second time before it proceeds."
+            "Deleting a Member also removes their Registrations — if a payment (and Council Share Receipt) was already recorded, you'll be asked to confirm a second time before it proceeds."
           ],
           tl: [
-            'Ang Membership Fee ay ₱100 — ₱25 lang doon ang talagang retained income ng Council (ang ₱75 ay napupunta sa National HQ), kaya ang ₱25 share lang ang naka-post sa Journal Voucher.',
+            'Ang Membership Fee ay ₱100 — ₱25 lang doon ang talagang retained income ng Council (ang ₱75 ay napupunta sa National HQ). Nabibilang lang ang ₱25 na iyon sa SCRD/Council Budget kapag na-print na ang sarili nitong pangalawang Council Share Receipt mula sa row ng Registration — ang Acknowledgment/Official Receipt na naibigay na sa Record Payment ay sakop na ang buong ₱100 na nakolekta.',
             'Nagpapakita ang Members table ng Active/Expired badge para sa bawat aplikante base sa pinakahuling na-file na Registration nila — itinuturing na valid ang membership sa loob ng 1 taon mula sa petsang iyon.',
-            'Kapag binura ang isang Member, matatanggal din ang mga Registration nila at ang Journal Voucher na naipost nito — kung may nakolekta nang bayad, hihilingin sa iyo na kumpirmahin muli bago ito magpatuloy.'
+            'Kapag binura ang isang Member, matatanggal din ang mga Registration nila — kung may nakolekta nang bayad (at Council Share Receipt), hihilingin sa iyo na kumpirmahin muli bago ito magpatuloy.'
           ]
         }
       },
@@ -416,14 +418,14 @@ export const manualSections: ManualSection[] = [
         },
         tips: {
           en: [
-            "The Membership Fee is ₱150 — only ₱60 of that is the Council's own retained income (the other ₱90 goes to National HQ), so only that ₱60 share posts to a Journal Voucher.",
+            "The Membership Fee is ₱150 — only ₱60 of that is the Council's own retained income (the other ₱90 goes to National HQ). That ₱60 only counts toward SCRD/Council Budget once its own second Council Share Receipt is printed from the Registration row — the Acknowledgment/Official Receipt given at Record Payment already covers the full ₱150 collected.",
             'The Members table shows an Active/Expired badge for each honoree based on their most recently filed Registration — the membership is treated as valid for 3 years from that date.',
-            "Deleting a Member also removes their Registrations and any Journal Voucher those posted — if payments were already collected, you'll be asked to confirm a second time before it proceeds."
+            "Deleting a Member also removes their Registrations — if a payment (and Council Share Receipt) was already recorded, you'll be asked to confirm a second time before it proceeds."
           ],
           tl: [
-            'Ang Membership Fee ay ₱150 — ₱60 lang doon ang talagang retained income ng Council (ang ₱90 ay napupunta sa National HQ), kaya ang ₱60 share lang ang naka-post sa Journal Voucher.',
+            'Ang Membership Fee ay ₱150 — ₱60 lang doon ang talagang retained income ng Council (ang ₱90 ay napupunta sa National HQ). Nabibilang lang ang ₱60 na iyon sa SCRD/Council Budget kapag na-print na ang sarili nitong pangalawang Council Share Receipt mula sa row ng Registration — ang Acknowledgment/Official Receipt na naibigay na sa Record Payment ay sakop na ang buong ₱150 na nakolekta.',
             'Nagpapakita ang Members table ng Active/Expired badge para sa bawat honoree base sa pinakahuling na-file na Registration nila — itinuturing na valid ang membership sa loob ng 3 taon mula sa petsang iyon.',
-            'Kapag binura ang isang Member, matatanggal din ang mga Registration nila at ang Journal Voucher na naipost nito — kung may nakolekta nang bayad, hihilingin sa iyo na kumpirmahin muli bago ito magpatuloy.'
+            'Kapag binura ang isang Member, matatanggal din ang mga Registration nila — kung may nakolekta nang bayad (at Council Share Receipt), hihilingin sa iyo na kumpirmahin muli bago ito magpatuloy.'
           ]
         }
       },
@@ -447,15 +449,15 @@ export const manualSections: ManualSection[] = [
         tips: {
           en: [
             'This is the one module whose Acknowledgment Receipt maps to the booklet\'s real fixed "Associate Members" row — every other individual-registration module here prints under a free-text "Others" line instead.',
-            "The Membership Fee is ₱50 — only ₱20 of that is the Council's own retained income (the other ₱30 goes to National HQ), so only that ₱20 share posts to a Journal Voucher.",
+            "The Membership Fee is ₱50 — only ₱20 of that is the Council's own retained income (the other ₱30 goes to National HQ). That ₱20 only counts toward SCRD/Council Budget once its own second Council Share Receipt is printed from the Registration row — the Acknowledgment/Official Receipt given at Record Payment already covers the full ₱50 collected.",
             'The Members table shows an Active/Expired badge for each applicant based on their most recently filed Registration — the membership is treated as valid for 1 year from that date.',
-            "Deleting a Member also removes their Registrations and any Journal Voucher those posted — if payments were already collected, you'll be asked to confirm a second time before it proceeds."
+            "Deleting a Member also removes their Registrations — if a payment (and Council Share Receipt) was already recorded, you'll be asked to confirm a second time before it proceeds."
           ],
           tl: [
             'Ito ang tanging module na ang Acknowledgment Receipt ay tumutugma sa tunay na nakatakdang "Associate Members" row ng booklet — lahat ng ibang individual-registration module dito ay naka-print sa ilalim ng free-text na "Others" line.',
-            'Ang Membership Fee ay ₱50 — ₱20 lang doon ang talagang retained income ng Council (ang ₱30 ay napupunta sa National HQ), kaya ang ₱20 share lang ang naka-post sa Journal Voucher.',
+            'Ang Membership Fee ay ₱50 — ₱20 lang doon ang talagang retained income ng Council (ang ₱30 ay napupunta sa National HQ). Nabibilang lang ang ₱20 na iyon sa SCRD/Council Budget kapag na-print na ang sarili nitong pangalawang Council Share Receipt mula sa row ng Registration — ang Acknowledgment/Official Receipt na naibigay na sa Record Payment ay sakop na ang buong ₱50 na nakolekta.',
             'Nagpapakita ang Members table ng Active/Expired badge para sa bawat aplikante base sa pinakahuling na-file na Registration nila — itinuturing na valid ang membership sa loob ng 1 taon mula sa petsang iyon.',
-            'Kapag binura ang isang Member, matatanggal din ang mga Registration nila at ang Journal Voucher na naipost nito — kung may nakolekta nang bayad, hihilingin sa iyo na kumpirmahin muli bago ito magpatuloy.'
+            'Kapag binura ang isang Member, matatanggal din ang mga Registration nila — kung may nakolekta nang bayad (at Council Share Receipt), hihilingin sa iyo na kumpirmahin muli bago ito magpatuloy.'
           ]
         }
       },
@@ -480,11 +482,11 @@ export const manualSections: ManualSection[] = [
         },
         tips: {
           en: [
-            "The GSP Membership Fee is ₱20 per member — only ₱5 of that is the Council's own retained income (the other ₱15 is forwarded to National HQ as a pure pass-through), so only that ₱5 share posts to a Journal Voucher, both from the Registration's own fee box and from each Payment tab collection. Both rates are editable in case National's split ever changes.",
+            "The GSP Membership Fee is ₱20 per member — only ₱5 of that is the Council's own retained income (the other ₱15 is forwarded to National HQ as a pure pass-through). That ₱5 only counts toward SCRD/Council Budget once its own second Council Share Receipt is printed for that payment from the Payment tab — the ICCG Registration's own fee box is filing paperwork only and never posts anything on its own; only an actual Payment tab collection can be receipted. Both rates are editable in case National's split ever changes.",
             'You can record a Payment for a Troop before ever filing an ICCG Registration for it — the fee inputs default to the standard ₱20/₱5 split. Filing a Registration afterward keeps the rate suggestion in sync going forward.'
           ],
           tl: [
-            'Ang GSP Membership Fee ay ₱20 kada miyembro — ₱5 lang doon ang talagang retained income ng Council (ang ₱15 ay ipapasa sa National HQ bilang pure pass-through), kaya ang ₱5 share lang ang naka-post sa Journal Voucher, parehong mula sa fee box ng Registration at sa bawat koleksyon sa Payment tab. Pareho itong maeedit kung sakaling magbago ang split ng National.',
+            'Ang GSP Membership Fee ay ₱20 kada miyembro — ₱5 lang doon ang talagang retained income ng Council (ang ₱15 ay ipapasa sa National HQ bilang pure pass-through). Nabibilang lang ang ₱5 na iyon sa SCRD/Council Budget kapag na-print na ang sarili nitong pangalawang Council Share Receipt para sa bayad na iyon mula sa Payment tab — ang fee box ng ICCG Registration mismo ay filing paperwork lamang at hindi kailanman awtomatikong nagpo-post; isang aktwal na koleksyon sa Payment tab lang ang puwedeng ma-receipt. Pareho itong maeedit kung sakaling magbago ang split ng National.',
             'Puwede kang magtala ng Payment para sa isang Troop kahit wala pang naisumiteng ICCG Registration para dito — ang fee inputs ay default sa standard na ₱20/₱5 split. Ang pagsumite ng Registration pagkatapos ay pinapanatiling naka-sync ang mungkahing rate paglipas ng panahon.'
           ]
         }
@@ -518,6 +520,70 @@ export const manualSections: ManualSection[] = [
             'Lahat ng figure dito ay live na kinukwenta mula sa mga module sa itaas — walang direktang tina-type dito maliban sa Goal targets.'
           ]
         }
+      },
+      {
+        key: 'membershipReports',
+        icon: <BarChart3 size={16} />,
+        summary: {
+          en: "Troops & Membership's own Daily Cash Collection Report — one record per calendar date, listing the original/gross fee collected from every payor across all 9 registration modules, matching the Council's paper form.",
+          tl: 'Sariling Daily Cash Collection Report ng Troops & Membership — isang record bawat petsa, nakalista ang orihinal/gross na bayad na nakolekta mula sa bawat payor sa lahat ng 9 na registration module, tumutugma sa paper form ng Council.'
+        },
+        steps: {
+          en: [
+            'Pick a date — every payment/remittance event recorded that day across Troops, District/Barangay Committee, Trefoil Guild, OAVF, Honorary/Associate Member, and ICCG pre-fills as its own row automatically.',
+            'Widen the date range to review a past stretch read-only, or use "Add Line" to log a same-day collection that hasn\'t gone through its own module yet.',
+            "Fill in each row's Total Deposited and Date Deposited as the cash actually gets banked, so (Under) Over Deposit reconciles to zero.",
+            "Attach scanned proof (deposit slips, etc.) the same way Accounting's own Daily Collections does, and Save once the day is complete.",
+            'Export the report as Excel, PDF, or Word, or View to preview it first.'
+          ],
+          tl: [
+            'Pumili ng petsa — bawat payment/remittance event na na-record sa araw na iyon sa Troops, District/Barangay Committee, Trefoil Guild, OAVF, Honorary/Associate Member, at ICCG ay awtomatikong mapupunan bilang sariling row.',
+            'Palawakin ang date range para suriin nang read-only ang nakaraang saklaw, o gamitin ang "Add Line" para itala ang koleksyon sa parehong araw na wala pang dumaan sa sariling module.',
+            'Punan ang Total Deposited at Date Deposited ng bawat row habang aktwal na naideposito ang cash, para maging zero ang (Under) Over Deposit.',
+            'Mag-attach ng scanned proof (deposit slips, atbp.) tulad ng ginagawa ng Daily Collections ng Accounting, at i-Save kapag kumpleto na ang araw.',
+            'I-export ang report bilang Excel, PDF, o Word, o View para i-preview muna.'
+          ]
+        },
+        tips: {
+          en: [
+            "This report deliberately shows the ORIGINAL/gross amount collected per payor, not the Council-retained share Accounting's own Daily Collections/SCRD/Council Budget recognize — the two reports track different things on purpose and won't match line for line.",
+            "Rows sharing the same physical receipt number (a Troop Leader paying more than one fee in one remittance) are merged into a single line, same as SCRD's own Cash Receipts Journal."
+          ],
+          tl: [
+            'Sadyang ipinapakita ng report na ito ang ORIHINAL/gross na halagang nakolekta bawat payor, hindi ang Council-retained share na kinikilala ng sariling Daily Collections/SCRD/Council Budget ng Accounting — sinasadyang magkaiba ang dalawang report at hindi ito magtutugma linya-por-linya.',
+            'Ang mga row na magkapareho ang pisikal na receipt number (nagbayad ang Troop Leader ng higit sa isang fee sa isang remittance) ay pinagsasama sa iisang linya, kagaya ng sariling Cash Receipts Journal ng SCRD.'
+          ]
+        }
+      },
+      {
+        key: 'troopLeaderSubmissions',
+        icon: <ClipboardList size={16} />,
+        summary: {
+          en: 'Review queue for self-registrations filed from the mobile app — a Troop Leader or member submits from their phone, and staff here Approve (creating the real Troop/Committee/Guild/Member record) or Reject it.',
+          tl: 'Review queue para sa mga self-registration na isinumite mula sa mobile app — nagsusumite ang isang Troop Leader o miyembro gamit ang kanilang telepono, at dito ina-Approve (gumagawa ng tunay na Troop/Committee/Guild/Member record) o ina-Reject ito ng staff.'
+        },
+        steps: {
+          en: [
+            'Switch tabs to review a specific category — Troop, District/Barangay Committee, Trefoil Guild, OAVF, Honorary/Associate Member, or ICCG.',
+            'Click View to see everything the mobile submitter entered before deciding.',
+            'Approve to create the real record from the submission; Reject to send it back with a required note, which the submitter sees in their own My Registrations screen.',
+            'A still-pending submission can also be deleted outright if it was filed in error.'
+          ],
+          tl: [
+            'Lumipat ng tab para suriin ang partikular na category — Troop, District/Barangay Committee, Trefoil Guild, OAVF, Honorary/Associate Member, o ICCG.',
+            'I-click ang View para makita lahat ng inilagay ng mobile submitter bago magpasya.',
+            'I-Approve para gawin ang tunay na record mula sa submission; I-Reject para ibalik ito na may kasamang required na note, na makikita ng submitter sa sarili nilang My Registrations screen.',
+            'Puwede ring buburahin nang tuluyan ang submission na pending pa kung mali itong naisumite.'
+          ]
+        },
+        tips: {
+          en: [
+            "Approving doesn't touch Cash Receipts/SCRD/Council Budget by itself — those still only recognize a fee once it's actually recorded through the resulting record's own Payment tab, same as any other registration filed directly by staff."
+          ],
+          tl: [
+            'Hindi direktang nagbabago ang Approve sa Cash Receipts/SCRD/Council Budget — nakikilala pa rin ang isang bayad kapag na-record na talaga ito sa Payment tab ng resultang record, kagaya ng kahit anong registration na direktang inisumite ng staff.'
+          ]
+        }
       }
     ]
   },
@@ -536,14 +602,14 @@ export const manualSections: ManualSection[] = [
           en: [
             "Review each line item's budgeted amount against its actual monthly spend.",
             "Accountants can update a line item's budgeted amount or monthly actuals; Managers can view but not edit.",
-            'Open Edit on a line item and use its "Source" section to link it to where its actual figures should come from — for an income line, pick from Cash Receipt categories (e.g. "BC Group Fee", "ICCG Registration Fee"), Troop roster payments, Point of Sale, or Rentals; for an expense line, pick voucher account names or a Payroll field. A line can combine more than one source at once.',
+            'Open Edit on a line item and use its "Source" section to link it to where its actual figures should come from — for an income line, tick the Cash Receipt categories that fund it (every registration module\'s fee, e.g. "Membership", "BC Group Fee", "ICCG Registration Fee" — Troop\'s own per-member roster payments are checkboxes here too, not a separate source), Point of Sale, or Rentals; for an expense line, pick voucher account names or a Payroll field. A line can combine more than one source at once.',
             'Switch between fiscal years with the selector at the top, or start a new one with "New Fiscal Year" once the current one wraps up.',
             'Use Export (top right) to download the report as Excel, PDF, or Word, or View to preview it first.'
           ],
           tl: [
             'Suriin ang budgeted amount ng bawat line item kumpara sa aktwal na ginastos bawat buwan.',
             'Pwedeng i-update ng Accountant ang budgeted amount o monthly actuals; ang Manager ay makakatingin lang, hindi makakapag-edit.',
-            'Buksan ang Edit sa isang line item at gamitin ang "Source" section nito para i-link kung saan dapat kunin ang aktwal na figures — para sa income line, pumili mula sa Cash Receipt categories (hal. "BC Group Fee", "ICCG Registration Fee"), Troop roster payments, Point of Sale, o Rentals; para sa expense line, pumili ng voucher account name o Payroll field. Pwedeng pagsamahin ang higit sa isang source sa isang line.',
+            'Buksan ang Edit sa isang line item at gamitin ang "Source" section nito para i-link kung saan dapat kunin ang aktwal na figures — para sa income line, tsekan ang mga Cash Receipt category na pinagmumulan nito (bayad ng bawat registration module, hal. "Membership", "BC Group Fee", "ICCG Registration Fee" — checkbox din dito ang sariling per-member roster payments ng Troop, hindi ito hiwalay na source), Point of Sale, o Rentals; para sa expense line, pumili ng voucher account name o Payroll field. Pwedeng pagsamahin ang higit sa isang source sa isang line.',
             'Lumipat sa ibang fiscal year gamit ang selector sa itaas, o magsimula ng bago gamit ang "New Fiscal Year" kapag tapos na ang kasalukuyan.',
             'Gamitin ang Export (kanang itaas) para i-download ang report bilang Excel, PDF, o Word, o View para i-preview muna.'
           ]
@@ -552,13 +618,13 @@ export const manualSections: ManualSection[] = [
           en: [
             'Sub-totals and group totals (e.g. Total Operating Income, Total Capital Expense) are bold both on screen and in every exported format.',
             'A lightning-bolt icon next to a line item means it has a Source linked and the app has a live figure ready for it — open Edit to review and apply it; it never overwrites your entry on its own. A line with no Source configured stays fully manual — there is no automatic guessing.',
-            'Linking a Source only works if the category you pick matches the exact account name a voucher actually posts under (see the Vouchers module) — otherwise nothing will match and the figure stays at zero.',
+            "An income line's Source is a fixed checklist, so there's no typo risk — every category you can tick is a real one some module actually posts under. An expense line's Source is still free text (matched against a Check Voucher's GL Account) — spell it exactly the same, or nothing will match and the figure stays at zero (see the Vouchers module).",
             "Every export prints each line item's own Jul-Jun monthly breakdown, and closes Income and Expenses out with their own SUMMARY recap (Operations/Capital/Other, then a Grand Total) — matching the Council's own paper budget form."
           ],
           tl: [
             'Bold ang mga sub-total at group total (hal. Total Operating Income, Total Capital Expense) sa screen at sa lahat ng na-export na format.',
             'Ang lightning-bolt icon sa tabi ng isang line item ay nangangahulugang may naka-link nang Source at may live figure na ang app para dito — buksan ang Edit para suriin at ilapat ito; hindi ito automatic na papalit sa iyong entry. Ang line na walang naka-configure na Source ay mananatiling fully manual — walang automatic na paghula.',
-            'Gagana lang ang pag-link ng Source kung ang category na pinili mo ay eksaktong tumutugma sa account name na talagang ginagamit ng voucher (tingnan ang Vouchers module) — kung hindi, walang mata-match at mananatiling zero ang figure.',
+            'Ang Source ng income line ay fixed na checklist, kaya walang typo risk — bawat category na puwede mong tsekan ay tunay na ginagamit ng ilang module. Ang Source ng expense line ay free text pa rin (itinutugma sa GL Account ng Check Voucher) — i-spell nang eksakto, kung hindi walang mata-match at mananatiling zero ang figure (tingnan ang Vouchers module).',
             'Isinasama ng bawat export ang buwanang breakdown (Jul-Jun) ng bawat line item, at tinatapos ang Income at Expenses ng sarili nilang SUMMARY (Operations/Capital/Other, tapos Grand Total) — tulad ng orihinal na paper budget form ng Council.'
           ]
         }
@@ -591,7 +657,7 @@ export const manualSections: ManualSection[] = [
         steps: {
           en: [
             "Create a Disbursement Voucher for each payment out: who it's paid to, the amount, and what it covers. Voucher No. is suggested automatically but editable, to match a pre-numbered paper voucher already written by hand.",
-            'To record incoming cash instead — a grant, membership fee, or other receipt not already covered by Point of Sale, Invoices, or a Troop payment — create a Journal Voucher and enter it under Account Titles (Credit) instead of (Debit). A Disbursement Voucher can itemize its credit side too (e.g. splitting between a bank account and a payable) instead of relying on the single Bank Account field.',
+            "To record incoming cash instead — a grant, interest income, or other receipt not already covered by Point of Sale, Invoices, Rentals, or a Troops & Membership module's own fee/Payment tab (those already post on their own; see each module's Payment tab / SCRD) — create a Journal Voucher and enter it under Account Titles (Credit) instead of (Debit). A Disbursement Voucher can itemize its credit side too (e.g. splitting between a bank account and a payable) instead of relying on the single Bank Account field.",
             'Add an optional Description next to any account title — it prints on the export as "Account - Description" (e.g. "Salary - March 16-31, 2026").',
             'Liquidating a cash advance? On a Journal Voucher, use the Cash Advance Liquidation section: pick the Disbursement Voucher that released the advance, then enter Total Amount Spent, Amount Refunded, and the refund O.R. number/date.',
             "Recording a receipt-direction (income) voucher? Attach the physical Service Invoice or Acknowledgment Receipt booklet number used for it — it then shows on the voucher itself and in SCRD's Cash Receipts Journal, and you can print or reprint it straight from the Vouchers list.",
@@ -599,7 +665,7 @@ export const manualSections: ManualSection[] = [
           ],
           tl: [
             'Gumawa ng Disbursement Voucher para sa bawat binayaran: kanino binayaran, magkano, at para saan. Automatic na iminumungkahi ang Voucher No. pero pwedeng i-edit, para tumugma sa numero na nakasulat na sa pre-numbered na papel na voucher.',
-            'Para magrekord ng papasok na pera — grant, membership fee, o ibang resibo na hindi pa saklaw ng Point of Sale, Invoices, o troop payment — gumawa ng Journal Voucher at ilagay ito sa Account Titles (Credit) sa halip na (Debit). Pwede ring i-itemize ang credit side ng isang Disbursement Voucher (hal. hatiin sa bank account at payable) sa halip na umasa lang sa iisang Bank Account field.',
+            'Para magrekord ng papasok na pera — grant, interest income, o ibang resibo na hindi pa saklaw ng Point of Sale, Invoices, Rentals, o sariling fee/Payment tab ng isang Troops & Membership module (awtomatiko na itong naitatala sa sarili nito; tingnan ang Payment tab ng bawat module / SCRD) — gumawa ng Journal Voucher at ilagay ito sa Account Titles (Credit) sa halip na (Debit). Pwede ring i-itemize ang credit side ng isang Disbursement Voucher (hal. hatiin sa bank account at payable) sa halip na umasa lang sa iisang Bank Account field.',
             'Magdagdag ng opsyonal na Description sa tabi ng kahit anong account title — lalabas ito sa export bilang "Account - Description" (hal. "Salary - March 16-31, 2026").',
             'Nag-liliquidate ng cash advance? Sa Journal Voucher, gamitin ang Cash Advance Liquidation section: piliin ang Disbursement Voucher na naglabas ng advance, pagkatapos ilagay ang Total Amount Spent, Amount Refunded, at ang O.R. number/date ng refund.',
             'Nagrerecord ng receipt-direction (income) na voucher? I-attach ang booklet number ng aktwal na Service Invoice o Acknowledgment Receipt na ginamit — lalabas ito sa voucher mismo at sa Cash Receipts Journal ng SCRD, at puwede mo itong i-print o i-reprint direkta mula sa Vouchers list.',
@@ -633,15 +699,17 @@ export const manualSections: ManualSection[] = [
         steps: {
           en: [
             'Pick the report and period you need.',
-            'Daily Collections automatically rolls up cash from Point of Sale sales, paid invoices, confirmed rental bookings, and registration fees — approved BC Group Fee and ICCG Registration Fee vouchers land in their own "BC Fee"/"ICCG" columns, the same way Membership and Rentals do; anything else that doesn\'t fit a fixed column lands under "Others".',
+            'Daily Collections automatically rolls up cash from Point of Sale sales, paid invoices, confirmed rental bookings, and registration fees — the Council-retained share of BC Group Fee and ICCG Registration Fee payments land in their own "BC Fee"/"ICCG" columns, the same way Membership and Rentals do; anything else that doesn\'t fit a fixed column lands under "Others".',
             "Use the manual rows only to log same-day cash that hasn't gone through its own module yet (e.g. dues collected in person before the Registration is filed) — avoid re-entering an amount that's already showing up as an automatic row.",
+            "This is Accounting's own daily cash blotter (every peso physically collected, in full) — Troops & Membership has its own parallel Daily Cash Collection Report under Membership Reports, which instead shows each payor's original/gross amount collected, not the Council-retained share this one tracks.",
             "Attach scanned proof (deposit slips, etc.) to a day's report, and open one to preview it in-app or download it — nothing opens in an outside browser.",
             'Export a report when you need a printable or shareable copy.'
           ],
           tl: [
             'Piliin ang report at panahon na kailangan.',
-            'Ang Daily Collections ay automatic na nagro-roll up ng cash mula sa Point of Sale sales, bayad na invoice, kumpirmadong rental booking, at registration fees — ang approved na BC Group Fee at ICCG Registration Fee vouchers ay napupunta sa sarili nilang "BC Fee"/"ICCG" column, kagaya ng Membership at Rentals; anumang hindi nababagay sa nakatakdang column ay napupunta sa "Others".',
+            'Ang Daily Collections ay automatic na nagro-roll up ng cash mula sa Point of Sale sales, bayad na invoice, kumpirmadong rental booking, at registration fees — ang Council-retained share ng BC Group Fee at ICCG Registration Fee payments ay napupunta sa sarili nilang "BC Fee"/"ICCG" column, kagaya ng Membership at Rentals; anumang hindi nababagay sa nakatakdang column ay napupunta sa "Others".',
             'Gamitin lang ang manual rows para itala ang cash na nakolekta sa parehong araw na wala pang dumaan sa sariling module (hal. dues na nakolekta in person bago pa ma-file ang Registration) — iwasan ang muling pag-enter ng amount na lumalabas na bilang automatic row.',
+            'Ito ang sariling daily cash blotter ng Accounting (bawat pisong pisikal na nakolekta, buo) — may sarili namang parehong Daily Cash Collection Report ang Troops & Membership sa ilalim ng Membership Reports, na sa halip ay nagpapakita ng orihinal/gross na halagang nakolekta ng bawat payor, hindi ang Council-retained share na sinusubaybayan nito.',
             'Mag-attach ng scanned proof (deposit slips, atbp.) sa report ng isang araw, at buksan ang isa para i-preview ito sa loob ng app o i-download — walang bubukas sa panlabas na browser.',
             'I-export ang report kapag kailangan ng printable o mai-share na kopya.'
           ]
@@ -656,14 +724,16 @@ export const manualSections: ManualSection[] = [
         },
         steps: {
           en: [
-            "Receipts and disbursements here aren't entered directly — they roll up automatically from Point of Sale, Invoices, Rentals, Troop payments, and approved Vouchers (see Vouchers for recording a receipt that isn't covered elsewhere).",
+            "Receipts and disbursements here aren't entered directly — they roll up automatically from Point of Sale, Invoices, Rentals, every Troops & Membership registration module's own fee/Payment tab records, and approved Vouchers (see Vouchers for recording a receipt that isn't covered elsewhere).",
             "The account's current balance recalculates automatically — you never type that number in directly.",
-            'The Cash Receipts Journal shows which physical receipt booklet (Service Invoice or Acknowledgment Receipt) and O.R./A.R. number backs each entry, when the posting voucher had one attached.'
+            'The Cash Receipts Journal shows which physical receipt booklet (Service Invoice or Acknowledgment Receipt) and O.R./A.R. number backs each entry, when one was recorded for it.',
+            'Rows sharing the same O.R./A.R. number are the same physical receipt handed over together (e.g. a Troop Leader paying Membership and Troop Fee in one remittance) — the Journal (and its Excel/PDF/Word export) merges them into a single line with a combined amount and category, "isang resibo, isang entry".'
           ],
           tl: [
-            'Hindi dito direktang inilalagay ang mga receipt at disbursement — awtomatiko itong buhat sa Point of Sale, Invoices, Rentals, troop payments, at Approved na Vouchers (tingnan ang Vouchers para magrekord ng receipt na wala pang saklaw dito).',
+            'Hindi dito direktang inilalagay ang mga receipt at disbursement — awtomatiko itong buhat sa Point of Sale, Invoices, Rentals, sariling fee/Payment tab record ng bawat Troops & Membership registration module, at Approved na Vouchers (tingnan ang Vouchers para magrekord ng receipt na wala pang saklaw dito).',
             'Automatic na nagre-recalculate ang current balance ng account — hindi mo ito direktang tina-type.',
-            'Ipinapakita ng Cash Receipts Journal kung aling physical receipt booklet (Service Invoice o Acknowledgment Receipt) at O.R./A.R. number ang bumabalik sa bawat entry, kapag may naka-attach na ito sa nag-post na voucher.'
+            'Ipinapakita ng Cash Receipts Journal kung aling physical receipt booklet (Service Invoice o Acknowledgment Receipt) at O.R./A.R. number ang bumabalik sa bawat entry, kapag mayroon nitong naitala.',
+            'Ang mga row na magkapareho ang O.R./A.R. number ay iisang pisikal na resibo na sabay na inabot (hal. nagbayad ang Troop Leader ng Membership at Troop Fee sa isang remittance) — pinagsasama ito ng Journal (at ng Excel/PDF/Word export nito) sa iisang linya na may pinagsamang halaga at kategorya, "isang resibo, isang entry".'
           ]
         }
       },

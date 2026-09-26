@@ -6,23 +6,26 @@ import { ReceiptFieldsSection } from '@/shared/components/receipts/ReceiptFields
 import { useOavfMemberStore } from '../store/oavfMember.store'
 import { useRecordOavfPaymentModal } from '../hooks/useRecordOavfPaymentModal'
 import type { OavfRegistration } from '../types/oavf.types'
+import type { ReceiptKind } from '@/shared/types/receipt.types'
 
 interface RecordOavfPaymentModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   registration: OavfRegistration | null
+  initialReceiptType?: ReceiptKind
 }
 
 export function RecordOavfPaymentModal({
   open,
   onOpenChange,
-  registration
+  registration,
+  initialReceiptType
 }: RecordOavfPaymentModalProps) {
   const { t } = useTranslation()
   const members = useOavfMemberStore((s) => s.members)
   const member = registration ? members.find((m) => m.id === registration.oavfMemberId) : undefined
   const { form, setForm, totalAmount, officialReceiptLines, receiptFields, handleSubmit } =
-    useRecordOavfPaymentModal(open, onOpenChange, registration)
+    useRecordOavfPaymentModal(open, onOpenChange, registration, initialReceiptType)
 
   return (
     <Modal

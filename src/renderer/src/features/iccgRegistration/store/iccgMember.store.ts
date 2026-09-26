@@ -47,18 +47,18 @@ interface IccgMemberState {
      *  this transaction's bulkPaymentId. */
     receipt?: ReceiptRecord
   }) => { bulkPaymentId: string; payments: MemberPayment[] }
-  // Saves the voucher id postBulkPaymentVoucher() returned back onto every payment of this
-  // transaction — a plumbing follow-up to addBulkPayment, not a user-facing action.
-  attachBulkPaymentVoucher: (paymentIds: string[], voucherId: string) => void
   // Corrects a whole transaction's date/paid-by after the fact — applies to every entry
-  // sharing `bulkKey`. Returns this transaction's payments (post-update) so the caller can
-  // rebuild its shared voucher's account lines.
+  // sharing `bulkKey`.
   updatePaymentGroup: (input: { bulkKey: string; date: string; paidByName: string }) => {
     payments: MemberPayment[]
   }
-  // Removes every entry sharing `bulkKey` — the whole transaction. Returns the removed
-  // payments so the caller can also delete their shared linked voucher.
+  // Removes every entry sharing `bulkKey` — the whole transaction.
   deletePaymentGroup: (bulkKey: string) => { removedPayments: MemberPayment[] }
+  // Stamps the printed council-share receipt (see PrintCouncilShareReceiptModal) onto every
+  // payment sharing `bulkKey` — mirrors features/troops/store/troops.store.ts's
+  // setMembershipCouncilShareReceipt, simpler here since every ICCG payment category (unlike
+  // Troops' mix of Membership/flat fees) carries its own council-share portion.
+  setCouncilShareReceipt: (input: { bulkKey: string; receipt: ReceiptRecord }) => void
 }
 
 export const useIccgMemberStore = create<IccgMemberState>()((set, get) => ({
@@ -160,24 +160,6 @@ export const useIccgMemberStore = create<IccgMemberState>()((set, get) => ({
     return { bulkPaymentId, payments }
   },
 
-  attachBulkPaymentVoucher: (paymentIds, voucherId) => {
-    const idSet = new Set(paymentIds)
-    set((s) => ({
-      members: s.members.map((m) =>
-        (m.payments ?? []).some((p) => idSet.has(p.id))
-          ? {
-              ...m,
-              payments: (m.payments ?? []).map((p) =>
-                idSet.has(p.id) ? { ...p, linkedVoucherId: voucherId } : p
-              )
-            }
-          : m
-      )
-    }))
-    const affected = get().members.filter((m) => (m.payments ?? []).some((p) => idSet.has(p.id)))
-    for (const member of affected) persist('iccgMembers', member.id, member)
-  },
-
   updatePaymentGroup: ({ bulkKey, date, paidByName }) => {
     const payments: MemberPayment[] = []
     const affectedIds = new Set(
@@ -243,5 +225,38 @@ export const useIccgMemberStore = create<IccgMemberState>()((set, get) => ({
     })
 
     return { removedPayments }
+  },
+
+  setCouncilShareReceipt: ({ bulkKey, receipt }) => {
+    const affectedIds = new Set(
+      get()
+        .members.filter((m) =>
+          (m.payments ?? []).some((p) => (p.bulkPaymentId ?? p.id) === bulkKey)
+        )
+        .map((m) => m.id)
+    )
+    if (affectedIds.size === 0) return
+
+    set((s) => ({
+      members: s.members.map((m) =>
+        affectedIds.has(m.id)
+          ? {
+              ...m,
+              payments: (m.payments ?? []).map((p) =>
+                (p.bulkPaymentId ?? p.id) === bulkKey ? { ...p, councilShareReceipt: receipt } : p
+              )
+            }
+          : m
+      )
+    }))
+    const updatedMembers = get().members.filter((m) => affectedIds.has(m.id))
+    for (const member of updatedMembers) persist('iccgMembers', member.id, member)
+
+    appendAuditLog({
+      action: 'iccg_council_share_receipt_printed',
+      actorName: actorName(),
+      entityType: 'iccg_member',
+      summary: `Council-share receipt ${receipt.receiptNumber} printed for an ICCG payment.`
+    })
   }
 }))

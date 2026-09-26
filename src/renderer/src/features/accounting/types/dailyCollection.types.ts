@@ -1,10 +1,9 @@
-import type { ReceiptRecord } from '@/shared/types/receipt.types'
-
 /** One receipt line the staff entered by hand — for cash collected in person that hasn't
  *  (yet) been recorded through an automated source (a POS sale, a rental, a troop/committee
- *  registration or bulk payment). BC Fee and ICCG do also have an automated source now (an
- *  approved Barangay Committee/ICCG Registration voucher — see useDailyCollectionsTab.ts's
- *  rawAutoReceiptRows), which lands in these same columns automatically; this manual line is
+ *  registration or bulk payment). BC Fee, DC Fee, TG Fee, ICCG, and Troop Fee/Thinking Day Fee
+ *  do also have an automated source now — the same merged Cash Receipts source SCRD/Council
+ *  Budget/Income Statement already pull from (see useDailyCollectionsTab.ts's
+ *  rawAutoReceiptRows) — which lands in these same columns automatically; this manual line is
  *  only for topping up same-day cash that hasn't gone through that flow yet. Mirrors the
  *  Council's real "Daily Cash Collection Report" columns exactly. */
 export interface ManualReceiptLine {
@@ -13,12 +12,18 @@ export interface ManualReceiptLine {
   receivedFrom: string
   nes: number
   bcFee: number
+  dcFee: number
+  tgFee: number
   csf: number
   iccg: number
   memReg: number
   rentals: number
   refundOfCa: number
-  others: number
+  troopFee: number
+  thinkingDay: number
+  oavfFee: number
+  honoraryFee: number
+  associateMemberFee: number
 }
 
 export interface CashDepositLine {
@@ -36,12 +41,6 @@ export interface CashDepositLine {
    *  correctly regardless of how a deposit is dated. */
   coverageFrom?: string
   coverageTo?: string
-  /** The internal-transmittal receipt printed for handing this cash over for deposit (see
-   *  PrintDepositReceiptModal) — deliberately NOT backed by a Journal Voucher, since the
-   *  income it represents was already recorded once when the underlying sale/booking/
-   *  payment happened; this is proof of custody transfer only, not a new receipt of income.
-   *  Unset until printed. */
-  receipt?: ReceiptRecord
 }
 
 export interface DailyCollectionAttachment {

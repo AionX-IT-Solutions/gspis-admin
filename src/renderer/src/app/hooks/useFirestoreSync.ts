@@ -40,6 +40,7 @@ import { useAssociateMemberRegistrationStore } from '@/features/associateMember/
 import { useIccgRegistrationStore } from '@/features/iccgRegistration/store/iccgRegistration.store'
 import { useIccgMemberStore } from '@/features/iccgRegistration/store/iccgMember.store'
 import { useMembershipGoalsStore } from '@/features/membershipStatusReport/store/membershipGoals.store'
+import { useMembershipDailyCollectionsStore } from '@/features/membershipReports/store/membershipDailyCollections.store'
 
 /**
  * Loads every module's data from Firestore once per session (each store seeds its own
@@ -93,6 +94,7 @@ export function useFirestoreSync() {
   const hydrateIccgRegistration = useIccgRegistrationStore((s) => s.hydrate)
   const hydrateIccgMember = useIccgMemberStore((s) => s.hydrate)
   const hydrateMembershipGoals = useMembershipGoalsStore((s) => s.hydrate)
+  const hydrateMembershipDailyCollections = useMembershipDailyCollectionsStore((s) => s.hydrate)
 
   useEffect(() => {
     hydrateHR()
@@ -136,6 +138,7 @@ export function useFirestoreSync() {
     hydrateIccgRegistration()
     hydrateIccgMember()
     hydrateMembershipGoals()
+    hydrateMembershipDailyCollections()
   }, [
     hydrateHR,
     hydrateAccounting,
@@ -177,6 +180,7 @@ export function useFirestoreSync() {
     hydrateAssociateMemberRegistration,
     hydrateIccgRegistration,
     hydrateIccgMember,
-    hydrateMembershipGoals
+    hydrateMembershipGoals,
+    hydrateMembershipDailyCollections
   ])
 }

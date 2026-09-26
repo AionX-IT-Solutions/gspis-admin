@@ -63,8 +63,6 @@ function describeSourceType(type: BudgetSourceType, rule: BudgetSourceRule, t: T
   let detail = ''
   if (type === 'voucher' && rule.voucherCategories?.length) {
     detail = rule.voucherCategories.join(', ')
-  } else if (type === 'troopPayment' && rule.troopPaymentCategories?.length) {
-    detail = rule.troopPaymentCategories.join(', ')
   } else if (type === 'rental' && rule.rentalSpaceCategory) {
     detail = rule.rentalSpaceCategory
   } else if (type === 'payroll' && rule.payrollField) {

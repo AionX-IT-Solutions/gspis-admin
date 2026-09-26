@@ -6,9 +6,11 @@ import { Button } from '@/shared/components/ui/Button'
 import { FormField, FieldInput, FieldSelect } from '@/shared/components/ui/FormField'
 import { SuggestInput } from '@/shared/components/ui/SuggestInput'
 import { formatCurrency } from '@/shared/lib/utils'
-import { CASH_RECEIPT_CATEGORIES } from '@/features/scrd/types/cashReceipts.types'
+import {
+  CASH_RECEIPT_CATEGORIES,
+  type CashReceiptCategory
+} from '@/features/scrd/types/cashReceipts.types'
 import type { RentalSpaceCategory } from '@/features/rentals/types/rentals.types'
-import type { MemberPaymentCategory } from '@/features/troops/types/troop.types'
 import type { PayrollEntry } from '@/features/hr/types/hr.types'
 import { PAYROLL_FIELD_OPTIONS } from '../lib/budgetAutoActuals'
 import { BUDGET_MONTH_LABELS, type BudgetCategory } from '../types/budget.types'
@@ -18,9 +20,8 @@ import type {
   BudgetSourceType
 } from '../types/budgetSourceMapping.types'
 
-const TROOP_PAYMENT_CATEGORIES: MemberPaymentCategory[] = ['membership', 'training', 'camping']
 const RENTAL_SPACE_CATEGORIES: RentalSpaceCategory[] = ['hall', 'room', 'space']
-const INCOME_SOURCE_TYPES: BudgetSourceType[] = ['voucher', 'troopPayment', 'pos', 'rental']
+const INCOME_SOURCE_TYPES: BudgetSourceType[] = ['voucher', 'pos', 'rental']
 const EXPENSE_SOURCE_TYPES: BudgetSourceType[] = ['voucher', 'payroll']
 
 interface EditBudgetCategoryModalProps {
@@ -68,7 +69,6 @@ export function EditBudgetCategoryModal({
   const totalActual = monthlyActuals.reduce((s, v) => s + v, 0)
   const isIncome = category?.section === 'income'
   const sourceTypes = isIncome ? INCOME_SOURCE_TYPES : EXPENSE_SOURCE_TYPES
-  const voucherSuggestions = isIncome ? CASH_RECEIPT_CATEGORIES : expenseVoucherCategorySuggestions
 
   function updateRule(index: number, patch: Partial<BudgetSourceRule>) {
     setRules((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)))
@@ -85,19 +85,16 @@ export function EditBudgetCategoryModal({
       voucherCategories: sourceTypes.includes('voucher')
         ? (rule.voucherCategories ?? [])
         : undefined,
-      troopPaymentCategories: sourceTypes.includes('troopPayment')
-        ? (rule.troopPaymentCategories ?? [])
-        : undefined,
       rentalSpaceCategory: sourceTypes.includes('rental') ? rule.rentalSpaceCategory : undefined,
       payrollField: sourceTypes.includes('payroll') ? rule.payrollField : undefined
     })
   }
 
-  function toggleTroopPaymentCategory(index: number, cat: MemberPaymentCategory) {
+  function toggleVoucherCategory(index: number, cat: string) {
     const rule = rules[index]
-    const current = rule.troopPaymentCategories ?? []
+    const current = rule.voucherCategories ?? []
     updateRule(index, {
-      troopPaymentCategories: current.includes(cat)
+      voucherCategories: current.includes(cat)
         ? current.filter((c) => c !== cat)
         : [...current, cat]
     })
@@ -120,7 +117,6 @@ export function EditBudgetCategoryModal({
 
   const sourceTypeLabels: Record<BudgetSourceType, string> = {
     voucher: t('budget.editModal.source.sourceTypeVoucher'),
-    troopPayment: t('budget.editModal.source.sourceTypeTroopPayment'),
     pos: t('budget.editModal.source.sourceTypePos'),
     rental: t('budget.editModal.source.sourceTypeRental'),
     payroll: t('budget.editModal.source.sourceTypePayroll')
@@ -350,49 +346,30 @@ export function EditBudgetCategoryModal({
                       </button>
                     </div>
 
-                    {rule.sourceTypes.includes('voucher') && (
-                      <VoucherCategoryChips
-                        suggestions={voucherSuggestions}
-                        values={rule.voucherCategories ?? []}
-                        onAdd={(v) =>
-                          updateRule(i, {
-                            voucherCategories: [...(rule.voucherCategories ?? []), v]
-                          })
-                        }
-                        onRemove={(v) =>
-                          updateRule(i, {
-                            voucherCategories: (rule.voucherCategories ?? []).filter((x) => x !== v)
-                          })
-                        }
-                      />
-                    )}
-
-                    {rule.sourceTypes.includes('troopPayment') && (
-                      <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-                        {TROOP_PAYMENT_CATEGORIES.map((cat) => (
-                          <label
-                            key={cat}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 6,
-                              fontSize: 12.5,
-                              color: 'var(--text-secondary)',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={(rule.troopPaymentCategories ?? []).includes(cat)}
-                              onChange={() => toggleTroopPaymentCategory(i, cat)}
-                            />
-                            {t(
-                              `troops.roster.payment.category${cat[0].toUpperCase()}${cat.slice(1)}`
-                            )}
-                          </label>
-                        ))}
-                      </div>
-                    )}
+                    {rule.sourceTypes.includes('voucher') &&
+                      (isIncome ? (
+                        <CashReceiptCategoryCheckboxes
+                          values={rule.voucherCategories ?? []}
+                          onToggle={(cat) => toggleVoucherCategory(i, cat)}
+                        />
+                      ) : (
+                        <VoucherCategoryChips
+                          suggestions={expenseVoucherCategorySuggestions}
+                          values={rule.voucherCategories ?? []}
+                          onAdd={(v) =>
+                            updateRule(i, {
+                              voucherCategories: [...(rule.voucherCategories ?? []), v]
+                            })
+                          }
+                          onRemove={(v) =>
+                            updateRule(i, {
+                              voucherCategories: (rule.voucherCategories ?? []).filter(
+                                (x) => x !== v
+                              )
+                            })
+                          }
+                        />
+                      ))}
 
                     {rule.sourceTypes.includes('rental') && (
                       <FieldSelect
@@ -437,6 +414,45 @@ export function EditBudgetCategoryModal({
         )}
       </div>
     </Modal>
+  )
+}
+
+interface CashReceiptCategoryCheckboxesProps {
+  values: string[]
+  onToggle: (category: CashReceiptCategory) => void
+}
+
+// Every income line links against CashReceiptCategory — a closed, canonical list (every
+// category any of the 9 registration modules/POS/Rentals/manual entries can ever post under,
+// see cashReceipts.types.ts) — so unlike an expense line's genuinely free-text GL Account name,
+// there's no need for free text + suggestions here: checkboxes make every choice precise
+// (no typos silently matching nothing) and complete (every real category is always listed).
+function CashReceiptCategoryCheckboxes({ values, onToggle }: CashReceiptCategoryCheckboxesProps) {
+  const { t } = useTranslation()
+  return (
+    <div>
+      <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>
+        {t('budget.editModal.source.voucherCategoriesLabel')}
+      </p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+        {CASH_RECEIPT_CATEGORIES.map((cat) => (
+          <label
+            key={cat}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              fontSize: 12.5,
+              color: 'var(--text-secondary)',
+              cursor: 'pointer'
+            }}
+          >
+            <input type="checkbox" checked={values.includes(cat)} onChange={() => onToggle(cat)} />
+            {cat}
+          </label>
+        ))}
+      </div>
+    </div>
   )
 }
 

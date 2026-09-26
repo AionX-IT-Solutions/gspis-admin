@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Tent, Plus, Pencil, Users, UserX, Trash2, Eye, Printer } from 'lucide-react'
+import { Tent, Plus, Pencil, Users, UserX, Trash2, Eye, Printer, Landmark } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/shared/components/ui/Card'
@@ -24,9 +24,11 @@ import { statusColumn, actionsColumn } from '@/shared/lib/columnHelpers'
 import { formatDate, formatAmount } from '@/shared/lib/utils'
 import { usePermissions } from '@/app/hooks/usePermissions'
 import { useToast } from '@/app/hooks/useToast'
+import { useAppStore } from '@/app/store/app.store'
 import { usePrinterDeviceName } from '@/shared/hooks/usePrinterDeviceName'
 import { printReceipt } from '@/shared/lib/receiptPrint'
-import type { ReceiptRecord } from '@/shared/types/receipt.types'
+import { ReceiptTypePickerModal } from '@/shared/components/receipts/ReceiptTypePickerModal'
+import type { ReceiptKind, ReceiptRecord } from '@/shared/types/receipt.types'
 import { useTroopRegistrations } from '@/features/troopRegistration/hooks/useTroopRegistrations'
 import { useTroopRegistrationStore } from '@/features/troopRegistration/store/troopRegistration.store'
 import { TroopPickerModal } from '@/features/troopRegistration/components/TroopPickerModal'
@@ -35,9 +37,14 @@ import type { FlatFeeCategory, MemberPaymentCategory, Troop } from '../types/tro
 import { TroopFormModal } from '../components/TroopFormModal'
 import { TroopsExportMenu } from '../components/TroopsExportMenu'
 import { RecordBulkPaymentModal } from '../components/RecordBulkPaymentModal'
+import { PrintCouncilShareReceiptModal } from '@/shared/components/receipts/PrintCouncilShareReceiptModal'
+import type { CouncilShareReceiptTarget } from '@/shared/hooks/usePrintCouncilShareReceiptModal'
+import {
+  findRecordedMembershipPayment,
+  membershipPaymentCouncilShare
+} from '@/features/troopRegistration/lib/registrationPaymentStatus'
 import { useTroops } from '../hooks/useTroops'
 import { useTroopsStore } from '../store/troops.store'
-import { syncBulkPaymentVoucher, deleteBulkPaymentVoucher } from '../lib/flatFeeVoucher'
 
 const pageVariants = {
   initial: { opacity: 0, y: 16 },
@@ -112,6 +119,7 @@ export function Troops() {
     handleConfirmDelete: handleConfirmDeleteRegistration
   } = useTroopRegistrations()
   const hydrateRegistrations = useTroopRegistrationStore((s) => s.hydrate)
+  const allRegistrations = useTroopRegistrationStore((s) => s.registrations)
   const displayedRegistrations = useMemo(() => {
     if (!districtParam) return filteredRegistrations
     return filteredRegistrations.filter((r) => {
@@ -129,9 +137,20 @@ export function Troops() {
   const canManagePayments = hasPermission('manage:troops')
 
   const [paymentSearch, setPaymentSearch] = useState('')
+  const [showReceiptTypePicker, setShowReceiptTypePicker] = useState(false)
   const [showBulkPaymentModal, setShowBulkPaymentModal] = useState(false)
+  const [bulkPaymentReceiptType, setBulkPaymentReceiptType] =
+    useState<ReceiptKind>('service_invoice')
+  function handlePickReceiptType(type: ReceiptKind) {
+    setBulkPaymentReceiptType(type)
+    setShowReceiptTypePicker(false)
+    setShowBulkPaymentModal(true)
+  }
+
   const updatePaymentGroup = useTroopsStore((s) => s.updatePaymentGroup)
   const deletePaymentGroup = useTroopsStore((s) => s.deletePaymentGroup)
+  const setMembershipCouncilShareReceipt = useTroopsStore((s) => s.setMembershipCouncilShareReceipt)
+  const currentUser = useAppStore((s) => s.currentUser)
 
   // Groups the underlying payment records (features/troops/store/troops.store.ts's
   // addBulkPayment) back into one row per TRANSACTION (bulkPaymentId) — a Troop Leader pays
@@ -158,12 +177,23 @@ export function Troops() {
      *  optional "Print a receipt" toggle) — every line sharing this bulkKey carries the same
      *  one, so whichever line is seen first wins. Undefined when printing wasn't used. */
     receipt?: ReceiptRecord
+    /** The Council-retained share of whatever 'membership' amount this row collected (0 for a
+     *  flat-fee-only row) — see membershipPaymentCouncilShare. Drives both the "Print Council
+     *  Share Receipt" button's visibility (only on a Membership row) and its printed amount. */
+    councilShareAmount: number
+    /** The second, internal receipt already printed for this row's council share, if any — see
+     *  PrintCouncilShareReceiptModal. Undefined until that button has been used once. */
+    councilShareReceipt?: ReceiptRecord
   }
   const paymentRows = useMemo(() => {
     const groups = new Map<string, PaymentRow>()
     for (const member of scoutMembers) {
       for (const payment of member.payments ?? []) {
         const bulkKey = payment.bulkPaymentId ?? payment.id
+        const councilShare =
+          payment.category === 'membership'
+            ? membershipPaymentCouncilShare(payment, member.troopId, allRegistrations)
+            : 0
         const existing = groups.get(bulkKey)
         if (existing) {
           existing.memberCount += 1
@@ -172,6 +202,8 @@ export function Troops() {
             existing.categories.push(payment.category)
           }
           existing.receipt ??= payment.receipt
+          existing.councilShareAmount += councilShare
+          existing.councilShareReceipt ??= payment.councilShareReceipt
         } else {
           groups.set(bulkKey, {
             id: bulkKey,
@@ -182,7 +214,9 @@ export function Troops() {
             paidByName: payment.paidByName ?? '—',
             memberCount: 1,
             totalAmount: payment.amount,
-            receipt: payment.receipt
+            receipt: payment.receipt,
+            councilShareAmount: councilShare,
+            councilShareReceipt: payment.councilShareReceipt
           })
         }
       }
@@ -207,13 +241,14 @@ export function Troops() {
             paidByName: payment.paidByName ?? '—',
             memberCount: 0,
             totalAmount: payment.amount,
-            receipt: payment.receipt
+            receipt: payment.receipt,
+            councilShareAmount: 0
           })
         }
       }
     }
     return [...groups.values()].sort((a, b) => b.date.localeCompare(a.date))
-  }, [scoutMembers, allTroops])
+  }, [scoutMembers, allTroops, allRegistrations])
 
   const filteredPaymentRows = useMemo(() => {
     const q = paymentSearch.trim().toLowerCase()
@@ -242,41 +277,24 @@ export function Troops() {
   // The fee amounts themselves are never editable here (they're auto-computed from the
   // troop's filed registration — see useRecordBulkPaymentModal.ts), so this only ever
   // corrects the date and who paid — applied to the WHOLE transaction at once ("isang resibo
-  // every transaction"), not just the one fee line the row happened to be found under. Keeps
-  // the transaction's shared voucher in sync too, best-effort, same permission gate as
-  // recording it in the first place.
+  // every transaction"), not just the one fee line the row happened to be found under.
   function handleConfirmEditPayment() {
     if (!editPaymentTarget) return
-    const { flatPayments } = updatePaymentGroup({
+    updatePaymentGroup({
       troopId: editPaymentTarget.troopId,
       bulkKey: editPaymentTarget.bulkKey,
       date: editPaymentDate,
       paidByName: editPaymentPaidBy.trim()
     })
-    const troop = troopByIdForPayments.get(editPaymentTarget.troopId)
-    const linkedVoucherId = flatPayments.find((p) => p.linkedVoucherId)?.linkedVoucherId
-    if (troop && linkedVoucherId && hasPermission('manage:vouchers')) {
-      syncBulkPaymentVoucher(
-        troop,
-        linkedVoucherId,
-        flatPayments,
-        editPaymentDate,
-        editPaymentPaidBy.trim()
-      )
-    }
     setEditPaymentTarget(null)
   }
 
   function handleConfirmDeletePayment() {
     if (!deletePaymentTarget) return
-    const { removedFlatPayments } = deletePaymentGroup({
+    deletePaymentGroup({
       troopId: deletePaymentTarget.troopId,
       bulkKey: deletePaymentTarget.bulkKey
     })
-    const linkedVoucherId = removedFlatPayments.find((p) => p.linkedVoucherId)?.linkedVoucherId
-    if (linkedVoucherId && hasPermission('manage:vouchers')) {
-      deleteBulkPaymentVoucher(linkedVoucherId)
-    }
     setDeletePaymentTarget(null)
   }
 
@@ -284,6 +302,35 @@ export function Troops() {
     if (!row.receipt) return
     const result = await printReceipt(row.receipt, printerDeviceName)
     if (!result.ok) toast.error(t('receipts.toast.printFailed'))
+  }
+
+  // The Membership Fee's council-retained share gets receipted a SECOND time in real life
+  // (the member-facing AR/SI above already covers the full amount collected) — this opens
+  // that second, internal receipt, going through the same up-front SI/AR picker as every
+  // other receipt flow only the first time it's printed; reprinting reopens the modal
+  // pre-filled with what was printed before instead (see usePrintCouncilShareReceiptModal).
+  const [showCouncilReceiptTypePicker, setShowCouncilReceiptTypePicker] = useState(false)
+  const [pendingCouncilReceiptRow, setPendingCouncilReceiptRow] = useState<PaymentRow | null>(null)
+  const [councilReceiptType, setCouncilReceiptType] = useState<ReceiptKind>('service_invoice')
+  const [councilReceiptRow, setCouncilReceiptRow] = useState<PaymentRow | null>(null)
+  const councilReceiptTarget: CouncilShareReceiptTarget | null = councilReceiptRow
+    ? {
+        key: councilReceiptRow.bulkKey,
+        label: troopByIdForPayments.get(councilReceiptRow.troopId)?.troopNumber ?? '—',
+        councilShareAmount: councilReceiptRow.councilShareAmount,
+        payorName: councilReceiptRow.paidByName === '—' ? '' : councilReceiptRow.paidByName,
+        existingReceipt: councilReceiptRow.councilShareReceipt
+      }
+    : null
+
+  function openCouncilShareReceipt(row: PaymentRow) {
+    if (row.councilShareReceipt) {
+      setCouncilReceiptType(row.councilShareReceipt.receiptType)
+      setCouncilReceiptRow(row)
+    } else {
+      setPendingCouncilReceiptRow(row)
+      setShowCouncilReceiptTypePicker(true)
+    }
   }
 
   const columns: Column<Troop>[] = [
@@ -391,6 +438,19 @@ export function Troops() {
       header: t('troopRegistration.table.troopNo'),
       render: (r) => r.troopNo || '—'
     },
+    {
+      key: 'receipt',
+      header: t('troopRegistration.payment.table.status'),
+      // Purely a read-only reflection of the Payment tab's own ledger (see
+      // findRecordedMembershipPayment) — recording payment only ever happens from the
+      // Payment tab itself, never from this badge.
+      render: (r) =>
+        findRecordedMembershipPayment(r, allRegistrations, scoutMembers) ? (
+          <Badge variant="success">{t('common.paid')}</Badge>
+        ) : (
+          <Badge variant="outline">{t('common.unpaid')}</Badge>
+        )
+    },
     actionsColumn<TroopRegistration>(
       (r) => (
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 4 }}>
@@ -476,6 +536,20 @@ export function Troops() {
               title={t('receipts.reprintButton')}
             >
               <Printer size={13} />
+            </Button>
+          )}
+          {r.categories.includes('membership') && r.councilShareAmount > 0 && canManagePayments && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => openCouncilShareReceipt(r)}
+              title={
+                r.councilShareReceipt
+                  ? t('receipts.councilShareReceipt.reprintButton')
+                  : t('receipts.councilShareReceipt.button')
+              }
+            >
+              <Landmark size={13} />
             </Button>
           )}
           {canManagePayments && (
@@ -564,7 +638,7 @@ export function Troops() {
                   variant="primary"
                   size="sm"
                   leftIcon={<Plus size={13} />}
-                  onClick={() => setShowBulkPaymentModal(true)}
+                  onClick={() => setShowReceiptTypePicker(true)}
                 >
                   {t('troops.payment.addButton')}
                 </Button>
@@ -727,7 +801,44 @@ export function Troops() {
         onPick={startRegistrationForTroop}
       />
 
-      <RecordBulkPaymentModal open={showBulkPaymentModal} onOpenChange={setShowBulkPaymentModal} />
+      <ReceiptTypePickerModal
+        open={showReceiptTypePicker}
+        onOpenChange={setShowReceiptTypePicker}
+        onSelect={handlePickReceiptType}
+      />
+
+      <RecordBulkPaymentModal
+        open={showBulkPaymentModal}
+        onOpenChange={setShowBulkPaymentModal}
+        initialReceiptType={bulkPaymentReceiptType}
+      />
+
+      <ReceiptTypePickerModal
+        open={showCouncilReceiptTypePicker}
+        onOpenChange={setShowCouncilReceiptTypePicker}
+        onSelect={(type) => {
+          setCouncilReceiptType(type)
+          setShowCouncilReceiptTypePicker(false)
+          setCouncilReceiptRow(pendingCouncilReceiptRow)
+          setPendingCouncilReceiptRow(null)
+        }}
+      />
+
+      <PrintCouncilShareReceiptModal
+        target={councilReceiptTarget}
+        defaultCashierName={currentUser?.fullName ?? ''}
+        onClose={() => setCouncilReceiptRow(null)}
+        onPrinted={(receipt) => {
+          if (councilReceiptRow) {
+            setMembershipCouncilShareReceipt({
+              troopId: councilReceiptRow.troopId,
+              bulkKey: councilReceiptRow.bulkKey,
+              receipt
+            })
+          }
+        }}
+        initialReceiptType={councilReceiptType}
+      />
 
       <Modal
         open={!!editPaymentTarget}

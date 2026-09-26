@@ -50,6 +50,11 @@ export interface OavfRegistration {
    *  reprint it later, same as the committee-style modules' FlatFeePayment.receipt. Unset on a
    *  filing that hasn't been paid yet. */
   receipt?: ReceiptRecord
+  /** The SECOND, internal receipt documenting the Council's own retained share of this fee (see
+   *  PrintCouncilShareReceiptModal), printed on demand from the Payments tab after the
+   *  applicant-facing AR/SI above was already issued — only once this exists does
+   *  registrationCashReceipts.ts's fromOavfRegistrations count this money as Council income. */
+  councilShareReceipt?: ReceiptRecord
   createdAt: string
   createdBy: string
 }

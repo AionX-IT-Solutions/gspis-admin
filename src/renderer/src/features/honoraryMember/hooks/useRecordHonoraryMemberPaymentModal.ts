@@ -5,12 +5,9 @@ import { usePermissions } from '@/app/hooks/usePermissions'
 import { useAppStore } from '@/app/store/app.store'
 import { todayLocalIso } from '@/shared/lib/utils'
 import { useReceiptFields } from '@/shared/hooks/useReceiptFields'
-import { usePrinterDeviceName } from '@/shared/hooks/usePrinterDeviceName'
-import { printReceipt } from '@/shared/lib/receiptPrint'
-import type { ReceiptBreakdownLine, ReceiptRecord } from '@/shared/types/receipt.types'
+import type { ReceiptBreakdownLine, ReceiptKind, ReceiptRecord } from '@/shared/types/receipt.types'
 import { useHonoraryMemberRegistrationStore } from '../store/honoraryMemberRegistration.store'
 import { useHonoraryMemberStore } from '../store/honoraryMember.store'
-import { syncHonoraryMemberRegistrationVoucher } from '../lib/honoraryMemberVoucher'
 import type { HonoraryMemberRegistration } from '../types/honoraryMemberRegistration.types'
 
 function emptyForm() {
@@ -23,7 +20,8 @@ function emptyForm() {
 export function useRecordHonoraryMemberPaymentModal(
   open: boolean,
   onOpenChange: (open: boolean) => void,
-  registration: HonoraryMemberRegistration | null
+  registration: HonoraryMemberRegistration | null,
+  initialReceiptType?: ReceiptKind
 ) {
   const { t } = useTranslation()
   const toast = useToast()
@@ -33,8 +31,7 @@ export function useRecordHonoraryMemberPaymentModal(
   const updateRegistration = useHonoraryMemberRegistrationStore((s) => s.updateRegistration)
   const members = useHonoraryMemberStore((s) => s.members)
   const [form, setForm] = useState(emptyForm())
-  const receiptFields = useReceiptFields({}, open)
-  const printerDeviceName = usePrinterDeviceName()
+  const receiptFields = useReceiptFields({}, open, initialReceiptType)
 
   useEffect(() => {
     if (!open) return
@@ -59,8 +56,11 @@ export function useRecordHonoraryMemberPaymentModal(
       {},
       { label: t('honoraryMember.payment.feeLabel'), amount: totalAmount }
     )
+    // `open` is deliberately included even though it's not read in the body — the "Others" row
+    // otherwise never re-fills after the fields reset on open, since this fee's amount defaults
+    // to the same fixed total every time and so this effect wouldn't otherwise re-run.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalAmount])
+  }, [totalAmount, open])
 
   function handleSubmit() {
     if (!canManage || !registration) return
@@ -115,18 +115,7 @@ export function useRecordHonoraryMemberPaymentModal(
     }
     updateRegistration(registration.id, updated)
 
-    if (hasPermission('manage:vouchers')) {
-      const linkedVoucherId = syncHonoraryMemberRegistrationVoucher(member, updated)
-      if (linkedVoucherId !== updated.linkedVoucherId) {
-        updateRegistration(registration.id, { linkedVoucherId })
-      }
-    }
-
     toast.success(t('honoraryMember.payment.toast.recorded'))
-
-    printReceipt(receipt, printerDeviceName).then((result) => {
-      if (!result.ok) toast.error(t('receipts.toast.printFailed'))
-    })
 
     onOpenChange(false)
   }

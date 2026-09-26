@@ -7,16 +7,16 @@
 // Mirrors scripts/manageStaffUser.mjs's rules exactly (same role list, same single-
 // super_admin constraint) — that script still exists as an emergency CLI backdoor, but
 // the app itself no longer generates or needs it for normal Add/Edit User use.
+//
+// Troop-leader self-registration is a deliberately separate function in
+// troopLeaderRegistration.ts, not folded in here: unlike everything below, its caller
+// isn't staff yet, so it can't share assertCallerIsAdmin's gate.
 
 import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https'
-import { logger } from 'firebase-functions'
-import { initializeApp } from 'firebase-admin/app'
-import { getAuth } from 'firebase-admin/auth'
-import { getFirestore, FieldValue } from 'firebase-admin/firestore'
+import { FieldValue } from 'firebase-admin/firestore'
 
-initializeApp()
-const auth = getAuth()
-const db = getFirestore()
+import { auth, db } from './firebaseAdmin'
+import { toHttpsError } from './http'
 
 // Must always be one of these 7 — Firestore security rules and gspi-app (mobile) only
 // understand them. A custom role (Role Permissions screen) is never sent as `role`
@@ -76,20 +76,6 @@ async function assertSuperAdminAvailable(excludeUid?: string): Promise<void> {
       `A super_admin already exists (${(other.data().email as string | undefined) ?? other.id}). Demote them first.`
     )
   }
-}
-
-function toMessage(err: unknown, fallback: string): string {
-  return err instanceof Error ? err.message : fallback
-}
-
-/** Every code path below funnels through here: an HttpsError we threw deliberately is
- *  passed through as-is, and anything unexpected gets logged (so it's visible in Cloud
- *  Logging even though the client only ever sees a short message) and turned into an
- *  HttpsError so it never reaches the client as a bare, message-less crash. */
-function toHttpsError(err: unknown, fallback: string): HttpsError {
-  if (err instanceof HttpsError) return err
-  logger.error(fallback, err)
-  return new HttpsError('internal', toMessage(err, fallback))
 }
 
 export const createStaffUser = onCall<CreateStaffUserRequest>(async (request) => {
@@ -159,3 +145,5 @@ export const updateStaffUser = onCall<UpdateStaffUserRequest>(async (request) =>
     throw toHttpsError(err, 'Failed to update user account.')
   }
 })
+
+export { registerTroopLeader } from './troopLeaderRegistration'

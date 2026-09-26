@@ -14,9 +14,17 @@ export interface ReceiptFieldsSeed {
  *  Deliberately does NOT own payor name or date — callers already have their own (invoice
  *  customer name / bulk payment's paid-by name and date), so this only covers the fields
  *  unique to printing a receipt. Resets whenever `resetKey` changes (e.g. a different invoice
- *  opened, or the modal re-opening). */
-export function useReceiptFields(seed: ReceiptFieldsSeed, resetKey: unknown) {
-  const [receiptType, setReceiptType] = useState<ReceiptKind>('service_invoice')
+ *  opened, or the modal re-opening) — `initialReceiptType` seeds which tab that reset lands
+ *  on, e.g. from ReceiptTypePickerModal's up-front choice, so the full form opens already on
+ *  the type the user just picked instead of always defaulting to Service Invoice. */
+export function useReceiptFields(
+  seed: ReceiptFieldsSeed,
+  resetKey: unknown,
+  initialReceiptType?: ReceiptKind
+) {
+  const [receiptType, setReceiptType] = useState<ReceiptKind>(
+    initialReceiptType ?? 'service_invoice'
+  )
   const [receiptNumber, setReceiptNumber] = useState('')
   const [tin, setTin] = useState('')
   const [address, setAddress] = useState(seed.address ?? '')
@@ -32,7 +40,7 @@ export function useReceiptFields(seed: ReceiptFieldsSeed, resetKey: unknown) {
   const [breakdownTouched, setBreakdownTouched] = useState(false)
 
   useEffect(() => {
-    setReceiptType('service_invoice')
+    setReceiptType(initialReceiptType ?? 'service_invoice')
     setReceiptNumber('')
     setTin('')
     setAddress(seed.address ?? '')

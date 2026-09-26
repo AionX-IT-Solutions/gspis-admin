@@ -27,9 +27,13 @@ export function useUsers() {
   const [search, setSearch] = useState('')
 
   const filteredUsers = useMemo(() => {
+    // Troop Leader accounts (self-registered from the mobile app) share this same
+    // `users` collection but aren't staff — they get their own list under Troop Leader
+    // Submissions instead of appearing in the staff directory here.
+    const staff = users.filter((u) => u.role !== 'troop_leader')
     const q = search.trim().toLowerCase()
-    if (!q) return users
-    return users.filter((u) => u.fullName.toLowerCase().includes(q))
+    if (!q) return staff
+    return staff.filter((u) => u.fullName.toLowerCase().includes(q))
   }, [users, search])
 
   async function handleConfirmToggleActive() {

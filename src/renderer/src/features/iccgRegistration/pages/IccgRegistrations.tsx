@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion'
 import { useMemo, useState } from 'react'
-import { IdCard, Plus, Pencil, Trash2, Eye, Printer, UserX } from 'lucide-react'
+import { IdCard, Landmark, Plus, Pencil, Trash2, Eye, Printer, UserX } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Card } from '@/shared/components/ui/Card'
 import { Button } from '@/shared/components/ui/Button'
+import { Badge } from '@/shared/components/ui/Badge'
 import { Modal } from '@/shared/components/ui/Modal'
 import { ConfirmDialog } from '@/shared/components/ui/ConfirmDialog'
 import { PageHeader } from '@/shared/components/ui/PageHeader'
@@ -23,9 +24,12 @@ import { actionsColumn, statusColumn } from '@/shared/lib/columnHelpers'
 import { formatDate, formatAmount } from '@/shared/lib/utils'
 import { usePermissions } from '@/app/hooks/usePermissions'
 import { useToast } from '@/app/hooks/useToast'
+import { useAppStore } from '@/app/store/app.store'
 import { usePrinterDeviceName } from '@/shared/hooks/usePrinterDeviceName'
 import { printReceipt } from '@/shared/lib/receiptPrint'
-import type { ReceiptRecord } from '@/shared/types/receipt.types'
+import { PrintCouncilShareReceiptModal } from '@/shared/components/receipts/PrintCouncilShareReceiptModal'
+import type { CouncilShareReceiptTarget } from '@/shared/hooks/usePrintCouncilShareReceiptModal'
+import type { ReceiptKind, ReceiptRecord } from '@/shared/types/receipt.types'
 import { useIccgRegistrationStore } from '../store/iccgRegistration.store'
 import { useIccgMemberStore } from '../store/iccgMember.store'
 import { TroopPickerModal } from '@/features/troopRegistration/components/TroopPickerModal'
@@ -36,7 +40,7 @@ import { useIccgRegistrations } from '../hooks/useIccgRegistrations'
 import { useIccgMembers } from '../hooks/useIccgMembers'
 import { RecordIccgBulkPaymentModal } from '../components/RecordIccgBulkPaymentModal'
 import { IccgMemberFormModal } from '../components/IccgMemberFormModal'
-import { syncBulkPaymentVoucher, deleteBulkPaymentVoucher } from '../lib/iccgVoucher'
+import { findRecordedIccgPayment } from '../lib/registrationPaymentStatus'
 
 const pageVariants = {
   initial: { opacity: 0, y: 16 },
@@ -87,6 +91,7 @@ export function IccgRegistrations() {
   } = useIccgRegistrations()
   const troops = useTroopsStore((s) => s.troops)
   const hydrate = useIccgRegistrationStore((s) => s.hydrate)
+  const allRegistrations = useIccgRegistrationStore((s) => s.registrations)
   const displayedRegistrations = useMemo(() => {
     if (!districtParam) return filteredRegistrations
     return filteredRegistrations.filter((r) => troopById.get(r.troopId)?.district === districtParam)
@@ -118,9 +123,14 @@ export function IccgRegistrations() {
   const hydrateMembers = useIccgMemberStore((s) => s.hydrate)
   const updatePaymentGroup = useIccgMemberStore((s) => s.updatePaymentGroup)
   const deletePaymentGroup = useIccgMemberStore((s) => s.deletePaymentGroup)
+  const setCouncilShareReceipt = useIccgMemberStore((s) => s.setCouncilShareReceipt)
+  const currentUser = useAppStore((s) => s.currentUser)
   const canManagePayments = hasPermission('manage:iccgRegistration')
   const [paymentSearch, setPaymentSearch] = useState('')
   const [showBulkPaymentModal, setShowBulkPaymentModal] = useState(false)
+  // Record Payment always uses the Acknowledgment Receipt booklet — no picker. The Council
+  // Share Receipt below is the opposite: always Service Invoice.
+  const bulkPaymentReceiptType: ReceiptKind = 'acknowledgment_receipt'
 
   // Groups the underlying payment records back into one row per TRANSACTION (bulkPaymentId)
   // — one receipt per remittance event, same reasoning as features/trefoilGuild's own
@@ -135,6 +145,12 @@ export function IccgRegistrations() {
     memberCount: number
     totalAmount: number
     receipt?: ReceiptRecord
+    /** The Council-retained share of this row's totalAmount — summed straight from each
+     *  payment's own councilShareAmount (unlike Troops, no ratio to compute here). */
+    councilShareAmount: number
+    /** The second, internal receipt already printed for this row's council share, if any — see
+     *  PrintCouncilShareReceiptModal. */
+    councilShareReceipt?: ReceiptRecord
   }
   const paymentRows = useMemo(() => {
     const groups = new Map<string, PaymentRow>()
@@ -148,6 +164,8 @@ export function IccgRegistrations() {
           if (!existing.categories.includes(payment.category))
             existing.categories.push(payment.category)
           existing.receipt ??= payment.receipt
+          existing.councilShareAmount += payment.councilShareAmount
+          existing.councilShareReceipt ??= payment.councilShareReceipt
         } else {
           groups.set(bulkKey, {
             id: bulkKey,
@@ -158,7 +176,9 @@ export function IccgRegistrations() {
             paidByName: payment.paidByName ?? '—',
             memberCount: 1,
             totalAmount: payment.amount,
-            receipt: payment.receipt
+            receipt: payment.receipt,
+            councilShareAmount: payment.councilShareAmount,
+            councilShareReceipt: payment.councilShareReceipt
           })
         }
       }
@@ -191,25 +211,17 @@ export function IccgRegistrations() {
 
   function handleConfirmEditPayment() {
     if (!editPaymentTarget) return
-    const { payments } = updatePaymentGroup({
+    updatePaymentGroup({
       bulkKey: editPaymentTarget.bulkKey,
       date: editPaymentDate,
       paidByName: editPaymentPaidBy.trim()
     })
-    const linkedVoucherId = payments.find((p) => p.linkedVoucherId)?.linkedVoucherId
-    if (linkedVoucherId && hasPermission('manage:vouchers')) {
-      syncBulkPaymentVoucher(linkedVoucherId, payments, editPaymentDate, editPaymentPaidBy.trim())
-    }
     setEditPaymentTarget(null)
   }
 
   function handleConfirmDeletePayment() {
     if (!deletePaymentTarget) return
-    const { removedPayments } = deletePaymentGroup(deletePaymentTarget.bulkKey)
-    const linkedVoucherId = removedPayments.find((p) => p.linkedVoucherId)?.linkedVoucherId
-    if (linkedVoucherId && hasPermission('manage:vouchers')) {
-      deleteBulkPaymentVoucher(linkedVoucherId)
-    }
+    deletePaymentGroup(deletePaymentTarget.bulkKey)
     setDeletePaymentTarget(null)
   }
 
@@ -217,6 +229,27 @@ export function IccgRegistrations() {
     if (!row.receipt) return
     const result = await printReceipt(row.receipt, printerDeviceName)
     if (!result.ok) toast.error(t('receipts.toast.printFailed'))
+  }
+
+  // The Council-retained share of this fee gets receipted a SECOND time in real life (the
+  // member-facing AR above already covers the full amount collected) — same flow as Troops'/
+  // OAVF's Payments tab (see usePrintCouncilShareReceiptModal). Unlike the Acknowledgment
+  // Receipt recorded above, this internal share is always billed via Service Invoice — no picker.
+  const [councilReceiptType, setCouncilReceiptType] = useState<ReceiptKind>('service_invoice')
+  const [councilReceiptRow, setCouncilReceiptRow] = useState<PaymentRow | null>(null)
+  const councilReceiptTarget: CouncilShareReceiptTarget | null = councilReceiptRow
+    ? {
+        key: councilReceiptRow.bulkKey,
+        label: troopById.get(councilReceiptRow.troopId)?.troopNumber ?? '—',
+        councilShareAmount: councilReceiptRow.councilShareAmount,
+        payorName: councilReceiptRow.paidByName === '—' ? '' : councilReceiptRow.paidByName,
+        existingReceipt: councilReceiptRow.councilShareReceipt
+      }
+    : null
+
+  function openCouncilShareReceipt(row: PaymentRow) {
+    setCouncilReceiptType(row.councilShareReceipt?.receiptType ?? 'service_invoice')
+    setCouncilReceiptRow(row)
   }
 
   const columns: Column<IccgRegistration>[] = [
@@ -238,6 +271,19 @@ export function IccgRegistrations() {
       key: 'total',
       header: t('iccgRegistration.table.total'),
       render: (r) => `₱${formatAmount(r.fee.total)}`
+    },
+    {
+      key: 'receipt',
+      header: t('iccgRegistration.regPayment.table.status'),
+      // Purely a read-only reflection of the Payment tab's own roster ledger (see
+      // findRecordedIccgPayment) — recording payment only ever happens from the Payment tab
+      // itself, never from this badge.
+      render: (r) =>
+        findRecordedIccgPayment(r, allRegistrations, members) ? (
+          <Badge variant="success">{t('common.paid')}</Badge>
+        ) : (
+          <Badge variant="outline">{t('common.unpaid')}</Badge>
+        )
     },
     actionsColumn<IccgRegistration>(
       (r) => (
@@ -394,6 +440,20 @@ export function IccgRegistrations() {
               title={t('receipts.reprintButton')}
             >
               <Printer size={13} />
+            </Button>
+          )}
+          {r.councilShareAmount > 0 && canManagePayments && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => openCouncilShareReceipt(r)}
+              title={
+                r.councilShareReceipt
+                  ? t('receipts.councilShareReceipt.reprintButton')
+                  : t('receipts.councilShareReceipt.button')
+              }
+            >
+              <Landmark size={13} />
             </Button>
           )}
           {canManagePayments && (
@@ -650,6 +710,19 @@ export function IccgRegistrations() {
       <RecordIccgBulkPaymentModal
         open={showBulkPaymentModal}
         onOpenChange={setShowBulkPaymentModal}
+        initialReceiptType={bulkPaymentReceiptType}
+      />
+
+      <PrintCouncilShareReceiptModal
+        target={councilReceiptTarget}
+        defaultCashierName={currentUser?.fullName ?? ''}
+        onClose={() => setCouncilReceiptRow(null)}
+        onPrinted={(receipt) => {
+          if (councilReceiptRow) {
+            setCouncilShareReceipt({ bulkKey: councilReceiptRow.bulkKey, receipt })
+          }
+        }}
+        initialReceiptType={councilReceiptType}
       />
 
       <Modal

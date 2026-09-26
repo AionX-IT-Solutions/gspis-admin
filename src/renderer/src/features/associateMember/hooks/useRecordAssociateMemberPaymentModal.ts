@@ -5,12 +5,9 @@ import { usePermissions } from '@/app/hooks/usePermissions'
 import { useAppStore } from '@/app/store/app.store'
 import { todayLocalIso } from '@/shared/lib/utils'
 import { useReceiptFields } from '@/shared/hooks/useReceiptFields'
-import { usePrinterDeviceName } from '@/shared/hooks/usePrinterDeviceName'
-import { printReceipt } from '@/shared/lib/receiptPrint'
-import type { ReceiptBreakdownLine, ReceiptRecord } from '@/shared/types/receipt.types'
+import type { ReceiptBreakdownLine, ReceiptKind, ReceiptRecord } from '@/shared/types/receipt.types'
 import { useAssociateMemberRegistrationStore } from '../store/associateMemberRegistration.store'
 import { useAssociateMemberStore } from '../store/associateMember.store'
-import { syncAssociateMemberRegistrationVoucher } from '../lib/associateMemberVoucher'
 import type { AssociateMemberRegistration } from '../types/associateMemberRegistration.types'
 
 // Unlike OAVF/Honorary Member, the Acknowledgment Receipt booklet's fixed row list
@@ -30,7 +27,8 @@ function emptyForm() {
 export function useRecordAssociateMemberPaymentModal(
   open: boolean,
   onOpenChange: (open: boolean) => void,
-  registration: AssociateMemberRegistration | null
+  registration: AssociateMemberRegistration | null,
+  initialReceiptType?: ReceiptKind
 ) {
   const { t } = useTranslation()
   const toast = useToast()
@@ -40,8 +38,7 @@ export function useRecordAssociateMemberPaymentModal(
   const updateRegistration = useAssociateMemberRegistrationStore((s) => s.updateRegistration)
   const members = useAssociateMemberStore((s) => s.members)
   const [form, setForm] = useState(emptyForm())
-  const receiptFields = useReceiptFields({}, open)
-  const printerDeviceName = usePrinterDeviceName()
+  const receiptFields = useReceiptFields({}, open, initialReceiptType)
 
   useEffect(() => {
     if (!open) return
@@ -63,8 +60,12 @@ export function useRecordAssociateMemberPaymentModal(
 
   useEffect(() => {
     receiptFields.autoFillBreakdown({ [AR_CATEGORY]: totalAmount }, { label: '', amount: 0 })
+    // `open` is deliberately included even though it's not read in the body — the "Associate
+    // Members" row otherwise never re-fills after the fields reset on open, since this fee's
+    // amount defaults to the same fixed total every time and so this effect wouldn't otherwise
+    // re-run.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [totalAmount])
+  }, [totalAmount, open])
 
   function handleSubmit() {
     if (!canManage || !registration) return
@@ -119,18 +120,7 @@ export function useRecordAssociateMemberPaymentModal(
     }
     updateRegistration(registration.id, updated)
 
-    if (hasPermission('manage:vouchers')) {
-      const linkedVoucherId = syncAssociateMemberRegistrationVoucher(member, updated)
-      if (linkedVoucherId !== updated.linkedVoucherId) {
-        updateRegistration(registration.id, { linkedVoucherId })
-      }
-    }
-
     toast.success(t('associateMember.payment.toast.recorded'))
-
-    printReceipt(receipt, printerDeviceName).then((result) => {
-      if (!result.ok) toast.error(t('receipts.toast.printFailed'))
-    })
 
     onOpenChange(false)
   }

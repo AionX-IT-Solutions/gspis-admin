@@ -26,7 +26,8 @@ import { usePermissions } from '@/app/hooks/usePermissions'
 import { useToast } from '@/app/hooks/useToast'
 import { usePrinterDeviceName } from '@/shared/hooks/usePrinterDeviceName'
 import { printReceipt } from '@/shared/lib/receiptPrint'
-import type { ReceiptRecord } from '@/shared/types/receipt.types'
+import { ReceiptTypePickerModal } from '@/shared/components/receipts/ReceiptTypePickerModal'
+import type { ReceiptKind, ReceiptRecord } from '@/shared/types/receipt.types'
 import { useBarangayCommitteeRegistrations } from '../hooks/useBarangayCommitteeRegistrations'
 import { useBarangayCommitteeRegistrationStore } from '../store/barangayCommitteeRegistration.store'
 import { BarangayCommitteePickerModal } from '../components/BarangayCommitteePickerModal'
@@ -40,7 +41,6 @@ import { BarangayCommitteeFormModal } from '../components/BarangayCommitteeFormM
 import { RecordBCBulkPaymentModal } from '../components/RecordBCBulkPaymentModal'
 import { useBarangayCommittees } from '../hooks/useBarangayCommittees'
 import { useBarangayCommitteeStore } from '../store/barangayCommittee.store'
-import { syncBulkPaymentVoucher, deleteBulkPaymentVoucher } from '../lib/bcVoucher'
 
 const pageVariants = {
   initial: { opacity: 0, y: 16 },
@@ -128,7 +128,15 @@ export function BarangayCommittees() {
   const canManagePayments = hasPermission('manage:barangayCommittee')
 
   const [paymentSearch, setPaymentSearch] = useState('')
+  const [showReceiptTypePicker, setShowReceiptTypePicker] = useState(false)
   const [showBulkPaymentModal, setShowBulkPaymentModal] = useState(false)
+  const [bulkPaymentReceiptType, setBulkPaymentReceiptType] =
+    useState<ReceiptKind>('service_invoice')
+  function handlePickReceiptType(type: ReceiptKind) {
+    setBulkPaymentReceiptType(type)
+    setShowReceiptTypePicker(false)
+    setShowBulkPaymentModal(true)
+  }
   const updatePaymentGroup = useBarangayCommitteeStore((s) => s.updatePaymentGroup)
   const deletePaymentGroup = useBarangayCommitteeStore((s) => s.deletePaymentGroup)
 
@@ -226,36 +234,21 @@ export function BarangayCommittees() {
 
   function handleConfirmEditPayment() {
     if (!editPaymentTarget) return
-    const { flatPayments } = updatePaymentGroup({
+    updatePaymentGroup({
       barangayCommitteeId: editPaymentTarget.barangayCommitteeId,
       bulkKey: editPaymentTarget.bulkKey,
       date: editPaymentDate,
       paidByName: editPaymentPaidBy.trim()
     })
-    const committee = committeeByIdForPayments.get(editPaymentTarget.barangayCommitteeId)
-    const linkedVoucherId = flatPayments.find((p) => p.linkedVoucherId)?.linkedVoucherId
-    if (committee && linkedVoucherId && hasPermission('manage:vouchers')) {
-      syncBulkPaymentVoucher(
-        committee,
-        linkedVoucherId,
-        flatPayments,
-        editPaymentDate,
-        editPaymentPaidBy.trim()
-      )
-    }
     setEditPaymentTarget(null)
   }
 
   function handleConfirmDeletePayment() {
     if (!deletePaymentTarget) return
-    const { removedFlatPayments } = deletePaymentGroup({
+    deletePaymentGroup({
       barangayCommitteeId: deletePaymentTarget.barangayCommitteeId,
       bulkKey: deletePaymentTarget.bulkKey
     })
-    const linkedVoucherId = removedFlatPayments.find((p) => p.linkedVoucherId)?.linkedVoucherId
-    if (linkedVoucherId && hasPermission('manage:vouchers')) {
-      deleteBulkPaymentVoucher(linkedVoucherId)
-    }
     setDeletePaymentTarget(null)
   }
 
@@ -515,7 +508,7 @@ export function BarangayCommittees() {
                   variant="primary"
                   size="sm"
                   leftIcon={<Plus size={13} />}
-                  onClick={() => setShowBulkPaymentModal(true)}
+                  onClick={() => setShowReceiptTypePicker(true)}
                 >
                   {t('barangayCommittee.payment.addButton')}
                 </Button>
@@ -676,9 +669,16 @@ export function BarangayCommittees() {
         onPick={startRegistrationForCommittee}
       />
 
+      <ReceiptTypePickerModal
+        open={showReceiptTypePicker}
+        onOpenChange={setShowReceiptTypePicker}
+        onSelect={handlePickReceiptType}
+      />
+
       <RecordBCBulkPaymentModal
         open={showBulkPaymentModal}
         onOpenChange={setShowBulkPaymentModal}
+        initialReceiptType={bulkPaymentReceiptType}
       />
 
       <Modal

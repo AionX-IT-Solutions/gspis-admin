@@ -95,6 +95,8 @@ const tl = {
       associateMember: 'Associate Members',
       iccgRegistration: 'ICCG',
       membershipStatusReport: 'Membership Status Report',
+      membershipReports: 'Membership Reports',
+      troopLeaderSubmissions: 'Troop Leader Submissions',
       activities: 'Mga Aktibidad',
       attendance: 'Attendance',
       leave: 'Mga Leave Request',
@@ -169,6 +171,8 @@ const tl = {
     errors: {
       invalidCredentials: 'Maling email o password.',
       userDisabled: 'Naka-disable ang account na ito. Makipag-ugnayan sa iyong administrator.',
+      notADesktopAccount:
+        'Troop Leader account ito at hindi maaaring mag-login sa desktop app. Gamitin ang mobile app.',
       tooManyRequests: 'Sobrang dami ng pagtatangka. Maghintay saglit at subukan muli.',
       network: 'May problema sa network — tingnan ang iyong koneksyon at subukan muli.',
       generic: 'Hindi matagumpay ang pag-sign in. Subukan muli.'
@@ -600,7 +604,7 @@ const tl = {
       leaderName: 'Troop Leader',
       leaderNamePlaceholder: 'hal. Juana Dela Cruz',
       trainingsCompletedCount: '{{count}} training ang natapos',
-      assistantLeaderName: 'Assistant Troop Leader',
+      assistantLeaderName: 'Troop Co-Leader',
       school: 'Paaralan / Komunidad',
       barangay: 'Barangay',
       meetingPlace: 'Lugar ng Pagpupulong',
@@ -815,6 +819,9 @@ const tl = {
       message:
         'Burahin ang {{schoolYear}} registration para sa Troop {{troopNumber}}? Hindi na ito maibabalik.'
     },
+    payment: {
+      table: { status: 'Bayad' }
+    },
     toast: {
       validationRequired: 'Kailangan ang school year',
       created: 'Naisumite ang Troop Registration',
@@ -843,9 +850,7 @@ const tl = {
       birthdate: 'Petsa ng Kapanganakan',
       beneficiary: 'Beneficiary',
       membersSection: 'Registration ng mga Miyembro ng Troop',
-      addPatrol: 'Magdagdag ng Patrol/Cluster',
       addMember: 'Magdagdag ng Miyembro',
-      removePatrol: 'Alisin ang Patrol/Cluster',
       gradeYear: 'Gr/Yr',
       regStatus: 'Reg. Status',
       signaturesSection: 'Mga Lagda',
@@ -1458,7 +1463,7 @@ const tl = {
       membershipFeeCouncilShare: 'Bahagi ng Council',
       dateLabel: 'Petsa',
       totalLabel: 'Kabuuan',
-      feeLabel: 'OAVF/Career Woman Membership Fee',
+      feeLabel: 'Membership',
       pickerTitle: 'Pumili ng Registration na Babayaran',
       pickerPlaceholder: 'Maghanap gamit ang pangalan o school year…',
       pickerEmpty: 'Walang nahanap na unpaid registration',
@@ -1468,6 +1473,11 @@ const tl = {
         date: 'Petsa',
         arNumber: 'AR No.',
         amount: 'Halaga'
+      },
+      confirmDelete: {
+        title: 'Burahin ang Bayad',
+        message:
+          'Burahin ang bayad na ito para kay {{name}}? Babalik ito sa Unpaid ang registration. Hindi na ito maibabalik.'
       },
       toast: {
         recorded: 'Naitala ang bayad'
@@ -1603,6 +1613,11 @@ const tl = {
         arNumber: 'AR No.',
         amount: 'Halaga'
       },
+      confirmDelete: {
+        title: 'Burahin ang Bayad',
+        message:
+          'Burahin ang bayad na ito para kay {{name}}? Babalik ito sa Unpaid ang registration. Hindi na ito maibabalik.'
+      },
       toast: {
         amountRequired: 'Maglagay ng halagang higit sa zero',
         recorded: 'Naitala ang bayad'
@@ -1732,6 +1747,11 @@ const tl = {
         date: 'Petsa',
         arNumber: 'AR No.',
         amount: 'Halaga'
+      },
+      confirmDelete: {
+        title: 'Burahin ang Bayad',
+        message:
+          'Burahin ang bayad na ito para kay {{name}}? Babalik ito sa Unpaid ang registration. Hindi na ito maibabalik.'
       },
       toast: {
         amountRequired: 'Maglagay ng halagang higit sa zero',
@@ -1982,6 +2002,9 @@ const tl = {
         paidByRequired: 'Ilagay kung sino ang nagbayad',
         recorded: 'Naitala ang bayad'
       }
+    },
+    regPayment: {
+      table: { status: 'Bayad' }
     }
   },
   membershipStatusReport: {
@@ -2029,6 +2052,54 @@ const tl = {
       yearRequired: 'Maglagay ng membership year',
       yearExists: 'May membership year na ito',
       yearCreated: 'Nagawa na ang {{year}}'
+    }
+  },
+  membershipReports: {
+    cardTitle: 'Daily Cash Collection Report',
+    cardSubtitle:
+      'Orihinal na halagang nakolekta bawat payor sa Troops & Membership — hindi ang council share na sinusubaybayan ng Accounting',
+    rangeSubtitle:
+      'Konsolidadong view sa napiling mga petsa — lumipat sa iisang araw para i-edit o i-save.',
+    exportLabel: 'I-export ang Ulat',
+    saved: 'Na-save',
+    draft: 'Hindi pa na-save',
+    rangeBadge: 'Range (read-only)',
+    addLine: 'Magdagdag ng Linya',
+    totalCashCollection: 'Kabuuang Cash Collection para sa Araw',
+    totalDeposited: 'Bawas Kabuuang Deposit para sa Araw',
+    underOverDeposit: '(Kulang) Sobra sa Deposit',
+    bankBranchCode: 'Bank Branch Code',
+    remarks: 'Puna',
+    preparedBy: 'Inihanda ni: {{name}}',
+    saveButton: 'I-save ang Ulat',
+    attachments: 'Mga Attachment',
+    noAttachments: 'Wala pang naka-attach na file',
+    uploadAttachment: 'Mag-attach ng File',
+    deleteAttachmentTitle: 'Burahin ang Attachment',
+    deleteAttachmentMessage:
+      'Sigurado ka bang gusto mong burahin ang "{{name}}"? Permanenteng maaalis ang file na ito. Hindi na ito maibabalik pa.',
+    table: {
+      payor: 'Nagbayad',
+      troopNo: 'Troop No.',
+      district: 'District',
+      regFormNo: 'Reg. Form No.',
+      rorDate: 'R.O.R. Date',
+      rorNo: 'R.O.R. No.',
+      amount: 'Halaga',
+      totalCollected: 'Kabuuang Halagang Nakolekta',
+      totalDeposited: 'Kabuuang Halagang Naideposito',
+      dateDeposited: 'Petsa ng Deposito',
+      remarks: 'Puna',
+      totals: 'KABUUAN'
+    },
+    toast: {
+      saved: 'Na-save ang Daily Cash Collection Report',
+      excel: 'Na-export ang ulat sa Excel',
+      pdf: 'Na-export ang ulat bilang PDF',
+      word: 'Na-export ang ulat bilang Word document',
+      attachmentUploaded: 'Na-upload ang attachment',
+      attachmentFailed: 'Hindi na-upload ang attachment',
+      attachmentDeleted: 'Nabura ang attachment'
     }
   },
   attendance: {
@@ -2162,6 +2233,61 @@ const tl = {
       approvedSynced: 'Ang mga naaprubahang petsa ay na-sync sa Attendance bilang "leave"',
       reverted: 'Naibalik ang pag-apruba sa tinanggihan',
       requestDeleted: 'Nabura ang leave request'
+    }
+  },
+  troopLeaderSubmissions: {
+    title: 'Mga Submission ng Membership',
+    approveButton: 'Aprubahan',
+    rejectButton: 'Tanggihan',
+    empty: 'Wala pang submission',
+    searchPlaceholder: 'Maghanap ayon sa pangalan o nagsumite…',
+    accountsHeading: 'Mga Account ng Miyembro',
+    noAccounts: 'Wala pang account ng miyembro',
+    tabs: {
+      troop: 'Troop',
+      barangayCommittee: 'Barangay Committee',
+      districtCommittee: 'District Committee',
+      trefoilGuild: 'Trefoil Guild',
+      oavf: 'OAVF / Career Woman',
+      honoraryMember: 'Honorary Member',
+      associateMember: 'Associate Member',
+      iccg: 'ICCG'
+    },
+    table: {
+      primary: 'Submission',
+      submittedBy: 'Isinumite ni',
+      members: 'Miyembro',
+      status: 'Status',
+      action: 'Aksyon'
+    },
+    modal: {
+      approveTitle: 'Aprubahan ang Submission',
+      rejectTitle: 'Tanggihan ang Submission',
+      confirmApproval: 'Kumpirmahin ang Pag-apruba',
+      confirmRejection: 'Kumpirmahin ang Pagtanggi',
+      summary: '{{primary}} — isinumite ni {{submitter}}',
+      approveHint:
+        'Ang pag-apruba ay direktang gagawa ng totoong record — ang Troop/Committee/Member, ang roster nito, at isang Registration na may awtomatikong nakalkulang bayad. Agad na magagamit ang Record Payment pagkatapos.'
+    },
+    detail: {
+      title: 'Detalye ng Submission',
+      submittedOn: 'Isinumite noong {{date}}',
+      submittedBy: 'Isinumite ni',
+      members: '{{count}} Miyembro',
+      reviewNotes: 'Mga Tala sa Review'
+    },
+    form: {
+      notesOptional: 'Mga tala (opsyonal)',
+      notesPlaceholder: 'hal. Kulang ang troop tel. no. — na-follow up na sa leader'
+    },
+    confirmDelete: {
+      title: 'Tanggalin ang Submission',
+      message: 'Tanggalin ang "{{primary}}" na submission? Hindi na ito maibabalik.'
+    },
+    toast: {
+      decided: 'Ang submission ay {{status}}',
+      mergeFailed: 'Hindi ma-file ang submission na ito bilang totoong record',
+      deleted: 'Natanggal ang submission'
     }
   },
   payroll: {
@@ -2532,6 +2658,18 @@ const tl = {
       confirmMessage: 'Mamarkahan bilang confirmed ang booking para kay "{{name}}".',
       completeTitle: 'Markahang tapos na ang booking na ito?',
       completeMessage: 'Mamarkahan bilang completed ang booking para kay "{{name}}".'
+    },
+    bookingReceipt: {
+      title: 'I-print ang Resibo — {{name}}',
+      hint: 'Ipi-print ang opisyal na resibo ng Konseho para sa nabayaran na ng renter na ito sa booking na ito.',
+      lineLabel: 'Renta ng {{space}}',
+      dateLabel: 'Petsa',
+      payorLabel: 'Tumanggap Mula Kay',
+      cashierLabel: 'Tinanggap Ni (kumakatawan sa Konseho)',
+      recordAndPrint: 'I-record at I-print',
+      toast: {
+        payorRequired: 'Ilagay kung kanino natanggap ang bayad.'
+      }
     }
   },
   visitors: {
@@ -2668,7 +2806,7 @@ const tl = {
       source: {
         heading: 'Source',
         hintIncome:
-          'I-link ang line na ito sa tunay na pinagmumulan ng pera nito — Vouchers/Cash Receipts, Troops & Membership payments, Point of Sale (NES), o Rentals. Kapag may nadagdag kang rule dito, papalitan nito ang built-in default ng line na ito; kapag inalis lahat ng rule, babalik sa default.',
+          'Lahat ng income ay galing sa Membership & Fees (bawat Troops & Membership registration module, kasama na ang sariling per-member roster payments ng isang Troop), Rentals, o NES (Point of Sale) — i-link ang line na ito sa kung alin dito ang tunay na pinagmumulan. Ang "Vouchers / Cash Receipts" ay sumasaklaw sa bayad ng bawat registration module (Troop, Barangay/District Committee, Trefoil Guild, OAVF, ICCG, Honorary/Associate Member). Kapag may nadagdag kang rule dito, papalitan nito ang built-in default ng line na ito; kapag inalis lahat ng rule, babalik sa default.',
         hintExpense:
           'I-link ang line na ito sa mga voucher o payroll field na aktwal na nagbabayad dito — kapaki-pakinabang kapag hindi eksaktong tugma ang GL Account text ng Check Voucher sa pangalan ng line na ito. Kapag may nadagdag kang rule dito, papalitan nito ang built-in default ng line na ito; kapag inalis lahat ng rule, babalik sa default.',
         addRule: 'Magdagdag ng Source',
@@ -2677,11 +2815,10 @@ const tl = {
         removeRule: 'Alisin ang source na ito',
         sourceTypeNotSpecified: 'Hindi Tinukoy',
         sourceTypeVoucher: 'Vouchers / Cash Receipts',
-        sourceTypeTroopPayment: 'Troops & Membership (Roster payments)',
         sourceTypePos: 'Point of Sale (NES)',
         sourceTypeRental: 'Rentals',
         sourceTypePayroll: 'Payroll',
-        voucherCategoriesLabel: 'Aling voucher/receipt categories ang kasama',
+        voucherCategoriesLabel: 'Aling mga category ang kasama',
         voucherCategoryPlaceholder: 'I-type o pumili ng category…',
         rentalCategoryAny: 'Kahit anong rental space',
         payrollFieldPlaceholder: 'Pumili ng payroll field'
@@ -2971,6 +3108,14 @@ const tl = {
     reprintButton: 'I-reprint ang Resibo',
     tabServiceInvoice: 'Service Invoice',
     tabAcknowledgmentReceipt: 'Acknowledgment Receipt',
+    typePicker: {
+      title: 'Piliin ang Klase ng Resibo',
+      subtitle: 'Aling resibo ang ire-release mo para sa bayad na ito?',
+      serviceInvoiceHint:
+        'Item-by-item na billing lines — para sa koleksyon na hindi fixed na registration fee.',
+      acknowledgmentReceiptHint:
+        'Nakatakdang breakdown ng Girl/Leader/Committee — para sa koleksyon ng registration fee.'
+    },
     receiptNumber: 'SI/AR Number',
     tin: 'TIN',
     address: 'Address',
@@ -2986,6 +3131,21 @@ const tl = {
       breakdownMismatch: 'Ang kabuuan ng breakdown ay dapat kapareho ng kabuuang halaga.',
       printFailed:
         'Na-record ang resibo, pero hindi na-print — tignan kung nakakonekta at naka-configure ang printer sa Settings'
+    },
+    councilShareReceipt: {
+      button: 'I-print ang Council Share Receipt',
+      reprintButton: 'I-reprint ang Council Share Receipt',
+      title: 'I-print ang Council Share Receipt — {{label}}',
+      hint: 'Pangalawa, panloob na resibo para sa sariling naretaing bahagi ng Council sa bayad na ito — nasakop na ng resibong inisyu sa itaas ang buong halagang nakolekta, kaya hindi na ito idadagdag ulit bilang income.',
+      lineLabel: 'Bahagi ng Council',
+      amountLabel: 'Bahagi ng Council',
+      dateLabel: 'Petsa',
+      payorLabel: 'Natanggap Mula Kay (nag-abot ng bahagi ng council)',
+      cashierLabel: 'Tinanggap Ni (kumilala para sa Council)',
+      recordAndPrint: 'I-record at I-print',
+      toast: {
+        payorRequired: 'Mangyaring ilagay kung sino ang nag-abot ng bahagi ng council.'
+      }
     }
   },
   vendors: {
@@ -3092,16 +3252,6 @@ const tl = {
         excel: 'Na-export ang Daily Collection Report sa Excel',
         pdf: 'Na-export ang Daily Collection Report bilang PDF',
         word: 'Na-export ang Daily Collection Report bilang Word document'
-      },
-      depositReceipt: {
-        printButton: 'I-print ang Resibo',
-        title: 'I-print ang Deposit Receipt',
-        hint: 'Patunay na inabot ang cash na ito para i-deposito — hindi ito bagong benta, kaya hindi na ito idadagdag ulit bilang income. Ang halagang nakolekta ay nabilang na noong unang natanggap ito.',
-        payorLabel: 'Natanggap Mula Kay (nag-abot ng cash)',
-        cashierLabel: 'Tinanggap Ni (kumilala para sa deposit)',
-        toast: {
-          payorRequired: 'Mangyaring ilagay kung sino ang nag-abot ng cash.'
-        }
       }
     }
   },
@@ -3712,7 +3862,7 @@ const tl = {
       whichTroopPlaceholder: 'Pumili ng troop',
       troopRole: 'Posisyon sa Troop na iyon',
       troopRoleLeader: 'Troop Leader',
-      troopRoleAssistant: 'Assistant Troop Leader',
+      troopRoleAssistant: 'Troop Co-Leader',
       completedTrainings: 'Natapos na Training',
       otherCompletedTraining: 'Iba pa (pakisulat)',
       ageLevelSpecialization: 'Para sa mga Nakatapos ng Age-Level Specialization Course Lamang',

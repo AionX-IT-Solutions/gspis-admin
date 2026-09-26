@@ -5,13 +5,10 @@ import { usePermissions } from '@/app/hooks/usePermissions'
 import { useAppStore } from '@/app/store/app.store'
 import { todayLocalIso } from '@/shared/lib/utils'
 import { useReceiptFields } from '@/shared/hooks/useReceiptFields'
-import { usePrinterDeviceName } from '@/shared/hooks/usePrinterDeviceName'
-import { printReceipt } from '@/shared/lib/receiptPrint'
-import type { ReceiptBreakdownLine, ReceiptRecord } from '@/shared/types/receipt.types'
+import type { ReceiptBreakdownLine, ReceiptKind, ReceiptRecord } from '@/shared/types/receipt.types'
 import { useTrefoilGuildStore } from '../store/trefoilGuild.store'
 import { useTrefoilGuildRegistrationStore } from '../store/trefoilGuildRegistration.store'
 import type { TrefoilGuildRegistration } from '../types/trefoilGuildRegistration.types'
-import { postBulkPaymentVoucher } from '../lib/tgVoucher'
 
 function emptyForm() {
   return {
@@ -20,9 +17,7 @@ function emptyForm() {
     date: todayLocalIso(),
     paidByName: '',
     membershipAmountPerMember: 0,
-    tgGroupFeeAmount: 0,
-    includeMembership: true,
-    includeTgGroupFee: true
+    tgGroupFeeAmount: 0
   }
 }
 
@@ -39,7 +34,11 @@ function findLatestRegistration(
     .sort((a, b) => b.dateApplied.localeCompare(a.dateApplied))[0]
 }
 
-export function useRecordTGBulkPaymentModal(open: boolean, onOpenChange: (open: boolean) => void) {
+export function useRecordTGBulkPaymentModal(
+  open: boolean,
+  onOpenChange: (open: boolean) => void,
+  initialReceiptType?: ReceiptKind
+) {
   const { t } = useTranslation()
   const toast = useToast()
   const { hasPermission } = usePermissions()
@@ -48,11 +47,9 @@ export function useRecordTGBulkPaymentModal(open: boolean, onOpenChange: (open: 
   const guilds = useTrefoilGuildStore((s) => s.guilds)
   const members = useTrefoilGuildStore((s) => s.members)
   const addBulkPayment = useTrefoilGuildStore((s) => s.addBulkPayment)
-  const attachBulkPaymentVoucher = useTrefoilGuildStore((s) => s.attachBulkPaymentVoucher)
   const registrations = useTrefoilGuildRegistrationStore((s) => s.registrations)
   const [form, setForm] = useState(emptyForm())
-  const receiptFields = useReceiptFields({}, open)
-  const printerDeviceName = usePrinterDeviceName()
+  const receiptFields = useReceiptFields({}, open, initialReceiptType)
 
   useEffect(() => {
     if (open) setForm(emptyForm())
@@ -82,14 +79,20 @@ export function useRecordTGBulkPaymentModal(open: boolean, onOpenChange: (open: 
     }))
   }
 
-  // Each fee line can be switched off for this specific transaction (e.g. collecting just the
-  // Membership Fee this time so it can be receipted cleanly as an Acknowledgment Receipt,
-  // leaving the T.G. Group Fee for a separate remittance) — the rates stay whatever the
-  // registration filed, only whether they're part of THIS collection changes.
-  const membershipTotal = form.includeMembership
-    ? form.membershipAmountPerMember * form.memberIds.length
-    : 0
-  const tgGroupFeeCollected = form.includeTgGroupFee ? form.tgGroupFeeAmount : 0
+  // Which fee is part of THIS collection is no longer a manual per-line toggle — it's
+  // determined entirely by the receipt type already picked (see ReceiptTypePickerModal), and
+  // the two are mutually exclusive: the Acknowledgment Receipt booklet has no Trefoil
+  // Guild-specific registration-fee row (the Membership Fee falls back to a free-text "Others"
+  // line — see the autoFillBreakdown note below), so an AR-based collection is Membership Fee
+  // only. The T.G. Group Fee isn't a registration fee at all — it's collected on a Service
+  // Invoice instead, which is T.G. Group Fee only (never Membership Fee, which always goes
+  // through an AR). A single remittance covering both would need two separate Record Bulk
+  // Payment transactions, one per receipt type.
+  const isServiceInvoice = receiptFields.receiptType === 'service_invoice'
+  const membershipTotal = isServiceInvoice
+    ? 0
+    : form.membershipAmountPerMember * form.memberIds.length
+  const tgGroupFeeCollected = isServiceInvoice ? form.tgGroupFeeAmount : 0
   const grandTotal = membershipTotal + tgGroupFeeCollected
 
   // Service Invoice tab's itemized preview — one line per fee actually being collected in
@@ -118,8 +121,12 @@ export function useRecordTGBulkPaymentModal(open: boolean, onOpenChange: (open: 
       {},
       { label: t('trefoilGuild.payment.categoryMembership'), amount: membershipTotal }
     )
+    // `open` is deliberately included even though it's not read in the body — the "Others" row
+    // otherwise never re-fills after the fields reset on open, whenever a new bulk payment
+    // happens to total the exact same amount as the previous one (so this effect wouldn't
+    // otherwise re-run).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [membershipTotal])
+  }, [membershipTotal, open])
 
   function handleSubmit() {
     if (!canManage) return
@@ -134,7 +141,7 @@ export function useRecordTGBulkPaymentModal(open: boolean, onOpenChange: (open: 
     const memberLines = [
       {
         category: 'membership' as const,
-        amountPerMember: form.includeMembership ? form.membershipAmountPerMember : 0
+        amountPerMember: isServiceInvoice ? 0 : form.membershipAmountPerMember
       }
     ].filter((l) => l.amountPerMember > 0)
     const flatLines = [{ category: 'tg_group_fee' as const, amount: tgGroupFeeCollected }].filter(
@@ -155,9 +162,9 @@ export function useRecordTGBulkPaymentModal(open: boolean, onOpenChange: (open: 
     }
 
     // Validate and build the receipt BEFORE recording anything — a payment is never recorded
-    // without a receipt to show for it (the Council's real process always issues one). Built
-    // once here and reused as-is both for storage (so the Payment tab can reprint it later)
-    // and for the actual print call below.
+    // without a receipt to show for it (the Council's real process always issues one). Stored
+    // on the payment record as-is so the Payment tab's own Print action can print/reprint it
+    // later — recording no longer prints automatically (see that tab's Actions column).
     const guild = guilds.find((g) => g.id === form.trefoilGuildId)
     if (!receiptFields.receiptNumber.trim()) {
       toast.error(t('receipts.toast.receiptNumberRequired'))
@@ -190,7 +197,7 @@ export function useRecordTGBulkPaymentModal(open: boolean, onOpenChange: (open: 
       cashierName: currentUser?.fullName ?? 'Cashier'
     }
 
-    const { flatPayments } = addBulkPayment({
+    addBulkPayment({
       trefoilGuildId: form.trefoilGuildId,
       memberIds: form.memberIds,
       memberLines,
@@ -200,34 +207,7 @@ export function useRecordTGBulkPaymentModal(open: boolean, onOpenChange: (open: 
       receipt
     })
 
-    // The T.G. Group Fee line (this transaction's only voucher-worthy line — Membership Fee
-    // has no council share, see trefoilGuild.types.ts) posts to ONE shared voucher for the
-    // whole transaction, same "one receipt per transaction" reasoning as Troops/District/
-    // Barangay Committee. Firestore only lets super_admin/admin/accountant/manager write
-    // `vouchers` (not hr, even though hr can record this payment) — skipped entirely rather
-    // than attempted-and-denied when the signed-in user lacks 'manage:vouchers'.
-    if (guild && flatPayments.length > 0 && hasPermission('manage:vouchers')) {
-      const voucherId = postBulkPaymentVoucher(
-        guild,
-        flatPayments,
-        form.date,
-        form.paidByName.trim(),
-        receipt
-      )
-      if (voucherId) {
-        attachBulkPaymentVoucher(
-          guild.id,
-          flatPayments.map((p) => p.id),
-          voucherId
-        )
-      }
-    }
-
     toast.success(t('trefoilGuild.payment.toast.recorded'))
-
-    printReceipt(receipt, printerDeviceName).then((result) => {
-      if (!result.ok) toast.error(t('receipts.toast.printFailed'))
-    })
 
     onOpenChange(false)
   }
@@ -237,6 +217,7 @@ export function useRecordTGBulkPaymentModal(open: boolean, onOpenChange: (open: 
     setForm,
     guildRegistration,
     selectGuild,
+    isServiceInvoice,
     membershipTotal,
     grandTotal,
     officialReceiptLines,

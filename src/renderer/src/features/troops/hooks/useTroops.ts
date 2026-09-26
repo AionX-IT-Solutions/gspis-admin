@@ -4,6 +4,9 @@ import { useSkeletonLoading } from '@/shared/hooks/useSkeletonLoading'
 import { useToast } from '@/app/hooks/useToast'
 import { usePermissions } from '@/app/hooks/usePermissions'
 import { useOrgSettingsStore } from '@/app/store/orgSettings.store'
+import { useIccgMemberStore } from '@/features/iccgRegistration/store/iccgMember.store'
+import { useIccgRegistrationStore } from '@/features/iccgRegistration/store/iccgRegistration.store'
+import { useTroopRegistrationStore } from '@/features/troopRegistration/store/troopRegistration.store'
 import { useTroopsStore } from '../store/troops.store'
 import { getMembershipYearLabel, isMembershipCurrent } from '../lib/membershipYear'
 import type { Troop } from '../types/troop.types'
@@ -21,6 +24,12 @@ export function useTroops() {
   const addTroop = useTroopsStore((s) => s.addTroop)
   const addScoutMember = useTroopsStore((s) => s.addScoutMember)
   const startMonth = useOrgSettingsStore((s) => s.membershipYearStartMonth)
+  const troopRegistrations = useTroopRegistrationStore((s) => s.registrations)
+  const addTroopRegistration = useTroopRegistrationStore((s) => s.addRegistration)
+  const iccgMembers = useIccgMemberStore((s) => s.members)
+  const addIccgMember = useIccgMemberStore((s) => s.addMember)
+  const iccgRegistrations = useIccgRegistrationStore((s) => s.registrations)
+  const addIccgRegistration = useIccgRegistrationStore((s) => s.addRegistration)
 
   const [showDialog, setShowDialog] = useState(false)
   const [editTarget, setEditTarget] = useState<Troop | null>(null)
@@ -65,7 +74,12 @@ export function useTroops() {
   }
 
   function commitDeleteTroop(target: Troop, force: boolean) {
+    // Captured before deleteTroop() runs — it cascades to all of these (see
+    // troops.store.ts), so Undo has to restore them too, not just the troop/roster.
     const orphanedMembers = scoutMembers.filter((m) => m.troopId === target.id)
+    const orphanedRegistrations = troopRegistrations.filter((r) => r.troopId === target.id)
+    const orphanedIccgMembers = iccgMembers.filter((m) => m.troopId === target.id)
+    const orphanedIccgRegistrations = iccgRegistrations.filter((r) => r.troopId === target.id)
     deleteTroop(target.id, force)
     toast.success(t('troops.toast.deleted', { troopNumber: target.troopNumber }), {
       duration: 6000,
@@ -74,6 +88,9 @@ export function useTroops() {
         onClick: () => {
           addTroop(target)
           orphanedMembers.forEach(addScoutMember)
+          orphanedRegistrations.forEach(addTroopRegistration)
+          orphanedIccgMembers.forEach(addIccgMember)
+          orphanedIccgRegistrations.forEach(addIccgRegistration)
         }
       }
     })
@@ -84,7 +101,11 @@ export function useTroops() {
     const target = deleteTarget
     setDeleteTarget(null)
     const orphanedMembers = scoutMembers.filter((m) => m.troopId === target.id)
-    if (orphanedMembers.some((m) => (m.payments?.length ?? 0) > 0)) {
+    const orphanedIccgMembers = iccgMembers.filter((m) => m.troopId === target.id)
+    if (
+      orphanedMembers.some((m) => (m.payments?.length ?? 0) > 0) ||
+      orphanedIccgMembers.some((m) => (m.payments?.length ?? 0) > 0)
+    ) {
       // Payment history is on the line — a second, explicit confirmation instead of
       // silently blocking, so a real cleanup need isn't a dead end.
       setForceDeleteTarget(target)

@@ -7,6 +7,7 @@ import {
 } from '@/shared/lib/firestoreSync'
 import { appendAuditLog } from '@/app/store/auditLog.store'
 import { useAppStore } from '@/app/store/app.store'
+import { useBarangayCommitteeRegistrationStore } from './barangayCommitteeRegistration.store'
 import type { ReceiptRecord } from '@/shared/types/receipt.types'
 import type {
   BarangayCommittee,
@@ -50,25 +51,15 @@ interface BarangayCommitteeState {
      *  row sharing this transaction's bulkPaymentId. */
     receipt?: ReceiptRecord
   }) => { bulkPaymentId: string; flatPayments: FlatFeePayment[] }
-  // Saves the voucher id postBulkPaymentVoucher() returned back onto every flat fee payment
-  // of this transaction — a plumbing follow-up to addBulkPayment, not a user-facing action.
-  attachBulkPaymentVoucher: (
-    barangayCommitteeId: string,
-    flatFeePaymentIds: string[],
-    voucherId: string
-  ) => void
   // Corrects a whole transaction's date/paid-by after the fact — applies to EVERY entry
-  // sharing `bulkKey` regardless of category (one receipt per transaction). Returns this
-  // transaction's flat fee payments (post-update) so the caller can rebuild its shared
-  // voucher's account lines.
+  // sharing `bulkKey` regardless of category (one receipt per transaction).
   updatePaymentGroup: (input: {
     barangayCommitteeId: string
     bulkKey: string
     date: string
     paidByName: string
   }) => { flatPayments: FlatFeePayment[] }
-  // Removes every entry sharing `bulkKey` — the whole transaction. Returns the removed flat
-  // fee payments so the caller can also delete their shared linked voucher.
+  // Removes every entry sharing `bulkKey` — the whole transaction.
   deletePaymentGroup: (input: { barangayCommitteeId: string; bulkKey: string }) => {
     removedFlatPayments: FlatFeePayment[]
   }
@@ -116,7 +107,9 @@ export const useBarangayCommitteeStore = create<BarangayCommitteeState>()((set, 
     })
   },
   // Blocked once any member has payment history — same reasoning as District Committee's
-  // deleteCommittee. `force` is the deliberate override.
+  // deleteCommittee. `force` is the deliberate override. Also cleans up filed Barangay
+  // Committee Registrations that reference this committee by id — same "no dangling records"
+  // fix as Troops' deleteTroop.
   deleteCommittee: (id, force = false) => {
     const committee = get().committees.find((c) => c.id === id)
     const orphanedMembers = get().members.filter((m) => m.barangayCommitteeId === id)
@@ -128,11 +121,19 @@ export const useBarangayCommitteeStore = create<BarangayCommitteeState>()((set, 
     }))
     deleteDocById('barangayCommittees', id)
     for (const member of orphanedMembers) deleteDocById('barangayCommitteeMembers', member.id)
+
+    const orphanedRegistrations = useBarangayCommitteeRegistrationStore
+      .getState()
+      .registrations.filter((r) => r.barangayCommitteeId === id)
+    for (const registration of orphanedRegistrations) {
+      useBarangayCommitteeRegistrationStore.getState().deleteRegistration(registration.id)
+    }
+
     appendAuditLog({
       action: 'barangay_committee_deleted',
       actorName: actorName(),
       entityType: 'barangay_committee',
-      summary: `Barangay Committee "${committee?.name ?? id}" and its ${orphanedMembers.length} member(s) deleted.${hasPayments ? ' Force-deleted despite recorded member payments.' : ''}`
+      summary: `Barangay Committee "${committee?.name ?? id}" and its ${orphanedMembers.length} member(s) and ${orphanedRegistrations.length} registration(s) deleted.${hasPayments ? ' Force-deleted despite recorded member payments.' : ''}`
     })
   },
 
@@ -250,24 +251,6 @@ export const useBarangayCommitteeStore = create<BarangayCommitteeState>()((set, 
     }
 
     return { bulkPaymentId, flatPayments }
-  },
-
-  attachBulkPaymentVoucher: (barangayCommitteeId, flatFeePaymentIds, voucherId) => {
-    const idSet = new Set(flatFeePaymentIds)
-    set((s) => ({
-      committees: s.committees.map((c) =>
-        c.id === barangayCommitteeId
-          ? {
-              ...c,
-              flatFeePayments: (c.flatFeePayments ?? []).map((p) =>
-                idSet.has(p.id) ? { ...p, linkedVoucherId: voucherId } : p
-              )
-            }
-          : c
-      )
-    }))
-    const committee = get().committees.find((c) => c.id === barangayCommitteeId)
-    if (committee) persist('barangayCommittees', barangayCommitteeId, committee)
   },
 
   updatePaymentGroup: ({ barangayCommitteeId, bulkKey, date, paidByName }) => {

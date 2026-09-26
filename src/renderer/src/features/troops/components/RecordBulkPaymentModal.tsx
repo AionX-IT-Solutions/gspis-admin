@@ -5,6 +5,7 @@ import { Button } from '@/shared/components/ui/Button'
 import { FormField, FieldInput } from '@/shared/components/ui/FormField'
 import { ReceiptFieldsSection } from '@/shared/components/receipts/ReceiptFieldsSection'
 import { formatDate } from '@/shared/lib/utils'
+import type { ReceiptKind } from '@/shared/types/receipt.types'
 import { useTroopsStore } from '../store/troops.store'
 import type { Troop } from '../types/troop.types'
 import { useRecordBulkPaymentModal } from '../hooks/useRecordBulkPaymentModal'
@@ -12,6 +13,7 @@ import { useRecordBulkPaymentModal } from '../hooks/useRecordBulkPaymentModal'
 interface RecordBulkPaymentModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  initialReceiptType?: ReceiptKind
 }
 
 function peso(n: number): string {
@@ -22,7 +24,11 @@ function troopLabel(troop: Troop): string {
   return troop.troopName ? `${troop.troopNumber} — ${troop.troopName}` : troop.troopNumber
 }
 
-export function RecordBulkPaymentModal({ open, onOpenChange }: RecordBulkPaymentModalProps) {
+export function RecordBulkPaymentModal({
+  open,
+  onOpenChange,
+  initialReceiptType
+}: RecordBulkPaymentModalProps) {
   const { t } = useTranslation()
   const allTroops = useTroopsStore((s) => s.troops)
   const {
@@ -30,12 +36,13 @@ export function RecordBulkPaymentModal({ open, onOpenChange }: RecordBulkPayment
     setForm,
     troopRegistration,
     selectTroop,
+    isServiceInvoice,
     membershipTotal,
     grandTotal,
     officialReceiptLines,
     receiptFields,
     handleSubmit
-  } = useRecordBulkPaymentModal(open, onOpenChange)
+  } = useRecordBulkPaymentModal(open, onOpenChange, initialReceiptType)
 
   const troops = useMemo(() => allTroops.filter((tr) => tr.isActive), [allTroops])
   const selectedTroop = troops.find((tr) => tr.id === form.troopId) ?? null
@@ -193,91 +200,70 @@ export function RecordBulkPaymentModal({ open, onOpenChange }: RecordBulkPayment
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
-          <div>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 11,
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                marginBottom: 6,
-                cursor: 'pointer',
-                textTransform: 'uppercase'
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={form.includeMembership}
-                onChange={(e) => setForm((f) => ({ ...f, includeMembership: e.target.checked }))}
+        {/* Which fee(s) show here is decided entirely by the receipt type already picked (see
+            ReceiptTypePickerModal) — the two are mutually exclusive, not a manual checkbox:
+            Acknowledgment Receipt is always Membership Fee only (the AR booklet has no Troop
+            Fee/Thinking Day Fee row), Service Invoice is always Troop Fee + Thinking Day Fee
+            only (never Membership Fee, which always goes through an AR instead). */}
+        <div style={{ display: 'flex', gap: 14 }}>
+          {!isServiceInvoice && (
+            <div style={{ flex: 1 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: 'var(--text-muted)',
+                  marginBottom: 6,
+                  textTransform: 'uppercase'
+                }}
+              >
+                {t('troops.roster.payment.categoryMembership')} (= ₱{peso(membershipTotal)})
+              </div>
+              <FieldInput
+                type="number"
+                value={form.membershipAmountPerMember || ''}
+                readOnly
+                disabled
               />
-              {t('troops.roster.payment.categoryMembership')} (= ₱{peso(membershipTotal)})
-            </label>
-            <FieldInput
-              type="number"
-              value={form.membershipAmountPerMember || ''}
-              readOnly
-              disabled={!form.includeMembership}
-            />
-          </div>
-          <div>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 11,
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                marginBottom: 6,
-                cursor: 'pointer',
-                textTransform: 'uppercase'
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={form.includeTroopFee}
-                onChange={(e) => setForm((f) => ({ ...f, includeTroopFee: e.target.checked }))}
-              />
-              {t('troops.payment.troopFeeLabel')}
-            </label>
-            <FieldInput
-              type="number"
-              value={form.troopFeeAmount || ''}
-              readOnly
-              disabled={!form.includeTroopFee}
-            />
-          </div>
-          <div>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 11,
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                marginBottom: 6,
-                cursor: 'pointer',
-                textTransform: 'uppercase'
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={form.includeThinkingDay}
-                onChange={(e) => setForm((f) => ({ ...f, includeThinkingDay: e.target.checked }))}
-              />
-              {t('troops.payment.thinkingDayFeeLabel')}
-            </label>
-            <FieldInput
-              type="number"
-              value={form.thinkingDayFeeAmount || ''}
-              readOnly
-              disabled={!form.includeThinkingDay}
-            />
-          </div>
+            </div>
+          )}
+          {isServiceInvoice && (
+            <>
+              <div style={{ flex: 1 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: 'var(--text-muted)',
+                    marginBottom: 6,
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  {t('troops.payment.troopFeeLabel')}
+                </div>
+                <FieldInput type="number" value={form.troopFeeAmount || ''} readOnly disabled />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: 'var(--text-muted)',
+                    marginBottom: 6,
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  {t('troops.payment.thinkingDayFeeLabel')}
+                </div>
+                <FieldInput
+                  type="number"
+                  value={form.thinkingDayFeeAmount || ''}
+                  readOnly
+                  disabled
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <div

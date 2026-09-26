@@ -7,6 +7,7 @@ import {
 } from '@/shared/lib/firestoreSync'
 import { appendAuditLog } from '@/app/store/auditLog.store'
 import { useAppStore } from '@/app/store/app.store'
+import { useTrefoilGuildRegistrationStore } from './trefoilGuildRegistration.store'
 import type { ReceiptRecord } from '@/shared/types/receipt.types'
 import type {
   TrefoilGuild,
@@ -50,25 +51,15 @@ interface TrefoilGuildState {
      *  row sharing this transaction's bulkPaymentId. */
     receipt?: ReceiptRecord
   }) => { bulkPaymentId: string; flatPayments: FlatFeePayment[] }
-  // Saves the voucher id postBulkPaymentVoucher() returned back onto every flat fee payment
-  // of this transaction — a plumbing follow-up to addBulkPayment, not a user-facing action.
-  attachBulkPaymentVoucher: (
-    trefoilGuildId: string,
-    flatFeePaymentIds: string[],
-    voucherId: string
-  ) => void
   // Corrects a whole transaction's date/paid-by after the fact — applies to EVERY entry
-  // sharing `bulkKey` regardless of category (one receipt per transaction). Returns this
-  // transaction's flat fee payments (post-update) so the caller can rebuild its shared
-  // voucher's account lines.
+  // sharing `bulkKey` regardless of category (one receipt per transaction).
   updatePaymentGroup: (input: {
     trefoilGuildId: string
     bulkKey: string
     date: string
     paidByName: string
   }) => { flatPayments: FlatFeePayment[] }
-  // Removes every entry sharing `bulkKey` — the whole transaction. Returns the removed flat
-  // fee payments so the caller can also delete their shared linked voucher.
+  // Removes every entry sharing `bulkKey` — the whole transaction.
   deletePaymentGroup: (input: { trefoilGuildId: string; bulkKey: string }) => {
     removedFlatPayments: FlatFeePayment[]
   }
@@ -116,7 +107,9 @@ export const useTrefoilGuildStore = create<TrefoilGuildState>()((set, get) => ({
     })
   },
   // Blocked once any member has payment history — same reasoning as Barangay/District
-  // Committee's deleteCommittee. `force` is the deliberate override.
+  // Committee's deleteCommittee. `force` is the deliberate override. Also cleans up filed
+  // Trefoil Guild Registrations that reference this guild by id — same "no dangling records"
+  // fix as Troops' deleteTroop.
   deleteGuild: (id, force = false) => {
     const guild = get().guilds.find((g) => g.id === id)
     const orphanedMembers = get().members.filter((m) => m.trefoilGuildId === id)
@@ -128,11 +121,19 @@ export const useTrefoilGuildStore = create<TrefoilGuildState>()((set, get) => ({
     }))
     deleteDocById('trefoilGuilds', id)
     for (const member of orphanedMembers) deleteDocById('trefoilGuildMembers', member.id)
+
+    const orphanedRegistrations = useTrefoilGuildRegistrationStore
+      .getState()
+      .registrations.filter((r) => r.trefoilGuildId === id)
+    for (const registration of orphanedRegistrations) {
+      useTrefoilGuildRegistrationStore.getState().deleteRegistration(registration.id)
+    }
+
     appendAuditLog({
       action: 'trefoil_guild_deleted',
       actorName: actorName(),
       entityType: 'trefoil_guild',
-      summary: `Trefoil Guild "${guild?.name ?? id}" and its ${orphanedMembers.length} member(s) deleted.${hasPayments ? ' Force-deleted despite recorded member payments.' : ''}`
+      summary: `Trefoil Guild "${guild?.name ?? id}" and its ${orphanedMembers.length} member(s) and ${orphanedRegistrations.length} registration(s) deleted.${hasPayments ? ' Force-deleted despite recorded member payments.' : ''}`
     })
   },
 
@@ -250,24 +251,6 @@ export const useTrefoilGuildStore = create<TrefoilGuildState>()((set, get) => ({
     }
 
     return { bulkPaymentId, flatPayments }
-  },
-
-  attachBulkPaymentVoucher: (trefoilGuildId, flatFeePaymentIds, voucherId) => {
-    const idSet = new Set(flatFeePaymentIds)
-    set((s) => ({
-      guilds: s.guilds.map((g) =>
-        g.id === trefoilGuildId
-          ? {
-              ...g,
-              flatFeePayments: (g.flatFeePayments ?? []).map((p) =>
-                idSet.has(p.id) ? { ...p, linkedVoucherId: voucherId } : p
-              )
-            }
-          : g
-      )
-    }))
-    const guild = get().guilds.find((g) => g.id === trefoilGuildId)
-    if (guild) persist('trefoilGuilds', trefoilGuildId, guild)
   },
 
   updatePaymentGroup: ({ trefoilGuildId, bulkKey, date, paidByName }) => {

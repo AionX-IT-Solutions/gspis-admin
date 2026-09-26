@@ -44,17 +44,45 @@ export function JournalTab({
   const preview = useDocumentPreview()
   const [search, setSearch] = useState('')
 
+  // Display-only grouping: rows sharing the same non-empty reference number are the same
+  // physical receipt (e.g. a Service Invoice covering both Troop Fee and Thinking Day Fund in
+  // one remittance) — "isang resibo, isang entry" (one receipt, one journal line), same as the
+  // Council's real books. This is deliberately scoped to just the Journal table/export, not the
+  // underlying `rows` — SCRD Summary's and Council Budget's per-category totals still need
+  // Troop Fees and Thinking Day Fund counted separately, so useScrdComputations.ts's own
+  // receiptRows (which those read from) stay ungrouped.
+  const groupedRows = useMemo(() => {
+    // A Map preserves insertion order, so iterating groups.values() below naturally keeps
+    // first-seen order without needing a separate index.
+    const groups = new Map<string, JournalDisplayRow>()
+    for (const r of rows) {
+      // No reference number to group by — every un-referenced row stands on its own, keyed by
+      // its own id so it never collides with another un-referenced row.
+      const key = r.reference || r.id
+      const existing = groups.get(key)
+      if (existing) {
+        existing.amount += r.amount
+        if (!existing.category.split(', ').includes(r.category)) {
+          existing.category = `${existing.category}, ${r.category}`
+        }
+      } else {
+        groups.set(key, { ...r })
+      }
+    }
+    return [...groups.values()]
+  }, [rows])
+
   const filteredRows = useMemo(() => {
     const q = search.trim().toLowerCase()
-    if (!q) return rows
-    return rows.filter(
+    if (!q) return groupedRows
+    return groupedRows.filter(
       (r) =>
         r.name.toLowerCase().includes(q) ||
         r.particulars.toLowerCase().includes(q) ||
         (r.reference?.toLowerCase().includes(q) ?? false) ||
         r.category.toLowerCase().includes(q)
     )
-  }, [rows, search])
+  }, [groupedRows, search])
 
   const journalColumns: Column<JournalDisplayRow>[] = [
     { key: 'date', header: t('scrd.columns.date'), render: (r) => formatDate(r.date) },
@@ -83,17 +111,17 @@ export function JournalTab({
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
         <ExportMenu
           label={t('scrd.exportJournalLabel')}
-          onView={async () => preview.openPreview(await onView(rows, monthLabel))}
+          onView={async () => preview.openPreview(await onView(groupedRows, monthLabel))}
           onExportExcel={() => {
-            onExportExcel(rows, monthLabel)
+            onExportExcel(groupedRows, monthLabel)
             toast.success(t(toastKeys.excel))
           }}
           onExportPdf={() => {
-            onExportPdf(rows, monthLabel)
+            onExportPdf(groupedRows, monthLabel)
             toast.success(t(toastKeys.pdf))
           }}
           onExportWord={() => {
-            onExportWord(rows, monthLabel)
+            onExportWord(groupedRows, monthLabel)
             toast.success(t(toastKeys.word))
           }}
         />
@@ -127,15 +155,15 @@ export function JournalTab({
         url={preview.url}
         title={t('scrd.exportJournalLabel')}
         onDownloadExcel={() => {
-          onExportExcel(rows, monthLabel)
+          onExportExcel(groupedRows, monthLabel)
           toast.success(t(toastKeys.excel))
         }}
         onDownloadPdf={() => {
-          onExportPdf(rows, monthLabel)
+          onExportPdf(groupedRows, monthLabel)
           toast.success(t(toastKeys.pdf))
         }}
         onDownloadWord={() => {
-          onExportWord(rows, monthLabel)
+          onExportWord(groupedRows, monthLabel)
           toast.success(t(toastKeys.word))
         }}
       />

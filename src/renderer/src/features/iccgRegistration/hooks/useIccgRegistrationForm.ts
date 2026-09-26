@@ -9,7 +9,6 @@ import { getMembershipYearLabel } from '@/features/troops/lib/membershipYear'
 import { todayLocalIso } from '@/shared/lib/utils'
 import { useIccgRegistrationStore } from '../store/iccgRegistration.store'
 import { useIccgMemberStore } from '../store/iccgMember.store'
-import { syncIccgRegistrationVoucher } from '../lib/iccgVoucher'
 import {
   councilRetainedIccgFeeShare,
   emptyFee,
@@ -256,17 +255,6 @@ export function useIccgRegistrationForm() {
     } else {
       updateRegistration(registrationId, fullRegistration)
       toast.success(t('iccgRegistration.toast.updated'))
-    }
-
-    // Firestore only lets super_admin/admin/accountant/manager write `vouchers` — hr can
-    // file a registration but not this — so this is skipped entirely rather than
-    // attempted-and-denied when the signed-in user lacks 'manage:vouchers'; an
-    // accountant/manager opening and re-saving the same filing later completes the link.
-    if (hasPermission('manage:vouchers')) {
-      const linkedVoucherId = syncIccgRegistrationVoucher(fullRegistration, troop)
-      if (linkedVoucherId !== fullRegistration.linkedVoucherId) {
-        updateRegistration(registrationId, { linkedVoucherId })
-      }
     }
 
     navigate('/iccg-registrations?tab=registrations')

@@ -38,6 +38,11 @@ export interface MemberPayment {
    *  stamped identically onto every entry sharing `bulkPaymentId` so the Payment tab can
    *  reprint it from any of them. */
   receipt?: ReceiptRecord
+  /** The SECOND, internal receipt documenting the Council's own retained share of this payment
+   *  (see PrintCouncilShareReceiptModal), printed on demand from the Payments tab after the
+   *  member-facing AR/SI above was already issued — only once this exists does
+   *  registrationCashReceipts.ts's fromIccgMemberPayments count this money as Council income. */
+  councilShareReceipt?: ReceiptRecord
 }
 
 export interface IccgMember {

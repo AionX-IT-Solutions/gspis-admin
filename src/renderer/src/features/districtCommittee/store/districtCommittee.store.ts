@@ -7,6 +7,7 @@ import {
 } from '@/shared/lib/firestoreSync'
 import { appendAuditLog } from '@/app/store/auditLog.store'
 import { useAppStore } from '@/app/store/app.store'
+import { useDistrictCommitteeRegistrationStore } from './districtCommitteeRegistration.store'
 import type { ReceiptRecord } from '@/shared/types/receipt.types'
 import type {
   DistrictCommittee,
@@ -53,27 +54,17 @@ interface DistrictCommitteeState {
      *  later from any row sharing this transaction's bulkPaymentId. */
     receipt?: ReceiptRecord
   }) => { bulkPaymentId: string; flatPayments: FlatFeePayment[] }
-  // Saves the voucher id postBulkPaymentVoucher() returned back onto every flat fee payment
-  // of this transaction — a plumbing follow-up to addBulkPayment, not a user-facing action,
-  // so it's silent (no audit log entry of its own).
-  attachBulkPaymentVoucher: (
-    districtCommitteeId: string,
-    flatFeePaymentIds: string[],
-    voucherId: string
-  ) => void
   // Corrects a whole transaction's date/paid-by after the fact — the fee amounts themselves
   // are never editable here, so date and payer name are the only fields a correction can
   // touch. Applies to EVERY entry sharing `bulkKey` regardless of category (one receipt per
-  // transaction). Returns this transaction's flat fee payments (post-update) so the caller
-  // can rebuild its shared voucher's account lines.
+  // transaction).
   updatePaymentGroup: (input: {
     districtCommitteeId: string
     bulkKey: string
     date: string
     paidByName: string
   }) => { flatPayments: FlatFeePayment[] }
-  // Removes every entry sharing `bulkKey` — the whole transaction. Returns the removed flat
-  // fee payments so the caller can also delete their shared linked voucher.
+  // Removes every entry sharing `bulkKey` — the whole transaction.
   deletePaymentGroup: (input: { districtCommitteeId: string; bulkKey: string }) => {
     removedFlatPayments: FlatFeePayment[]
   }
@@ -122,7 +113,8 @@ export const useDistrictCommitteeStore = create<DistrictCommitteeState>()((set, 
   },
   // Blocked once any member has payment history — same reasoning as Troops' deleteTroop
   // (Daily Collections derives its per-day totals live from members[].payments). `force` is
-  // the deliberate override.
+  // the deliberate override. Also cleans up filed District Committee Registrations that
+  // reference this committee by id — same "no dangling records" fix as Troops' deleteTroop.
   deleteCommittee: (id, force = false) => {
     const committee = get().committees.find((c) => c.id === id)
     const orphanedMembers = get().members.filter((m) => m.districtCommitteeId === id)
@@ -134,11 +126,19 @@ export const useDistrictCommitteeStore = create<DistrictCommitteeState>()((set, 
     }))
     deleteDocById('districtCommittees', id)
     for (const member of orphanedMembers) deleteDocById('districtCommitteeMembers', member.id)
+
+    const orphanedRegistrations = useDistrictCommitteeRegistrationStore
+      .getState()
+      .registrations.filter((r) => r.districtCommitteeId === id)
+    for (const registration of orphanedRegistrations) {
+      useDistrictCommitteeRegistrationStore.getState().deleteRegistration(registration.id)
+    }
+
     appendAuditLog({
       action: 'district_committee_deleted',
       actorName: actorName(),
       entityType: 'district_committee',
-      summary: `District Committee "${committee?.name ?? id}" and its ${orphanedMembers.length} member(s) deleted.${hasPayments ? ' Force-deleted despite recorded member payments.' : ''}`
+      summary: `District Committee "${committee?.name ?? id}" and its ${orphanedMembers.length} member(s) and ${orphanedRegistrations.length} registration(s) deleted.${hasPayments ? ' Force-deleted despite recorded member payments.' : ''}`
     })
   },
 
@@ -256,24 +256,6 @@ export const useDistrictCommitteeStore = create<DistrictCommitteeState>()((set, 
     }
 
     return { bulkPaymentId, flatPayments }
-  },
-
-  attachBulkPaymentVoucher: (districtCommitteeId, flatFeePaymentIds, voucherId) => {
-    const idSet = new Set(flatFeePaymentIds)
-    set((s) => ({
-      committees: s.committees.map((c) =>
-        c.id === districtCommitteeId
-          ? {
-              ...c,
-              flatFeePayments: (c.flatFeePayments ?? []).map((p) =>
-                idSet.has(p.id) ? { ...p, linkedVoucherId: voucherId } : p
-              )
-            }
-          : c
-      )
-    }))
-    const committee = get().committees.find((c) => c.id === districtCommitteeId)
-    if (committee) persist('districtCommittees', districtCommitteeId, committee)
   },
 
   updatePaymentGroup: ({ districtCommitteeId, bulkKey, date, paidByName }) => {

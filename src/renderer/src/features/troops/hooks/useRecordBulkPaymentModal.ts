@@ -5,13 +5,10 @@ import { usePermissions } from '@/app/hooks/usePermissions'
 import { useAppStore } from '@/app/store/app.store'
 import { todayLocalIso } from '@/shared/lib/utils'
 import { useReceiptFields } from '@/shared/hooks/useReceiptFields'
-import { usePrinterDeviceName } from '@/shared/hooks/usePrinterDeviceName'
-import { printReceipt } from '@/shared/lib/receiptPrint'
-import type { ReceiptBreakdownLine, ReceiptRecord } from '@/shared/types/receipt.types'
+import type { ReceiptBreakdownLine, ReceiptKind, ReceiptRecord } from '@/shared/types/receipt.types'
 import { useTroopsStore } from '../store/troops.store'
 import { useTroopRegistrationStore } from '@/features/troopRegistration/store/troopRegistration.store'
 import type { TroopRegistration } from '@/features/troopRegistration/types/troopRegistration.types'
-import { postBulkPaymentVoucher } from '../lib/flatFeeVoucher'
 
 function emptyForm() {
   return {
@@ -21,10 +18,7 @@ function emptyForm() {
     paidByName: '',
     membershipAmountPerMember: 0,
     troopFeeAmount: 0,
-    thinkingDayFeeAmount: 0,
-    includeMembership: true,
-    includeTroopFee: true,
-    includeThinkingDay: true
+    thinkingDayFeeAmount: 0
   }
 }
 
@@ -42,7 +36,11 @@ function findLatestRegistration(
     .sort((a, b) => b.dateApplied.localeCompare(a.dateApplied))[0]
 }
 
-export function useRecordBulkPaymentModal(open: boolean, onOpenChange: (open: boolean) => void) {
+export function useRecordBulkPaymentModal(
+  open: boolean,
+  onOpenChange: (open: boolean) => void,
+  initialReceiptType?: ReceiptKind
+) {
   const { t } = useTranslation()
   const toast = useToast()
   const { hasPermission } = usePermissions()
@@ -51,11 +49,9 @@ export function useRecordBulkPaymentModal(open: boolean, onOpenChange: (open: bo
   const troops = useTroopsStore((s) => s.troops)
   const scoutMembers = useTroopsStore((s) => s.scoutMembers)
   const addBulkPayment = useTroopsStore((s) => s.addBulkPayment)
-  const attachBulkPaymentVoucher = useTroopsStore((s) => s.attachBulkPaymentVoucher)
   const registrations = useTroopRegistrationStore((s) => s.registrations)
   const [form, setForm] = useState(emptyForm())
-  const receiptFields = useReceiptFields({}, open)
-  const printerDeviceName = usePrinterDeviceName()
+  const receiptFields = useReceiptFields({}, open, initialReceiptType)
 
   useEffect(() => {
     if (open) setForm(emptyForm())
@@ -87,15 +83,20 @@ export function useRecordBulkPaymentModal(open: boolean, onOpenChange: (open: bo
     }))
   }
 
-  // Each fee line can be switched off for this specific transaction (e.g. collecting just the
-  // Membership Fee this time so it can be receipted cleanly as an Acknowledgment Receipt,
-  // leaving Troop Fee/Thinking Day Fee for a separate remittance) — the rates themselves stay
-  // whatever the registration filed, only whether they're part of THIS collection changes.
-  const membershipTotal = form.includeMembership
-    ? form.membershipAmountPerMember * form.memberIds.length
-    : 0
-  const troopFeeCollected = form.includeTroopFee ? form.troopFeeAmount : 0
-  const thinkingDayCollected = form.includeThinkingDay ? form.thinkingDayFeeAmount : 0
+  // Which fees are part of THIS collection is no longer a manual per-line toggle — it's
+  // determined entirely by the receipt type already picked (see ReceiptTypePickerModal), and
+  // the two are mutually exclusive: the Acknowledgment Receipt booklet only has fixed Girl/
+  // Leader/Co-Leader REGISTRATION fee rows, so an AR-based collection is Membership Fee only.
+  // Troop Fee/Thinking Day Fee aren't registration fees at all — they're collected on a
+  // Service Invoice instead, which is Troop Fee + Thinking Day Fee only (never Membership Fee,
+  // which always goes through an AR). A single remittance covering both would need two
+  // separate Record Bulk Payment transactions, one per receipt type.
+  const isServiceInvoice = receiptFields.receiptType === 'service_invoice'
+  const membershipTotal = isServiceInvoice
+    ? 0
+    : form.membershipAmountPerMember * form.memberIds.length
+  const troopFeeCollected = isServiceInvoice ? form.troopFeeAmount : 0
+  const thinkingDayCollected = isServiceInvoice ? form.thinkingDayFeeAmount : 0
   const grandTotal = membershipTotal + troopFeeCollected + thinkingDayCollected
 
   // Service Invoice tab's itemized preview — one line per fee actually being collected in
@@ -120,8 +121,12 @@ export function useRecordBulkPaymentModal(open: boolean, onOpenChange: (open: bo
   // once the cashier has actually edited the breakdown.
   useEffect(() => {
     receiptFields.autoFillBreakdown({ Girl: membershipTotal }, { label: '', amount: 0 })
+    // `open` is deliberately included even though it's not read in the body — the "Girl" row
+    // otherwise never re-fills after the fields reset on open, whenever a new bulk payment
+    // happens to total the exact same amount as the previous one (so this effect wouldn't
+    // otherwise re-run).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [membershipTotal])
+  }, [membershipTotal, open])
 
   function handleSubmit() {
     if (!canManage) return
@@ -136,7 +141,7 @@ export function useRecordBulkPaymentModal(open: boolean, onOpenChange: (open: bo
     const memberLines = [
       {
         category: 'membership' as const,
-        amountPerMember: form.includeMembership ? form.membershipAmountPerMember : 0
+        amountPerMember: isServiceInvoice ? 0 : form.membershipAmountPerMember
       }
     ].filter((l) => l.amountPerMember > 0)
     const flatLines = [
@@ -158,9 +163,9 @@ export function useRecordBulkPaymentModal(open: boolean, onOpenChange: (open: bo
     }
 
     // Validate and build the receipt BEFORE recording anything — a payment is never recorded
-    // without a receipt to show for it (the Council's real process always issues one). Built
-    // once here and reused as-is both for storage (so the Payment tab can reprint it later)
-    // and for the actual print call below.
+    // without a receipt to show for it (the Council's real process always issues one). Stored
+    // on the payment record as-is so the Payment tab's own Print action can print/reprint it
+    // later — recording no longer prints automatically (see that tab's Actions column).
     const troop = troops.find((tr) => tr.id === form.troopId)
     if (!receiptFields.receiptNumber.trim()) {
       toast.error(t('receipts.toast.receiptNumberRequired'))
@@ -193,7 +198,7 @@ export function useRecordBulkPaymentModal(open: boolean, onOpenChange: (open: bo
       cashierName: currentUser?.fullName ?? 'Cashier'
     }
 
-    const { flatPayments } = addBulkPayment({
+    addBulkPayment({
       troopId: form.troopId,
       memberIds: form.memberIds,
       memberLines,
@@ -203,35 +208,7 @@ export function useRecordBulkPaymentModal(open: boolean, onOpenChange: (open: bo
       receipt
     })
 
-    // All of this transaction's flat fee lines (Troop Fee, Thinking Day Fee) post to ONE
-    // shared approved voucher — one receipt per remittance, not one per fee type — so it
-    // reaches SCRD's Cash Receipts / the Council Budget's income auto-actuals, same as every
-    // other real income source in this app. Firestore only lets super_admin/admin/
-    // accountant/manager write `vouchers` (not hr, even though hr can record this payment) —
-    // skipped entirely rather than attempted-and-denied when the signed-in user lacks
-    // 'manage:vouchers'.
-    if (troop && flatPayments.length > 0 && hasPermission('manage:vouchers')) {
-      const voucherId = postBulkPaymentVoucher(
-        troop,
-        flatPayments,
-        form.date,
-        form.paidByName.trim(),
-        receipt
-      )
-      if (voucherId) {
-        attachBulkPaymentVoucher(
-          troop.id,
-          flatPayments.map((p) => p.id),
-          voucherId
-        )
-      }
-    }
-
     toast.success(t('troops.payment.toast.recorded'))
-
-    printReceipt(receipt, printerDeviceName).then((result) => {
-      if (!result.ok) toast.error(t('receipts.toast.printFailed'))
-    })
 
     onOpenChange(false)
   }
@@ -241,7 +218,10 @@ export function useRecordBulkPaymentModal(open: boolean, onOpenChange: (open: bo
     setForm,
     troopRegistration,
     selectTroop,
+    isServiceInvoice,
     membershipTotal,
+    troopFeeCollected,
+    thinkingDayCollected,
     grandTotal,
     officialReceiptLines,
     receiptFields,

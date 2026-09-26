@@ -9,12 +9,10 @@ import {
   hasCashAdvance,
   cashAdvanceReimbursement
 } from '@/features/vouchers/lib/expenseVouchers'
-import { getReceiptRowsFromVouchers } from '@/features/vouchers/lib/receiptVouchers'
+import { useCashReceiptRows } from '@/features/scrd/hooks/useCashReceiptRows'
 import { usePOSStore } from '@/features/pos/store/pos.store'
 import { useRentalsStore } from '@/features/rentals/store/rentals.store'
-import { useTroopsStore } from '@/features/troops/store/troops.store'
 import { useDailyCollectionsStore } from '../store/dailyCollections.store'
-import type { MemberPaymentCategory } from '@/features/troops/types/troop.types'
 import {
   exportIncomeStatementExcel,
   exportIncomeStatementPdf,
@@ -22,21 +20,18 @@ import {
   buildIncomeStatementPdfDoc
 } from '../lib/financialReportsExport'
 
-// Mirrors the categorization useScrdComputations.ts already uses for the same underlying
-// records, so this report's Income total and SCRD's "Total Receipts" always agree.
-const RECEIPT_CATEGORY_BY_MEMBER_PAYMENT: Record<MemberPaymentCategory, string> = {
-  membership: 'Troop Fees',
-  training: 'Training Fees',
-  camping: 'Camping Fees'
-}
-
 export function useIncomeStatementTab(periodLabel: string) {
   const { t } = useTranslation()
   const toast = useToast()
   const preview = useDocumentPreview()
   const vouchers = useVouchersStore((s) => s.vouchers)
   const expenses = useMemo(() => getExpenseVouchers(vouchers), [vouchers])
-  const cashReceipts = useMemo(() => getReceiptRowsFromVouchers(vouchers), [vouchers])
+  // Every real income source the app records — approved Journal Voucher credit lines plus all
+  // 9 registration modules' fee/payment records read directly instead of through a voucher
+  // (BC/DC/TG/OAVF/ICCG/Honorary/Associate/Troop council shares) — same shared source SCRD's
+  // Cash Receipts Journal and Council Budget's income auto-actuals already pull from, so this
+  // report's income total is never a second, disagreeing figure.
+  const cashReceipts = useCashReceiptRows()
   // A cash-advance liquidation JV that overspent its advance owes the payee the excess back in
   // real cash — the mirror image of an underspent one's leftover refund, which cashReceipts
   // above already counts as "Cash Advance Refund" income. Journal Vouchers are otherwise never
@@ -54,15 +49,15 @@ export function useIncomeStatementTab(periodLabel: string) {
   )
   const sales = usePOSStore((s) => s.sales)
   const bookings = useRentalsStore((s) => s.bookings)
-  const scoutMembers = useTroopsStore((s) => s.scoutMembers)
   const dailyCollectionReports = useDailyCollectionsStore((s) => s.reports)
 
   const pnl = useMemo(() => {
-    // Every real income source the app records — approved Journal Voucher credit lines (Cash
-    // Receipts), POS sales, confirmed/completed rental bookings, and Troop/District Committee
-    // roster payments — same sources SCRD's Cash Receipts Journal and Bank Balances already
-    // pull from (see receiptVouchers.ts / useScrdComputations.ts / useBankBalances.ts), so this
-    // report's income total is never a second, disagreeing figure.
+    // Every real income source the app records — cashReceipts (Journal Vouchers plus all 9
+    // registration modules' direct-read fee/payment records, including Training/Camping Fee
+    // roster payments — see the useCashReceiptRows() assignment above and
+    // registrationCashReceipts.ts's fromTroopMemberFeePayments), POS sales, and confirmed/
+    // completed rental bookings — so this report's income total is never a second, disagreeing
+    // figure from SCRD's Cash Receipts Journal.
     const incomeByAccount = new Map<string, number>()
     const addIncome = (category: string, amount: number) =>
       incomeByAccount.set(category, (incomeByAccount.get(category) ?? 0) + amount)
@@ -72,11 +67,6 @@ export function useIncomeStatementTab(periodLabel: string) {
     bookings
       .filter((b) => b.status === 'confirmed' || b.status === 'completed')
       .forEach((b) => addIncome('Rental Income', b.amountPaid ?? b.totalAmount))
-    scoutMembers.forEach((m) =>
-      (m.payments ?? []).forEach((p) =>
-        addIncome(RECEIPT_CATEGORY_BY_MEMBER_PAYMENT[p.category], p.amount)
-      )
-    )
     // Daily Collections' hand-entered rows — the only categories with no automated source
     // (Badge/Certificate Fee, Council Service Fund, ICCG dues collected in person; see
     // ManualReceiptLine in dailyCollection.types.ts). NES/Mem. Reg./Rentals columns on the
@@ -118,7 +108,6 @@ export function useIncomeStatementTab(periodLabel: string) {
     cashReceipts,
     sales,
     bookings,
-    scoutMembers,
     dailyCollectionReports,
     cashAdvanceReimbursementRows
   ])
@@ -156,7 +145,6 @@ export function useIncomeStatementTab(periodLabel: string) {
     bookings
       .filter((b) => b.status === 'confirmed' || b.status === 'completed')
       .forEach((b) => addIncome(b.bookingDate, b.amountPaid ?? b.totalAmount))
-    scoutMembers.forEach((m) => (m.payments ?? []).forEach((p) => addIncome(p.date, p.amount)))
     dailyCollectionReports.forEach((r) =>
       r.manualReceipts.forEach((line) => addIncome(r.date, line.bcFee + line.csf + line.iccg))
     )
@@ -171,7 +159,6 @@ export function useIncomeStatementTab(periodLabel: string) {
     cashReceipts,
     sales,
     bookings,
-    scoutMembers,
     dailyCollectionReports,
     cashAdvanceReimbursementRows
   ])

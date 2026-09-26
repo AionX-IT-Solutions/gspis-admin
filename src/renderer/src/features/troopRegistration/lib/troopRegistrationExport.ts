@@ -385,8 +385,8 @@ export async function exportTroopRegistrationExcel(data: TroopRegistrationExport
 
   setCell(sheet, `A${r}`, 'REGISTRATION OF TROOP MEMBERS', SECTION_FONT)
   r++
-  for (const [patrol, members] of groupByPatrol(data.members)) {
-    setCell(sheet, `A${r}`, `Name of Patrol/Cluster: ${patrol}`, {
+  for (const [, members] of groupByPatrol(data.members)) {
+    setCell(sheet, `A${r}`, 'Name of Patrol/Cluster:', {
       bold: true,
       size: 9,
       italic: true
@@ -558,20 +558,11 @@ export async function buildTroopRegistrationPdfDoc(data: TroopRegistrationExport
     columnStyles: { 4: { halign: 'center' }, 5: { halign: 'center' }, 6: { halign: 'center' } }
   })
 
-  for (const [patrol, members] of groupByPatrol(data.members)) {
+  for (const [, members] of groupByPatrol(data.members)) {
     y = addTable(doc, {
       startY: y + 8,
       head: [
-        [
-          `Patrol/Cluster: ${patrol}`,
-          'Name',
-          'MM',
-          'DD',
-          'YY',
-          'Gr/Yr',
-          'Reg. Status',
-          'Beneficiary'
-        ]
+        ['Name of Patrol/Cluster:', 'Name', 'MM', 'DD', 'YY', 'Gr/Yr', 'Reg. Status', 'Beneficiary']
       ],
       body: members.map((m, i) => {
         const [mm, dd, yy] = splitBirthdate(m.birthdate)
@@ -708,10 +699,10 @@ export async function exportTroopRegistrationDocx(data: TroopRegistrationExportD
     new Paragraph({
       children: [new TextRun({ text: 'Registration of Troop Members', bold: true })]
     }),
-    ...groupByPatrol(data.members).flatMap(([patrol, members]) => [
+    ...groupByPatrol(data.members).flatMap(([, members]) => [
       new Paragraph({
         spacing: { before: 120 },
-        children: [new TextRun({ text: `Patrol/Cluster: ${patrol}`, bold: true, italics: true })]
+        children: [new TextRun({ text: 'Name of Patrol/Cluster:', bold: true, italics: true })]
       }),
       buildTable(
         ['#', 'Name (Last, First, M.I.)', 'MM', 'DD', 'YY', 'Gr/Yr', 'Reg. Status', 'Beneficiary'],

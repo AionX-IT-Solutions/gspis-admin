@@ -8,8 +8,7 @@ import { usePOSStore } from '@/features/pos/store/pos.store'
 import { useRentalsStore } from '@/features/rentals/store/rentals.store'
 import { useVouchersStore } from '@/features/vouchers/store/vouchers.store'
 import { useHRStore } from '@/features/hr/store/hr.store'
-import { useTroopsStore } from '@/features/troops/store/troops.store'
-import { getReceiptRowsFromVouchers } from '@/features/vouchers/lib/receiptVouchers'
+import { useCashReceiptRows } from '@/features/scrd/hooks/useCashReceiptRows'
 import { stripCategoryNumbering } from '@/features/vouchers/lib/expenseVouchers'
 import { useBudgetStore, type BudgetCategoryEdit } from '../store/budget.store'
 import { useBudgetSourceMappingsStore } from '../store/budgetSourceMappings.store'
@@ -45,8 +44,7 @@ export function useBudget() {
   const spaces = useRentalsStore((s) => s.spaces)
   const vouchers = useVouchersStore((s) => s.vouchers)
   const payroll = useHRStore((s) => s.payroll)
-  const cashReceipts = useMemo(() => getReceiptRowsFromVouchers(vouchers), [vouchers])
-  const scoutMembers = useTroopsStore((s) => s.scoutMembers)
+  const cashReceipts = useCashReceiptRows()
   const sourceMappings = useBudgetSourceMappingsStore((s) => s.mappings)
   const getSourceMapping = useBudgetSourceMappingsStore((s) => s.getMapping)
   const setSourceMapping = useBudgetSourceMappingsStore((s) => s.setMapping)
@@ -116,9 +114,10 @@ export function useBudget() {
     [categories]
   )
 
-  // Reference figures pulled live from POS/Rentals/Vouchers/Payroll/Troop payments for
-  // whichever budget lines have a confident real-data match — offered in the Edit modal as a
-  // one-click fill, never silently overwriting the council-approved manual actuals.
+  // Reference figures pulled live from POS/Rentals/Vouchers/Payroll/Cash Receipts (every
+  // registration module's fee, including Troop's own roster payments) for whichever budget
+  // lines have a confident real-data match — offered in the Edit modal as a one-click fill,
+  // never silently overwriting the council-approved manual actuals.
   const autoActualsByCategory = useMemo(
     () =>
       computeBudgetAutoActuals(categories, fiscalYear, {
@@ -128,7 +127,6 @@ export function useBudget() {
         vouchers,
         payroll,
         cashReceipts,
-        scoutMembers,
         sourceMappings
       }),
     [
@@ -140,7 +138,6 @@ export function useBudget() {
       vouchers,
       payroll,
       cashReceipts,
-      scoutMembers,
       sourceMappings
     ]
   )

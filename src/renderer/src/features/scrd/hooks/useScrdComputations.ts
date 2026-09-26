@@ -8,22 +8,12 @@ import {
   hasCashAdvance,
   cashAdvanceReimbursement
 } from '@/features/vouchers/lib/expenseVouchers'
-import { getReceiptRowsFromVouchers } from '@/features/vouchers/lib/receiptVouchers'
+import { useCashReceiptRows } from './useCashReceiptRows'
 import { usePOSStore } from '@/features/pos/store/pos.store'
 import { useRentalsStore } from '@/features/rentals/store/rentals.store'
-import { useTroopsStore } from '@/features/troops/store/troops.store'
 import { useDailyCollectionsStore } from '@/features/accounting/store/dailyCollections.store'
 import { RECEIPT_KIND_LABELS } from '@/shared/types/receipt.types'
-import type { MemberPaymentCategory } from '@/features/troops/types/troop.types'
 import type { JournalRow, BankAccountBalance } from '../lib/scrdExcelExport'
-
-// Mirrors MEMBER_PAYMENT_CATEGORIES_BY_BUDGET_LINE (budgetAutoActuals.ts) so a Troop payment's
-// category label here always names the same Council Budget line its amount actually posts to.
-const RECEIPT_CATEGORY_BY_MEMBER_PAYMENT: Record<MemberPaymentCategory, string> = {
-  membership: 'Troop Fees',
-  training: 'Training Fees',
-  camping: 'Camping Fees'
-}
 
 export interface JournalDisplayRow extends JournalRow {
   id: string
@@ -59,7 +49,7 @@ export function useScrdComputations() {
   const deleteBank = useBanksStore((s) => s.deleteBank)
   const restoreBank = useBanksStore((s) => s.restoreBank)
   const vouchers = useVouchersStore((s) => s.vouchers)
-  const cashReceipts = useMemo(() => getReceiptRowsFromVouchers(vouchers), [vouchers])
+  const cashReceipts = useCashReceiptRows()
   // A cash-advance liquidation JV that overspent its advance owes the payee the excess back
   // in real cash — the mirror image of an underspent one's leftover refund, which
   // getReceiptRowsFromVouchers already turns into a "Cash Advance Refund" receipt row above.
@@ -79,7 +69,6 @@ export function useScrdComputations() {
   const bookings = useRentalsStore((s) => s.bookings)
   const spaces = useRentalsStore((s) => s.spaces)
   const purchases = usePOSStore((s) => s.purchases)
-  const scoutMembers = useTroopsStore((s) => s.scoutMembers)
   const dailyCollectionReports = useDailyCollectionsStore((s) => s.reports)
 
   const [manualInterestIncome, setManualInterestIncome] = useState(0)
@@ -131,23 +120,12 @@ export function useScrdComputations() {
         bankAccount: 'Cash on Hand',
         // What was actually collected (down payment or full settlement), not
         // the contract price — see useBankBalances for the same fallback.
-        amount: safeAmount(b.amountPaid ?? b.totalAmount)
+        amount: safeAmount(b.amountPaid ?? b.totalAmount),
+        receiptType: b.receipt ? RECEIPT_KIND_LABELS[b.receipt.receiptType] : undefined
       }))
-    const fromTroopPayments: JournalDisplayRow[] = scoutMembers.flatMap((m) =>
-      (m.payments ?? []).map((payment) => ({
-        id: payment.id,
-        date: payment.date,
-        name: m.fullName,
-        particulars: `${RECEIPT_CATEGORY_BY_MEMBER_PAYMENT[payment.category]} (${m.fullName})`,
-        category: RECEIPT_CATEGORY_BY_MEMBER_PAYMENT[payment.category],
-        bankAccount: 'Cash on Hand',
-        amount: safeAmount(payment.amount),
-        receiptType: payment.receipt ? RECEIPT_KIND_LABELS[payment.receipt.receiptType] : undefined
-      }))
-    )
     // Daily Collections' hand-entered rows — only the categories with no automated source of
     // their own (BC Fee/CSF/ICCG). The NES/Mem. Reg./Rentals columns on that same form are
-    // skipped here since fromSales/fromTroopPayments/fromRentals above already count those
+    // skipped here since fromSales/cashReceipts/fromRentals above already count those
     // amounts from their real records — re-adding them from a manual entry would double-count.
     const fromDailyCollections: JournalDisplayRow[] = dailyCollectionReports.flatMap((r) =>
       r.manualReceipts.flatMap((line) => {
@@ -172,14 +150,10 @@ export function useScrdComputations() {
         return rows
       })
     )
-    return [
-      ...fromManual,
-      ...fromSales,
-      ...fromRentals,
-      ...fromTroopPayments,
-      ...fromDailyCollections
-    ].sort((a, b) => (a.date < b.date ? 1 : -1))
-  }, [cashReceipts, sales, bookings, spaces, scoutMembers, dailyCollectionReports])
+    return [...fromManual, ...fromSales, ...fromRentals, ...fromDailyCollections].sort((a, b) =>
+      a.date < b.date ? 1 : -1
+    )
+  }, [cashReceipts, sales, bookings, spaces, dailyCollectionReports])
 
   const disbursementRows: JournalDisplayRow[] = useMemo(
     () =>

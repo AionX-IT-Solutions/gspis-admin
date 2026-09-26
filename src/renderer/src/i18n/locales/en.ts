@@ -95,6 +95,8 @@ const en = {
       associateMember: 'Associate Members',
       iccgRegistration: 'ICCG',
       membershipStatusReport: 'Membership Status Report',
+      membershipReports: 'Membership Reports',
+      troopLeaderSubmissions: 'Membership Submissions',
       activities: 'Activities',
       attendance: 'Attendance',
       leave: 'Leave Requests',
@@ -169,6 +171,8 @@ const en = {
     errors: {
       invalidCredentials: 'Incorrect email or password.',
       userDisabled: 'This account has been disabled. Contact your administrator.',
+      notADesktopAccount:
+        'This account is a Troop Leader account and cannot sign in to the desktop app. Use the mobile app instead.',
       tooManyRequests: 'Too many attempts. Please wait a moment and try again.',
       network: 'Network error — check your connection and try again.',
       generic: 'Sign-in failed. Please try again.'
@@ -592,7 +596,7 @@ const en = {
       leaderName: 'Troop Leader',
       leaderNamePlaceholder: 'e.g. Juana Dela Cruz',
       trainingsCompletedCount: '{{count}} training(s) completed',
-      assistantLeaderName: 'Assistant Troop Leader',
+      assistantLeaderName: 'Troop Co-Leader',
       school: 'School / Community',
       barangay: 'Barangay',
       meetingPlace: 'Meeting Place',
@@ -807,6 +811,9 @@ const en = {
       message:
         'Delete the {{schoolYear}} registration for Troop {{troopNumber}}? This cannot be undone.'
     },
+    payment: {
+      table: { status: 'Payment' }
+    },
     toast: {
       validationRequired: 'School year is required',
       created: 'Troop Registration filed',
@@ -835,9 +842,7 @@ const en = {
       birthdate: 'Birthdate',
       beneficiary: 'Beneficiary',
       membersSection: 'Registration of Troop Members',
-      addPatrol: 'Add Patrol/Cluster',
       addMember: 'Add Member',
-      removePatrol: 'Remove Patrol/Cluster',
       gradeYear: 'Gr/Yr',
       regStatus: 'Reg. Status',
       signaturesSection: 'Signatures',
@@ -1443,7 +1448,7 @@ const en = {
       membershipFeeCouncilShare: 'Council Share',
       dateLabel: 'Date',
       totalLabel: 'Total',
-      feeLabel: 'OAVF/Career Woman Membership Fee',
+      feeLabel: 'Membership',
       pickerTitle: 'Select Registration to Pay',
       pickerPlaceholder: 'Search by applicant name or school year…',
       pickerEmpty: 'No unpaid registrations found',
@@ -1453,6 +1458,11 @@ const en = {
         date: 'Date',
         arNumber: 'AR No.',
         amount: 'Amount'
+      },
+      confirmDelete: {
+        title: 'Delete Payment',
+        message:
+          'Delete this payment for {{name}}? This reverts the registration to Unpaid. This cannot be undone.'
       },
       toast: {
         recorded: 'Payment recorded'
@@ -1588,6 +1598,11 @@ const en = {
         arNumber: 'AR No.',
         amount: 'Amount'
       },
+      confirmDelete: {
+        title: 'Delete Payment',
+        message:
+          'Delete this payment for {{name}}? This reverts the registration to Unpaid. This cannot be undone.'
+      },
       toast: {
         amountRequired: 'Enter an amount greater than zero',
         recorded: 'Payment recorded'
@@ -1717,6 +1732,11 @@ const en = {
         date: 'Date',
         arNumber: 'AR No.',
         amount: 'Amount'
+      },
+      confirmDelete: {
+        title: 'Delete Payment',
+        message:
+          'Delete this payment for {{name}}? This reverts the registration to Unpaid. This cannot be undone.'
       },
       toast: {
         amountRequired: 'Enter an amount greater than zero',
@@ -1967,6 +1987,9 @@ const en = {
         paidByRequired: 'Enter who paid',
         recorded: 'Payment recorded'
       }
+    },
+    regPayment: {
+      table: { status: 'Payment' }
     }
   },
   membershipStatusReport: {
@@ -2013,6 +2036,54 @@ const en = {
       yearRequired: 'Enter a membership year label',
       yearExists: 'That membership year already exists',
       yearCreated: '{{year}} created'
+    }
+  },
+  membershipReports: {
+    cardTitle: 'Daily Cash Collection Report',
+    cardSubtitle:
+      'Original amount collected per payor across Troops & Membership — not the council-retained share Accounting tracks',
+    rangeSubtitle:
+      'Consolidated view across the selected dates — switch to a single day to edit or save.',
+    exportLabel: 'Export Report',
+    saved: 'Saved',
+    draft: 'Unsaved draft',
+    rangeBadge: 'Range (read-only)',
+    addLine: 'Add Line',
+    totalCashCollection: 'Total Cash Collection for the Day',
+    totalDeposited: 'Less Total Deposit for the Day',
+    underOverDeposit: '(Under) Over Deposit',
+    bankBranchCode: 'Bank Branch Code',
+    remarks: 'Remarks',
+    preparedBy: 'Prepared by: {{name}}',
+    saveButton: 'Save Report',
+    attachments: 'Attachments',
+    noAttachments: 'No files attached yet',
+    uploadAttachment: 'Attach File',
+    deleteAttachmentTitle: 'Delete Attachment',
+    deleteAttachmentMessage:
+      'Are you sure you want to delete "{{name}}"? This will permanently remove the file. This action cannot be undone.',
+    table: {
+      payor: 'Payor',
+      troopNo: 'Troop No.',
+      district: 'District',
+      regFormNo: 'Reg. Form No.',
+      rorDate: 'R.O.R. Date',
+      rorNo: 'R.O.R. No.',
+      amount: 'Amount',
+      totalCollected: 'Total Amount Collected',
+      totalDeposited: 'Total Amount Deposited',
+      dateDeposited: 'Date Deposited',
+      remarks: 'Remarks',
+      totals: 'TOTALS'
+    },
+    toast: {
+      saved: 'Daily Cash Collection Report saved',
+      excel: 'Report exported to Excel',
+      pdf: 'Report exported as PDF',
+      word: 'Report exported as Word document',
+      attachmentUploaded: 'Attachment uploaded',
+      attachmentFailed: 'Failed to upload attachment',
+      attachmentDeleted: 'Attachment deleted'
     }
   },
   attendance: {
@@ -2146,6 +2217,61 @@ const en = {
       approvedSynced: 'Approved dates synced to Attendance as "leave"',
       reverted: 'Leave approval reverted to rejected',
       requestDeleted: 'Leave request deleted'
+    }
+  },
+  troopLeaderSubmissions: {
+    title: 'Membership Submissions',
+    approveButton: 'Approve',
+    rejectButton: 'Reject',
+    empty: 'No submissions yet',
+    searchPlaceholder: 'Search by name or submitter…',
+    accountsHeading: 'Member Accounts',
+    noAccounts: 'No member accounts yet',
+    tabs: {
+      troop: 'Troop',
+      barangayCommittee: 'Barangay Committee',
+      districtCommittee: 'District Committee',
+      trefoilGuild: 'Trefoil Guild',
+      oavf: 'OAVF / Career Woman',
+      honoraryMember: 'Honorary Member',
+      associateMember: 'Associate Member',
+      iccg: 'ICCG'
+    },
+    table: {
+      primary: 'Submission',
+      submittedBy: 'Submitted By',
+      members: 'Members',
+      status: 'Status',
+      action: 'Action'
+    },
+    modal: {
+      approveTitle: 'Approve Submission',
+      rejectTitle: 'Reject Submission',
+      confirmApproval: 'Confirm Approval',
+      confirmRejection: 'Confirm Rejection',
+      summary: '{{primary}} — submitted by {{submitter}}',
+      approveHint:
+        'Approving files this as the real record right away — the Troop/Committee/Member, its roster, and a Registration with auto-computed fees. Record Payment is unblocked immediately after.'
+    },
+    detail: {
+      title: 'Submission Details',
+      submittedOn: 'Submitted {{date}}',
+      submittedBy: 'Submitted By',
+      members: '{{count}} Member(s)',
+      reviewNotes: 'Review Notes'
+    },
+    form: {
+      notesOptional: 'Notes (optional)',
+      notesPlaceholder: 'e.g. Missing troop tel. no. — followed up with leader'
+    },
+    confirmDelete: {
+      title: 'Delete Submission',
+      message: 'Delete the "{{primary}}" submission? This can\'t be undone.'
+    },
+    toast: {
+      decided: 'Submission {{status}}',
+      mergeFailed: 'Could not file this submission as a real record',
+      deleted: 'Submission deleted'
     }
   },
   payroll: {
@@ -2513,6 +2639,18 @@ const en = {
       confirmMessage: 'The booking for "{{name}}" will be marked as confirmed.',
       completeTitle: 'Mark this booking completed?',
       completeMessage: 'The booking for "{{name}}" will be marked as completed.'
+    },
+    bookingReceipt: {
+      title: 'Print Receipt — {{name}}',
+      hint: 'Prints the Council’s official receipt for what this renter has paid so far on this booking.',
+      lineLabel: 'Rental of {{space}}',
+      dateLabel: 'Date',
+      payorLabel: 'Received From',
+      cashierLabel: 'Received By (acknowledging for the Council)',
+      recordAndPrint: 'Record & Print',
+      toast: {
+        payorRequired: 'Please enter who the payment was received from.'
+      }
     }
   },
   visitors: {
@@ -2649,7 +2787,7 @@ const en = {
       source: {
         heading: 'Source',
         hintIncome:
-          'Link this line to where its money actually comes from — Vouchers/Cash Receipts, Troops & Membership payments, Point of Sale (NES), or Rentals. Once you add a rule here, it replaces the built-in default for this line; clearing every rule reverts to that default.',
+          'All income comes from Membership & Fees (every Troops & Membership registration module, including a Troop\'s own per-member roster payments), Rentals, or NES (Point of Sale) — link this line to whichever of those actually funds it. "Vouchers / Cash Receipts" covers every registration module\'s fee (Troop, Barangay/District Committee, Trefoil Guild, OAVF, ICCG, Honorary/Associate Member). Once you add a rule here, it replaces the built-in default for this line; clearing every rule reverts to that default.',
         hintExpense:
           "Link this line to the vouchers or payroll fields that actually pay for it — useful when a Check Voucher's GL Account text doesn't already match this line's name exactly. Once you add a rule here, it replaces the built-in default for this line; clearing every rule reverts to that default.",
         addRule: 'Add Source',
@@ -2658,11 +2796,10 @@ const en = {
         removeRule: 'Remove this source',
         sourceTypeNotSpecified: 'Not Specified',
         sourceTypeVoucher: 'Vouchers / Cash Receipts',
-        sourceTypeTroopPayment: 'Troops & Membership (Roster payments)',
         sourceTypePos: 'Point of Sale (NES)',
         sourceTypeRental: 'Rentals',
         sourceTypePayroll: 'Payroll',
-        voucherCategoriesLabel: 'Which voucher/receipt categories count',
+        voucherCategoriesLabel: 'Which categories count',
         voucherCategoryPlaceholder: 'Type or pick a category…',
         rentalCategoryAny: 'Any rental space',
         payrollFieldPlaceholder: 'Select a payroll field'
@@ -2952,6 +3089,14 @@ const en = {
     reprintButton: 'Reprint Receipt',
     tabServiceInvoice: 'Service Invoice',
     tabAcknowledgmentReceipt: 'Acknowledgment Receipt',
+    typePicker: {
+      title: 'Select Receipt Type',
+      subtitle: 'Which receipt will you issue for this payment?',
+      serviceInvoiceHint:
+        'Itemized billing lines — for collections that aren’t a fixed registration fee.',
+      acknowledgmentReceiptHint:
+        'Fixed Girl/Leader/Committee breakdown — for registration-fee collections.'
+    },
     receiptNumber: 'SI/AR Number',
     tin: 'TIN',
     address: 'Address',
@@ -2967,6 +3112,25 @@ const en = {
       breakdownMismatch: 'The breakdown total must equal the total amount.',
       printFailed:
         "Receipt was recorded, but couldn't print — check that the printer is connected and configured in Settings"
+    },
+    // Shared "second, internal receipt for the Council's own retained share" flow — used by
+    // every module whose fee has a National-HQ-pass-through/Council-retained-share split
+    // (Troops, OAVF/Career Woman, Honorary Member, Associate Member, …). {{label}} is a Troop
+    // number, an applicant's name, etc. — whatever that module's own row identifies itself by.
+    councilShareReceipt: {
+      button: 'Print Council Share Receipt',
+      reprintButton: 'Reprint Council Share Receipt',
+      title: 'Print Council Share Receipt — {{label}}',
+      hint: 'A second, internal receipt for the Council’s own retained share of this fee — the receipt already issued above already covered the full amount collected, so this is not posted as income again.',
+      lineLabel: 'Council Share',
+      amountLabel: 'Council Share',
+      dateLabel: 'Date',
+      payorLabel: 'Received From (handed over the council share)',
+      cashierLabel: 'Received By (acknowledging for the Council)',
+      recordAndPrint: 'Record & Print',
+      toast: {
+        payorRequired: 'Please enter who handed over the council share.'
+      }
     }
   },
   vendors: {
@@ -3073,16 +3237,6 @@ const en = {
         excel: 'Daily Collection Report exported to Excel',
         pdf: 'Daily Collection Report exported as PDF',
         word: 'Daily Collection Report exported as Word document'
-      },
-      depositReceipt: {
-        printButton: 'Print Receipt',
-        title: 'Print Deposit Receipt',
-        hint: 'Proof that this cash was handed over for deposit — not a new sale, so it is not posted as income again. The amount collected was already counted once, when it was originally received.',
-        payorLabel: 'Received From (handed over the cash)',
-        cashierLabel: 'Received By (acknowledging for deposit)',
-        toast: {
-          payorRequired: 'Please enter who handed over the cash.'
-        }
       }
     }
   },
@@ -3690,7 +3844,7 @@ const en = {
       whichTroopPlaceholder: 'Select troop',
       troopRole: 'Position on that Troop',
       troopRoleLeader: 'Troop Leader',
-      troopRoleAssistant: 'Assistant Troop Leader',
+      troopRoleAssistant: 'Troop Co-Leader',
       completedTrainings: 'Completed Training',
       otherCompletedTraining: 'Others (please specify)',
       ageLevelSpecialization: 'For Age-Level Specialization Course Completers Only',

@@ -39,6 +39,12 @@ export interface AssociateMemberRegistration {
   /** The receipt printed when "Record Payment" was submitted — kept so the Payment tab can
    *  reprint it later. Unset on a filing that hasn't been paid yet. */
   receipt?: ReceiptRecord
+  /** The SECOND, internal receipt documenting the Council's own retained share of this fee (see
+   *  PrintCouncilShareReceiptModal), printed on demand from the Payments tab after the
+   *  applicant-facing AR/SI above was already issued — only once this exists does
+   *  registrationCashReceipts.ts's fromAssociateMemberRegistrations count this money as Council
+   *  income. */
+  councilShareReceipt?: ReceiptRecord
   createdAt: string
   createdBy: string
 }

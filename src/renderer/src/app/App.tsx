@@ -80,6 +80,11 @@ const TroopRegistrationForm = lazy(() =>
     default: m.TroopRegistrationForm
   }))
 )
+const TroopLeaderSubmissions = lazy(() =>
+  import('@/features/troopLeaderSubmissions/pages/TroopLeaderSubmissions').then((m) => ({
+    default: m.TroopLeaderSubmissions
+  }))
+)
 const DistrictCommittees = lazy(() =>
   import('@/features/districtCommittee/pages/DistrictCommittees').then((m) => ({
     default: m.DistrictCommittees
@@ -134,6 +139,11 @@ const IccgRegistrationForm = lazy(() =>
 const MembershipStatusReport = lazy(() =>
   import('@/features/membershipStatusReport/pages/MembershipStatusReport').then((m) => ({
     default: m.MembershipStatusReport
+  }))
+)
+const MembershipReports = lazy(() =>
+  import('@/features/membershipReports/pages/MembershipReports').then((m) => ({
+    default: m.MembershipReports
   }))
 )
 const Activities = lazy(() =>
@@ -346,6 +356,14 @@ function AuthenticatedShell() {
                   }
                 />
                 <Route
+                  path="/troop-leader-submissions"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.troopLeaderSubmissions}>
+                      <TroopLeaderSubmissions />
+                    </RequirePermission>
+                  }
+                />
+                <Route
                   path="/district-committee"
                   element={
                     <RequirePermission permission={MODULE_PERMISSIONS.districtCommittee}>
@@ -438,6 +456,14 @@ function AuthenticatedShell() {
                   element={
                     <RequirePermission permission={MODULE_PERMISSIONS.membershipStatusReport}>
                       <MembershipStatusReport />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="/membership-reports"
+                  element={
+                    <RequirePermission permission={MODULE_PERMISSIONS.membershipReports}>
+                      <MembershipReports />
                     </RequirePermission>
                   }
                 />

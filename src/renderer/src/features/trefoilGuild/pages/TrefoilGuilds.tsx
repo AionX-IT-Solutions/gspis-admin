@@ -26,7 +26,8 @@ import { usePermissions } from '@/app/hooks/usePermissions'
 import { useToast } from '@/app/hooks/useToast'
 import { usePrinterDeviceName } from '@/shared/hooks/usePrinterDeviceName'
 import { printReceipt } from '@/shared/lib/receiptPrint'
-import type { ReceiptRecord } from '@/shared/types/receipt.types'
+import { ReceiptTypePickerModal } from '@/shared/components/receipts/ReceiptTypePickerModal'
+import type { ReceiptKind, ReceiptRecord } from '@/shared/types/receipt.types'
 import { useTrefoilGuildRegistrations } from '../hooks/useTrefoilGuildRegistrations'
 import { useTrefoilGuildRegistrationStore } from '../store/trefoilGuildRegistration.store'
 import { TrefoilGuildPickerModal } from '../components/TrefoilGuildPickerModal'
@@ -40,7 +41,6 @@ import { TrefoilGuildFormModal } from '../components/TrefoilGuildFormModal'
 import { RecordTGBulkPaymentModal } from '../components/RecordTGBulkPaymentModal'
 import { useTrefoilGuilds } from '../hooks/useTrefoilGuilds'
 import { useTrefoilGuildStore } from '../store/trefoilGuild.store'
-import { syncBulkPaymentVoucher, deleteBulkPaymentVoucher } from '../lib/tgVoucher'
 
 const pageVariants = {
   initial: { opacity: 0, y: 16 },
@@ -125,7 +125,15 @@ export function TrefoilGuilds() {
   const canManagePayments = hasPermission('manage:trefoilGuild')
 
   const [paymentSearch, setPaymentSearch] = useState('')
+  const [showReceiptTypePicker, setShowReceiptTypePicker] = useState(false)
   const [showBulkPaymentModal, setShowBulkPaymentModal] = useState(false)
+  const [bulkPaymentReceiptType, setBulkPaymentReceiptType] =
+    useState<ReceiptKind>('service_invoice')
+  function handlePickReceiptType(type: ReceiptKind) {
+    setBulkPaymentReceiptType(type)
+    setShowReceiptTypePicker(false)
+    setShowBulkPaymentModal(true)
+  }
   const updatePaymentGroup = useTrefoilGuildStore((s) => s.updatePaymentGroup)
   const deletePaymentGroup = useTrefoilGuildStore((s) => s.deletePaymentGroup)
 
@@ -222,36 +230,21 @@ export function TrefoilGuilds() {
 
   function handleConfirmEditPayment() {
     if (!editPaymentTarget) return
-    const { flatPayments } = updatePaymentGroup({
+    updatePaymentGroup({
       trefoilGuildId: editPaymentTarget.trefoilGuildId,
       bulkKey: editPaymentTarget.bulkKey,
       date: editPaymentDate,
       paidByName: editPaymentPaidBy.trim()
     })
-    const guild = guildByIdForPayments.get(editPaymentTarget.trefoilGuildId)
-    const linkedVoucherId = flatPayments.find((p) => p.linkedVoucherId)?.linkedVoucherId
-    if (guild && linkedVoucherId && hasPermission('manage:vouchers')) {
-      syncBulkPaymentVoucher(
-        guild,
-        linkedVoucherId,
-        flatPayments,
-        editPaymentDate,
-        editPaymentPaidBy.trim()
-      )
-    }
     setEditPaymentTarget(null)
   }
 
   function handleConfirmDeletePayment() {
     if (!deletePaymentTarget) return
-    const { removedFlatPayments } = deletePaymentGroup({
+    deletePaymentGroup({
       trefoilGuildId: deletePaymentTarget.trefoilGuildId,
       bulkKey: deletePaymentTarget.bulkKey
     })
-    const linkedVoucherId = removedFlatPayments.find((p) => p.linkedVoucherId)?.linkedVoucherId
-    if (linkedVoucherId && hasPermission('manage:vouchers')) {
-      deleteBulkPaymentVoucher(linkedVoucherId)
-    }
     setDeletePaymentTarget(null)
   }
 
@@ -505,7 +498,7 @@ export function TrefoilGuilds() {
                   variant="primary"
                   size="sm"
                   leftIcon={<Plus size={13} />}
-                  onClick={() => setShowBulkPaymentModal(true)}
+                  onClick={() => setShowReceiptTypePicker(true)}
                 >
                   {t('trefoilGuild.payment.addButton')}
                 </Button>
@@ -664,9 +657,16 @@ export function TrefoilGuilds() {
         onPick={startRegistrationForGuild}
       />
 
+      <ReceiptTypePickerModal
+        open={showReceiptTypePicker}
+        onOpenChange={setShowReceiptTypePicker}
+        onSelect={handlePickReceiptType}
+      />
+
       <RecordTGBulkPaymentModal
         open={showBulkPaymentModal}
         onOpenChange={setShowBulkPaymentModal}
+        initialReceiptType={bulkPaymentReceiptType}
       />
 
       <Modal

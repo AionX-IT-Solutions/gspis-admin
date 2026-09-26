@@ -4,6 +4,7 @@ import { useSkeletonLoading } from '@/shared/hooks/useSkeletonLoading'
 import { useToast } from '@/app/hooks/useToast'
 import { usePermissions } from '@/app/hooks/usePermissions'
 import { useTrefoilGuildStore } from '../store/trefoilGuild.store'
+import { useTrefoilGuildRegistrationStore } from '../store/trefoilGuildRegistration.store'
 import type { TrefoilGuild } from '../types/trefoilGuild.types'
 
 export function useTrefoilGuilds() {
@@ -18,6 +19,8 @@ export function useTrefoilGuilds() {
   const deleteGuild = useTrefoilGuildStore((s) => s.deleteGuild)
   const addGuild = useTrefoilGuildStore((s) => s.addGuild)
   const addMember = useTrefoilGuildStore((s) => s.addMember)
+  const registrations = useTrefoilGuildRegistrationStore((s) => s.registrations)
+  const addRegistration = useTrefoilGuildRegistrationStore((s) => s.addRegistration)
 
   const [showDialog, setShowDialog] = useState(false)
   const [editTarget, setEditTarget] = useState<TrefoilGuild | null>(null)
@@ -57,7 +60,10 @@ export function useTrefoilGuilds() {
   }
 
   function commitDelete(target: TrefoilGuild, force: boolean) {
+    // Captured before deleteGuild() runs — it cascades to filed Registrations too (see
+    // trefoilGuild.store.ts), so Undo has to restore them as well.
     const orphanedMembers = members.filter((m) => m.trefoilGuildId === target.id)
+    const orphanedRegistrations = registrations.filter((r) => r.trefoilGuildId === target.id)
     deleteGuild(target.id, force)
     toast.success(t('trefoilGuild.toast.deleted', { name: target.name }), {
       duration: 6000,
@@ -66,6 +72,7 @@ export function useTrefoilGuilds() {
         onClick: () => {
           addGuild(target)
           orphanedMembers.forEach(addMember)
+          orphanedRegistrations.forEach(addRegistration)
         }
       }
     })

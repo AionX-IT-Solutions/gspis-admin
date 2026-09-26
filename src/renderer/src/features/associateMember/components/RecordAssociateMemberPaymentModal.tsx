@@ -6,17 +6,20 @@ import { ReceiptFieldsSection } from '@/shared/components/receipts/ReceiptFields
 import { useAssociateMemberStore } from '../store/associateMember.store'
 import { useRecordAssociateMemberPaymentModal } from '../hooks/useRecordAssociateMemberPaymentModal'
 import type { AssociateMemberRegistration } from '../types/associateMemberRegistration.types'
+import type { ReceiptKind } from '@/shared/types/receipt.types'
 
 interface RecordAssociateMemberPaymentModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   registration: AssociateMemberRegistration | null
+  initialReceiptType?: ReceiptKind
 }
 
 export function RecordAssociateMemberPaymentModal({
   open,
   onOpenChange,
-  registration
+  registration,
+  initialReceiptType
 }: RecordAssociateMemberPaymentModalProps) {
   const { t } = useTranslation()
   const members = useAssociateMemberStore((s) => s.members)
@@ -24,7 +27,7 @@ export function RecordAssociateMemberPaymentModal({
     ? members.find((m) => m.id === registration.associateMemberId)
     : undefined
   const { form, setForm, totalAmount, officialReceiptLines, receiptFields, handleSubmit } =
-    useRecordAssociateMemberPaymentModal(open, onOpenChange, registration)
+    useRecordAssociateMemberPaymentModal(open, onOpenChange, registration, initialReceiptType)
 
   return (
     <Modal

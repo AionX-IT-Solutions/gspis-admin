@@ -9,8 +9,9 @@ import { formatDate, toInputDate, todayLocalIso } from '@/shared/lib/utils'
 import { usePOSStore } from '@/features/pos/store/pos.store'
 import { useRentalsStore } from '@/features/rentals/store/rentals.store'
 import { useTroopsStore } from '@/features/troops/store/troops.store'
-import { useVouchersStore } from '@/features/vouchers/store/vouchers.store'
-import { getReceiptRowsFromVouchers } from '@/features/vouchers/lib/receiptVouchers'
+import { useTroopRegistrationStore } from '@/features/troopRegistration/store/troopRegistration.store'
+import { membershipPaymentCouncilShare } from '@/features/troopRegistration/lib/registrationPaymentStatus'
+import { useCashReceiptRows } from '@/features/scrd/hooks/useCashReceiptRows'
 import { useBanksStore, bankDisplayName } from '@/features/scrd/store/banks.store'
 import { useDailyCollectionsStore } from '../store/dailyCollections.store'
 import type {
@@ -34,12 +35,18 @@ function newManualLine(): ManualReceiptLine {
     receivedFrom: '',
     nes: 0,
     bcFee: 0,
+    dcFee: 0,
+    tgFee: 0,
     csf: 0,
     iccg: 0,
     memReg: 0,
     rentals: 0,
     refundOfCa: 0,
-    others: 0
+    troopFee: 0,
+    thinkingDay: 0,
+    oavfFee: 0,
+    honoraryFee: 0,
+    associateMemberFee: 0
   }
 }
 
@@ -62,25 +69,51 @@ function manualLineToRow(l: ManualReceiptLine): DailyCollectionReceiptRow {
     receivedFrom: l.receivedFrom,
     nes: l.nes,
     bcFee: l.bcFee,
+    dcFee: l.dcFee,
+    tgFee: l.tgFee,
     csf: l.csf,
     iccg: l.iccg,
     memReg: l.memReg,
     rentals: l.rentals,
     refundOfCa: l.refundOfCa,
-    others: l.others,
-    amount: l.nes + l.bcFee + l.csf + l.iccg + l.memReg + l.rentals + l.refundOfCa + l.others
+    troopFee: l.troopFee,
+    thinkingDay: l.thinkingDay,
+    oavfFee: l.oavfFee,
+    honoraryFee: l.honoraryFee,
+    associateMemberFee: l.associateMemberFee,
+    amount:
+      l.nes +
+      l.bcFee +
+      l.dcFee +
+      l.tgFee +
+      l.csf +
+      l.iccg +
+      l.memReg +
+      l.rentals +
+      l.refundOfCa +
+      l.troopFee +
+      l.thinkingDay +
+      l.oavfFee +
+      l.honoraryFee +
+      l.associateMemberFee
   }
 }
 
 const emptyReceiptTotals = {
   nes: 0,
   bcFee: 0,
+  dcFee: 0,
+  tgFee: 0,
   csf: 0,
   iccg: 0,
   memReg: 0,
   rentals: 0,
   refundOfCa: 0,
-  others: 0,
+  troopFee: 0,
+  thinkingDay: 0,
+  oavfFee: 0,
+  honoraryFee: 0,
+  associateMemberFee: 0,
   amount: 0
 }
 
@@ -102,8 +135,15 @@ export function useDailyCollectionsTab() {
   const spaces = useRentalsStore((s) => s.spaces)
   const scoutMembers = useTroopsStore((s) => s.scoutMembers)
   const troops = useTroopsStore((s) => s.troops)
-  const vouchers = useVouchersStore((s) => s.vouchers)
-  const cashReceipts = useMemo(() => getReceiptRowsFromVouchers(vouchers), [vouchers])
+  const troopRegistrations = useTroopRegistrationStore((s) => s.registrations)
+  // The same merged (vouchers + all 9 registration modules' direct-read fee/payment records)
+  // source SCRD/Council Budget/Income Statement already pull from — see useCashReceiptRows.ts.
+  // 'Membership' (Troops) is excluded below wherever this is consumed: this report already has
+  // its own dedicated, per-payment scoutMembers loop for that slice (the Mem. Reg. column),
+  // which predates this shared hook and has finer (per-payment, not per-registration-aggregate)
+  // date granularity than useCashReceiptRows' single summarized row — merging both would double
+  // -count the same money.
+  const cashReceipts = useCashReceiptRows()
   const banks = useBanksStore((s) => s.banks)
 
   // The report is normally a single calendar date (dateFrom === dateTo), matching the
@@ -148,11 +188,29 @@ export function useDailyCollectionsTab() {
     }
     for (const m of scoutMembers) {
       for (const payment of m.payments ?? []) {
-        if (payment.amount <= 0 || !datePredicate(payment.date)) continue
-        total += payment.amount
+        if (payment.amount <= 0) continue
+        if (payment.category === 'membership') {
+          // Membership Fee has a National HQ pass-through split, AND (see the matching change
+          // in rawAutoReceiptRows below for the full reasoning) isn't recognized as Council
+          // cash at all until its second, internal "Council Share Receipt" has been printed —
+          // bucketed under THAT receipt's own date, not the original Troop-level collection
+          // date.
+          if (
+            !payment.councilShareReceipt ||
+            !datePredicate(toInputDate(payment.councilShareReceipt.date))
+          ) {
+            continue
+          }
+          total += membershipPaymentCouncilShare(payment, m.troopId, troopRegistrations)
+        } else {
+          if (!datePredicate(payment.date)) continue
+          total += payment.amount
+        }
       }
     }
     for (const r of cashReceipts) {
+      // Already counted above via the scoutMembers loop — see the note on `cashReceipts` itself.
+      if (r.category === 'Membership') continue
       if (!datePredicate(toInputDate(r.date))) continue
       total += r.amount
     }
@@ -172,7 +230,21 @@ export function useDailyCollectionsTab() {
     if (!anchor) return 0
     const anchorManualTotal = anchor.manualReceipts.reduce(
       (s, l) =>
-        s + l.nes + l.bcFee + l.csf + l.iccg + l.memReg + l.rentals + l.refundOfCa + l.others,
+        s +
+        l.nes +
+        l.bcFee +
+        l.dcFee +
+        l.tgFee +
+        l.csf +
+        l.iccg +
+        l.memReg +
+        l.rentals +
+        l.refundOfCa +
+        l.troopFee +
+        l.thinkingDay +
+        l.oavfFee +
+        l.honoraryFee +
+        l.associateMemberFee,
       0
     )
     const anchorDepositTotal = anchor.deposits.reduce((s, d) => s + d.amount, 0)
@@ -225,12 +297,18 @@ export function useDailyCollectionsTab() {
         receivedFrom: s.memberName ?? t('reports.dailyCollections.walkIn'),
         nes: s.totalAmount,
         bcFee: 0,
+        dcFee: 0,
+        tgFee: 0,
         csf: 0,
         iccg: 0,
         memReg: 0,
         rentals: 0,
         refundOfCa: 0,
-        others: 0,
+        troopFee: 0,
+        thinkingDay: 0,
+        oavfFee: 0,
+        honoraryFee: 0,
+        associateMemberFee: 0,
         amount: s.totalAmount
       })
     }
@@ -244,66 +322,122 @@ export function useDailyCollectionsTab() {
         receivedFrom: b.renterName,
         nes: 0,
         bcFee: 0,
+        dcFee: 0,
+        tgFee: 0,
         csf: 0,
         iccg: 0,
         memReg: 0,
         rentals: amount,
         refundOfCa: 0,
-        others: 0,
+        troopFee: 0,
+        thinkingDay: 0,
+        oavfFee: 0,
+        honoraryFee: 0,
+        associateMemberFee: 0,
         amount
       })
     }
 
     for (const m of scoutMembers) {
       for (const payment of m.payments ?? []) {
-        if (payment.amount <= 0 || !inRange(payment.date)) continue
+        if (payment.amount <= 0) continue
+        // Membership Fee has a National HQ pass-through split (most of what's collected isn't
+        // Council income), AND its Council-retained share isn't recognized as Council cash at
+        // all until its second, internal "Council Share Receipt" has been printed (see
+        // PrintCouncilShareReceiptModal) — bucketed under THAT receipt's own date, not the
+        // original Troop-level collection date, matching registrationCashReceipts.ts's
+        // fromTroopRegistrations. Training/Camping Fees have no such split or gate, so they
+        // stay at face value, bucketed by their own collection date.
+        let creditedAmount: number
+        if (payment.category === 'membership') {
+          if (!payment.councilShareReceipt) continue
+          if (!inRange(toInputDate(payment.councilShareReceipt.date))) continue
+          creditedAmount = membershipPaymentCouncilShare(payment, m.troopId, troopRegistrations)
+        } else {
+          if (!inRange(payment.date)) continue
+          creditedAmount = payment.amount
+        }
+        if (creditedAmount <= 0) continue
         rows.push({
           siNo: troops.find((tr) => tr.id === m.troopId)?.troopNumber ?? '',
           receivedFrom: m.fullName,
           nes: 0,
           bcFee: 0,
+          dcFee: 0,
+          tgFee: 0,
           csf: 0,
           iccg: 0,
-          memReg: payment.amount,
+          memReg: creditedAmount,
           rentals: 0,
           refundOfCa: 0,
-          others: 0,
-          amount: payment.amount
+          troopFee: 0,
+          thinkingDay: 0,
+          oavfFee: 0,
+          honoraryFee: 0,
+          associateMemberFee: 0,
+          amount: creditedAmount
         })
       }
     }
 
-    // Approved Journal Voucher credit lines (Cash Receipts) — Cash Advance Refunds, Barangay
-    // Committee/ICCG/Council Support Fund, Trefoil/District Committee/OAVF/Honorary/Associate
-    // remittances, etc. A handful of these match one of the paper form's own fixed columns
-    // (see CashReceiptCategory in scrd/types/cashReceipts.types.ts for the exact account text
-    // each registration module posts) and land there, same as Mem. Reg./Rentals do above for
-    // their own auto sources; everything else still doesn't fit any fixed column, so it lands
-    // under "Others" as before.
+    // Every other real income source (Troop Fee/Thinking Day Fee, BC/DC/TG Group Fee, ICCG/
+    // OAVF/Honorary/Associate Member fees, Cash Advance Refunds, any manually posted Journal
+    // Voucher credit) — read from the same merged cashReceipts source SCRD/Council Budget/
+    // Income Statement already use (see the `cashReceipts` declaration above). 'Membership'
+    // (Troops) is skipped here — already counted via the scoutMembers loop above (Mem. Reg.). Most
+    // of the rest match one of the paper form's own fixed columns (see CashReceiptCategory in
+    // scrd/types/cashReceipts.types.ts for the exact account text each registration module posts)
+    // and land there, same as Mem. Reg./Rentals do above for their own auto sources; everything
+    // else (Training/Camping Fees, Interest Income, Other Operations — not tied to a single
+    // registration module) doesn't fit any fixed column, so it's counted in the row's own total
+    // (still real cash — see Total Cash Collection) without a column of its own.
     for (const r of cashReceipts) {
-      if (!inRange(toInputDate(r.date))) continue
+      if (r.category === 'Membership' || !inRange(toInputDate(r.date))) continue
       const isRefundOfCa = r.category === 'Cash Advance Refund'
       const isBcFee = r.category === 'BC Group Fee'
+      const isDcFee = r.category === 'DC Group Fee'
+      const isTgFee = r.category === 'TG Group Fee'
       const isCsf = r.category === 'Council Support Fund'
       const isIccg = r.category === 'ICCG Registration Fee'
-      const isOthers = !isRefundOfCa && !isBcFee && !isCsf && !isIccg
+      const isTroopFee = r.category === 'Troop Fees'
+      const isThinkingDay = r.category === 'Thinking Day Fund'
+      const isOavfFee = r.category === 'OAVF/Career Woman Membership Fee'
+      const isHonoraryFee = r.category === 'Honorary Member Fee'
+      const isAssociateMemberFee = r.category === 'Associate Member Fee'
       rows.push({
         siNo: r.referenceNumber ?? '',
         receivedFrom: r.payor,
         nes: 0,
         bcFee: isBcFee ? r.amount : 0,
+        dcFee: isDcFee ? r.amount : 0,
+        tgFee: isTgFee ? r.amount : 0,
         csf: isCsf ? r.amount : 0,
         iccg: isIccg ? r.amount : 0,
         memReg: 0,
         rentals: 0,
         refundOfCa: isRefundOfCa ? r.amount : 0,
-        others: isOthers ? r.amount : 0,
+        troopFee: isTroopFee ? r.amount : 0,
+        thinkingDay: isThinkingDay ? r.amount : 0,
+        oavfFee: isOavfFee ? r.amount : 0,
+        honoraryFee: isHonoraryFee ? r.amount : 0,
+        associateMemberFee: isAssociateMemberFee ? r.amount : 0,
         amount: r.amount
       })
     }
 
     return rows
-  }, [sales, bookings, spaces, scoutMembers, troops, cashReceipts, dateFrom, dateTo, t])
+  }, [
+    sales,
+    bookings,
+    spaces,
+    scoutMembers,
+    troops,
+    troopRegistrations,
+    cashReceipts,
+    dateFrom,
+    dateTo,
+    t
+  ])
 
   // Every saved report touching the selected range — only meaningful in range mode, where it
   // supplies the (read-only) manual receipts, deposits, and attachments that would otherwise
@@ -338,12 +472,18 @@ export function useDailyCollectionsTab() {
         (t, r) => ({
           nes: t.nes + r.nes,
           bcFee: t.bcFee + r.bcFee,
+          dcFee: t.dcFee + r.dcFee,
+          tgFee: t.tgFee + r.tgFee,
           csf: t.csf + r.csf,
           iccg: t.iccg + r.iccg,
           memReg: t.memReg + r.memReg,
           rentals: t.rentals + r.rentals,
           refundOfCa: t.refundOfCa + r.refundOfCa,
-          others: t.others + r.others,
+          troopFee: t.troopFee + r.troopFee,
+          thinkingDay: t.thinkingDay + r.thinkingDay,
+          oavfFee: t.oavfFee + r.oavfFee,
+          honoraryFee: t.honoraryFee + r.honoraryFee,
+          associateMemberFee: t.associateMemberFee + r.associateMemberFee,
           amount: t.amount + r.amount
         }),
         { ...emptyReceiptTotals }
@@ -451,6 +591,20 @@ export function useDailyCollectionsTab() {
     : formatDate(dateFrom)
   const preparedByDisplay = existingReport?.preparedBy ?? currentUser?.fullName ?? ''
 
+  // A report existing for today isn't the same as today's CURRENT edits being persisted —
+  // adding a deposit line (or any other edit) after the last Save leaves this local state
+  // ahead of what's actually in dailyCollections.store.ts, which is what every other reader
+  // of this data (e.g. SCRD's useBankBalances.ts, computing bank balances from saved deposits)
+  // actually sees. Comparing against the saved snapshot catches that gap instead of showing a
+  // stale "Saved" badge while unsaved changes (like a not-yet-persisted bank deposit) silently
+  // don't show up anywhere else yet.
+  const isSaved =
+    !isRange &&
+    !!existingReport &&
+    existingReport.beginningBalance === beginningBalance &&
+    JSON.stringify(existingReport.manualReceipts) === JSON.stringify(manualReceipts) &&
+    JSON.stringify(existingReport.deposits) === JSON.stringify(deposits)
+
   // The exported paper form only has a Bank/S-A No./Purpose/Amount deposit table (matches
   // the Council's physical form exactly), so a multi-day coverage range rides along inside
   // the Purpose cell instead of adding a column — keeps the printed form's layout unchanged.
@@ -527,7 +681,7 @@ export function useDailyCollectionsTab() {
     uploadingAttachment,
     handleUploadAttachment,
     handleDeleteAttachment,
-    isSaved: !isRange && !!existingReport,
+    isSaved,
     handleSave,
     preview,
     handleView,

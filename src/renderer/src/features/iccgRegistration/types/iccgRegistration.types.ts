@@ -88,10 +88,8 @@ export interface IccgRegistration {
   /** Council Executive. */
   approvedByName?: string
   fee: IccgFee
-  /** The approved Journal Voucher auto-created for this filing's CGS Registration Fee — see
-   *  useIccgRegistrationForm.ts. Re-saving updates this same voucher instead of creating a
-   *  duplicate. Unset when no one with voucher-write permission has saved this filing yet, or
-   *  on a filing predating this. */
+  /** @deprecated Vestigial — the auto-voucher-on-save mechanism this backed was removed (see
+   *  registrationCashReceipts.ts's header comment); no code sets a new value here anymore. */
   linkedVoucherId?: string
   createdAt: string
   updatedAt: string

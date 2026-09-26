@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { FormField, FieldInput, FieldSelect } from '@/shared/components/ui/FormField'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/components/ui/Tabs'
+import { Tabs, TabsContent } from '@/shared/components/ui/Tabs'
 import { formatCurrency } from '@/shared/lib/utils'
 import { MEMBERSHIP_FEE_CATEGORIES } from '@/shared/lib/receiptCategories'
 import type { ModeOfPayment } from '@/features/vouchers/types/vouchers.types'
@@ -40,10 +40,12 @@ interface ReceiptFieldsSectionProps {
  *  modal that needs to print one of the Council's two receipt booklets — Invoices' Record
  *  Payment and Troops & Membership's Record Bulk Payment. Callers supply their own payor
  *  name/date fields around this (they already have those) and read the values back via the
- *  paired useReceiptFields hook. */
+ *  paired useReceiptFields hook. The receipt type itself is no longer switchable here — it's
+ *  decided up front by ReceiptTypePickerModal before this section's modal even opens, so this
+ *  only shows a passive label for which one is active, not an in-place tab switcher (avoids
+ *  a second, redundant place to change a decision that's already been made). */
 export function ReceiptFieldsSection({
   receiptType,
-  onReceiptTypeChange,
   receiptNumber,
   onReceiptNumberChange,
   tin,
@@ -71,13 +73,20 @@ export function ReceiptFieldsSection({
   const { t } = useTranslation()
 
   return (
-    <Tabs value={receiptType} onValueChange={(v) => onReceiptTypeChange(v as ReceiptKind)}>
-      <TabsList>
-        <TabsTrigger value="service_invoice">{t('receipts.tabServiceInvoice')}</TabsTrigger>
-        <TabsTrigger value="acknowledgment_receipt">
-          {t('receipts.tabAcknowledgmentReceipt')}
-        </TabsTrigger>
-      </TabsList>
+    <Tabs value={receiptType}>
+      <div
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: 'var(--accent-primary)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.03em'
+        }}
+      >
+        {receiptType === 'service_invoice'
+          ? t('receipts.tabServiceInvoice')
+          : t('receipts.tabAcknowledgmentReceipt')}
+      </div>
 
       <div
         style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14, marginTop: 16 }}

@@ -4,6 +4,7 @@ import { useSkeletonLoading } from '@/shared/hooks/useSkeletonLoading'
 import { useToast } from '@/app/hooks/useToast'
 import { usePermissions } from '@/app/hooks/usePermissions'
 import { useBarangayCommitteeStore } from '../store/barangayCommittee.store'
+import { useBarangayCommitteeRegistrationStore } from '../store/barangayCommitteeRegistration.store'
 import type { BarangayCommittee } from '../types/barangayCommittee.types'
 
 export function useBarangayCommittees() {
@@ -18,6 +19,8 @@ export function useBarangayCommittees() {
   const deleteCommittee = useBarangayCommitteeStore((s) => s.deleteCommittee)
   const addCommittee = useBarangayCommitteeStore((s) => s.addCommittee)
   const addMember = useBarangayCommitteeStore((s) => s.addMember)
+  const registrations = useBarangayCommitteeRegistrationStore((s) => s.registrations)
+  const addRegistration = useBarangayCommitteeRegistrationStore((s) => s.addRegistration)
 
   const [showDialog, setShowDialog] = useState(false)
   const [editTarget, setEditTarget] = useState<BarangayCommittee | null>(null)
@@ -57,7 +60,10 @@ export function useBarangayCommittees() {
   }
 
   function commitDelete(target: BarangayCommittee, force: boolean) {
+    // Captured before deleteCommittee() runs — it cascades to filed Registrations too (see
+    // barangayCommittee.store.ts), so Undo has to restore them as well.
     const orphanedMembers = members.filter((m) => m.barangayCommitteeId === target.id)
+    const orphanedRegistrations = registrations.filter((r) => r.barangayCommitteeId === target.id)
     deleteCommittee(target.id, force)
     toast.success(t('barangayCommittee.toast.deleted', { name: target.name }), {
       duration: 6000,
@@ -66,6 +72,7 @@ export function useBarangayCommittees() {
         onClick: () => {
           addCommittee(target)
           orphanedMembers.forEach(addMember)
+          orphanedRegistrations.forEach(addRegistration)
         }
       }
     })

@@ -5,19 +5,25 @@ import { Button } from '@/shared/components/ui/Button'
 import { FormField, FieldInput } from '@/shared/components/ui/FormField'
 import { ReceiptFieldsSection } from '@/shared/components/receipts/ReceiptFieldsSection'
 import { formatDate } from '@/shared/lib/utils'
+import type { ReceiptKind } from '@/shared/types/receipt.types'
 import { useBarangayCommitteeStore } from '../store/barangayCommittee.store'
 import { useRecordBCBulkPaymentModal } from '../hooks/useRecordBCBulkPaymentModal'
 
 interface RecordBCBulkPaymentModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  initialReceiptType?: ReceiptKind
 }
 
 function peso(n: number): string {
   return n.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-export function RecordBCBulkPaymentModal({ open, onOpenChange }: RecordBCBulkPaymentModalProps) {
+export function RecordBCBulkPaymentModal({
+  open,
+  onOpenChange,
+  initialReceiptType
+}: RecordBCBulkPaymentModalProps) {
   const { t } = useTranslation()
   const allCommittees = useBarangayCommitteeStore((s) => s.committees)
   const {
@@ -25,12 +31,13 @@ export function RecordBCBulkPaymentModal({ open, onOpenChange }: RecordBCBulkPay
     setForm,
     committeeRegistration,
     selectCommittee,
+    isServiceInvoice,
     membershipTotal,
     grandTotal,
     officialReceiptLines,
     receiptFields,
     handleSubmit
-  } = useRecordBCBulkPaymentModal(open, onOpenChange)
+  } = useRecordBCBulkPaymentModal(open, onOpenChange, initialReceiptType)
 
   const committees = useMemo(() => allCommittees.filter((c) => c.isActive), [allCommittees])
   const selectedCommittee = committees.find((c) => c.id === form.barangayCommitteeId) ?? null
@@ -184,63 +191,49 @@ export function RecordBCBulkPaymentModal({ open, onOpenChange }: RecordBCBulkPay
           </div>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
-          <div>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 11,
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                marginBottom: 6,
-                cursor: 'pointer',
-                textTransform: 'uppercase'
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={form.includeMembership}
-                onChange={(e) => setForm((f) => ({ ...f, includeMembership: e.target.checked }))}
+        {/* Which fee shows here is decided entirely by the receipt type already picked (see
+            ReceiptTypePickerModal) — the two are mutually exclusive, not a manual checkbox:
+            Acknowledgment Receipt is always Membership Fee only (the AR booklet has no B.C.
+            Group Fee row), Service Invoice is always B.C. Group Fee only (never Membership
+            Fee, which always goes through an AR instead). */}
+        <div style={{ display: 'flex', gap: 14 }}>
+          {!isServiceInvoice && (
+            <div style={{ flex: 1 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: 'var(--text-muted)',
+                  marginBottom: 6,
+                  textTransform: 'uppercase'
+                }}
+              >
+                {t('barangayCommittee.payment.categoryMembership')} (= ₱{peso(membershipTotal)})
+              </div>
+              <FieldInput
+                type="number"
+                value={form.membershipAmountPerMember || ''}
+                readOnly
+                disabled
               />
-              {t('barangayCommittee.payment.categoryMembership')} (= ₱{peso(membershipTotal)})
-            </label>
-            <FieldInput
-              type="number"
-              value={form.membershipAmountPerMember || ''}
-              readOnly
-              disabled={!form.includeMembership}
-            />
-          </div>
-          <div>
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 11,
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                marginBottom: 6,
-                cursor: 'pointer',
-                textTransform: 'uppercase'
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={form.includeBcGroupFee}
-                onChange={(e) => setForm((f) => ({ ...f, includeBcGroupFee: e.target.checked }))}
-              />
-              {t('barangayCommittee.payment.bcGroupFeeLabel')}
-            </label>
-            <FieldInput
-              type="number"
-              value={form.bcGroupFeeAmount || ''}
-              readOnly
-              disabled={!form.includeBcGroupFee}
-            />
-          </div>
+            </div>
+          )}
+          {isServiceInvoice && (
+            <div style={{ flex: 1 }}>
+              <div
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: 'var(--text-muted)',
+                  marginBottom: 6,
+                  textTransform: 'uppercase'
+                }}
+              >
+                {t('barangayCommittee.payment.bcGroupFeeLabel')}
+              </div>
+              <FieldInput type="number" value={form.bcGroupFeeAmount || ''} readOnly disabled />
+            </div>
+          )}
         </div>
 
         <div

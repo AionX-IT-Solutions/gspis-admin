@@ -187,12 +187,18 @@ export interface DailyCollectionReceiptRow {
   receivedFrom: string
   nes: number
   bcFee: number
+  dcFee: number
+  tgFee: number
   csf: number
   iccg: number
   memReg: number
   rentals: number
   refundOfCa: number
-  others: number
+  troopFee: number
+  thinkingDay: number
+  oavfFee: number
+  honoraryFee: number
+  associateMemberFee: number
   amount: number
 }
 
@@ -225,12 +231,18 @@ const RECEIPT_HEAD = [
   'Received From',
   'NES',
   'BC Fee',
+  'DC Fee',
+  'TG Fee',
   'CSF',
   'ICCG',
   'Mem. Reg.',
   'Rentals',
   'Refund of CA',
-  'Others',
+  'Troop Fee',
+  'Thinking Day',
+  'OAVF Fee',
+  'Honorary Fee',
+  'Assoc. Member Fee',
   'Amount'
 ]
 
@@ -240,12 +252,18 @@ function receiptRowCells(r: DailyCollectionReceiptRow): (string | number)[] {
     r.receivedFrom,
     r.nes.toFixed(2),
     r.bcFee.toFixed(2),
+    r.dcFee.toFixed(2),
+    r.tgFee.toFixed(2),
     r.csf.toFixed(2),
     r.iccg.toFixed(2),
     r.memReg.toFixed(2),
     r.rentals.toFixed(2),
     r.refundOfCa.toFixed(2),
-    r.others.toFixed(2),
+    r.troopFee.toFixed(2),
+    r.thinkingDay.toFixed(2),
+    r.oavfFee.toFixed(2),
+    r.honoraryFee.toFixed(2),
+    r.associateMemberFee.toFixed(2),
     r.amount.toFixed(2)
   ]
 }
@@ -256,12 +274,18 @@ function receiptFootCells(t: DailyCollectionsData['receiptTotals']): (string | n
     'TOTAL',
     t.nes.toFixed(2),
     t.bcFee.toFixed(2),
+    t.dcFee.toFixed(2),
+    t.tgFee.toFixed(2),
     t.csf.toFixed(2),
     t.iccg.toFixed(2),
     t.memReg.toFixed(2),
     t.rentals.toFixed(2),
     t.refundOfCa.toFixed(2),
-    t.others.toFixed(2),
+    t.troopFee.toFixed(2),
+    t.thinkingDay.toFixed(2),
+    t.oavfFee.toFixed(2),
+    t.honoraryFee.toFixed(2),
+    t.associateMemberFee.toFixed(2),
     t.amount.toFixed(2)
   ]
 }
@@ -309,13 +333,19 @@ export async function exportDailyCollectionsExcel(data: DailyCollectionsData) {
     { width: 10 },
     { width: 10 },
     { width: 10 },
+    { width: 10 },
+    { width: 10 },
     { width: 11 },
     { width: 11 },
     { width: 11 },
-    { width: 11 },
+    { width: 10 },
+    { width: 10 },
+    { width: 10 },
+    { width: 10 },
+    { width: 12 },
     { width: 14 }
   ]
-  await addWorksheetLogo(wb, sheet, { startCol: 2, endCol: 12 })
+  await addWorksheetLogo(wb, sheet, { startCol: 2, endCol: 18 })
 
   const lines = [
     orgHeader.orgName,
@@ -324,7 +354,7 @@ export async function exportDailyCollectionsExcel(data: DailyCollectionsData) {
     data.dateLabel
   ]
   lines.forEach((line, i) => {
-    sheet.mergeCells(i + 1, 2, i + 1, 12)
+    sheet.mergeCells(i + 1, 2, i + 1, 18)
     const cell = sheet.getCell(i + 1, 2)
     cell.value = line
     cell.alignment = { horizontal: 'center' }
@@ -334,9 +364,9 @@ export async function exportDailyCollectionsExcel(data: DailyCollectionsData) {
   let r = 6
   sheet.getCell(r, 2).value = 'Beginning Balance'
   sheet.getCell(r, 2).font = { bold: true }
-  sheet.getCell(r, 12).value = data.beginningBalance
-  sheet.getCell(r, 12).numFmt = '#,##0.00'
-  sheet.getCell(r, 12).font = { bold: true }
+  sheet.getCell(r, 18).value = data.beginningBalance
+  sheet.getCell(r, 18).numFmt = '#,##0.00'
+  sheet.getCell(r, 18).font = { bold: true }
   r += 2
 
   sheet.getCell(r, 2).value = 'ADD: CASH RECEIPTS'
@@ -368,14 +398,14 @@ export async function exportDailyCollectionsExcel(data: DailyCollectionsData) {
   r += 2
 
   sheet.getCell(r, 2).value = 'TOTAL CASH COLLECTION DURING THE DAY'
-  sheet.getCell(r, 12).value = data.totalCashCollection
-  sheet.getCell(r, 12).numFmt = '#,##0.00'
+  sheet.getCell(r, 18).value = data.totalCashCollection
+  sheet.getCell(r, 18).numFmt = '#,##0.00'
   r++
   sheet.getCell(r, 2).value = 'TOTAL CASH ON HAND'
   sheet.getCell(r, 2).font = { bold: true }
-  sheet.getCell(r, 12).value = data.totalCashOnHand
-  sheet.getCell(r, 12).numFmt = '#,##0.00'
-  sheet.getCell(r, 12).font = { bold: true }
+  sheet.getCell(r, 18).value = data.totalCashOnHand
+  sheet.getCell(r, 18).numFmt = '#,##0.00'
+  sheet.getCell(r, 18).font = { bold: true }
   r += 2
 
   sheet.getCell(r, 2).value = 'LESS: CASH DEPOSIT'
@@ -405,14 +435,14 @@ export async function exportDailyCollectionsExcel(data: DailyCollectionsData) {
   r += 2
 
   sheet.getCell(r, 2).value = 'TOTAL CASH COLLECTION DEPOSIT IN BANK'
-  sheet.getCell(r, 12).value = data.totalDeposited
-  sheet.getCell(r, 12).numFmt = '#,##0.00'
+  sheet.getCell(r, 18).value = data.totalDeposited
+  sheet.getCell(r, 18).numFmt = '#,##0.00'
   r++
   sheet.getCell(r, 2).value = 'BALANCE/UNDEPOSITED CASH COLLECTION'
   sheet.getCell(r, 2).font = { bold: true }
-  sheet.getCell(r, 12).value = data.balanceUndeposited
-  sheet.getCell(r, 12).numFmt = '#,##0.00'
-  sheet.getCell(r, 12).font = { bold: true }
+  sheet.getCell(r, 18).value = data.balanceUndeposited
+  sheet.getCell(r, 18).numFmt = '#,##0.00'
+  sheet.getCell(r, 18).font = { bold: true }
   r += 4
 
   const sig = dailyCollectionSignatories(data.preparedBy)
@@ -468,7 +498,13 @@ export async function buildDailyCollectionsPdfDoc(data: DailyCollectionsData) {
       7: { halign: 'right' },
       8: { halign: 'right' },
       9: { halign: 'right' },
-      10: { halign: 'right' }
+      10: { halign: 'right' },
+      11: { halign: 'right' },
+      12: { halign: 'right' },
+      13: { halign: 'right' },
+      14: { halign: 'right' },
+      15: { halign: 'right' },
+      16: { halign: 'right' }
     }
   })
   y += 20

@@ -188,6 +188,14 @@
       match /membershipGoals/{id} {
         allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
       }
+      // Membership Reports' own "Daily Cash Collection Report" — one per calendar date,
+      // read live across every Troops & Membership registration/payment module (original/
+      // gross amounts, not Accounting's council-retained share) plus hand-added lines and
+      // per-row deposit overrides — same role gate as every other Troops & Membership module
+      // above.
+      match /membershipDailyCollectionReports/{id} {
+        allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
 
       // Council Programs: Activities (troop camps, trainings, meetings, community service).
       match /activities/{id} {
@@ -320,6 +328,193 @@
       match /announcements/{id} {
         allow read: if isSignedIn();
         allow write: if hasAnyRole(['super_admin', 'admin']);
+      }
+
+      // Troop Leader self-service: proposed troop/roster data submitted by a self-registered
+      // troop_leader account (see functions/troopLeaderRegistration.ts) awaiting staff review.
+      // Deliberately never merged automatically into troops/scoutMembers — those rules above
+      // are untouched, troop_leader isn't in any of their hasAnyRole(...) lists, so this is the
+      // only collection that role can ever write to. Staff review and manually re-key an
+      // approved submission into the real records (see features/troopLeaderSubmissions).
+      match /troopLeaderSubmissions/{id} {
+        allow read: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid)
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+        // A leader may only ever create their own doc, and only as 'pending' — status/review
+        // fields are staff-only, set exclusively through the decision update branch below.
+        allow create: if isSignedIn() && role() == 'troop_leader'
+          && request.resource.data.submittedByUid == request.auth.uid
+          && request.resource.data.status == 'pending';
+        // Two disjoint update shapes: the owning leader may keep editing their own submission's
+        // content while it's still pending (but can't touch status/review/ownership fields —
+        // that's how a leader can't self-approve), or staff may flip status/review fields only.
+        allow update: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending'
+            && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['submittedByUid', 'status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt']))
+          || (hasAnyRole(['super_admin', 'admin', 'hr', 'manager'])
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt', 'updatedAt']));
+        // A leader may still only delete their own, still-pending submission — but staff can
+        // also delete any submission regardless of status, for cleaning up test/junk/duplicate
+        // entries (approving one already copied its data into the real records first, so
+        // deleting the submission afterward never loses anything).
+        allow delete: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending')
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+
+      // Same self-service shape as troopLeaderSubmissions above, one collection per remaining
+      // Troops & Membership category — a troop_leader account (the account tier now covers any
+      // self-registered member, not just troop leaders; the role literal is unchanged to avoid
+      // migrating already-registered accounts) can propose data for any of these too, and staff
+      // review/re-key it the same way. See features/troopLeaderSubmissions (desktop) and
+      // features/troopLeader (mobile) in both apps.
+      match /barangayCommitteeSubmissions/{id} {
+        allow read: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid)
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+        allow create: if isSignedIn() && role() == 'troop_leader'
+          && request.resource.data.submittedByUid == request.auth.uid
+          && request.resource.data.status == 'pending';
+        allow update: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending'
+            && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['submittedByUid', 'status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt']))
+          || (hasAnyRole(['super_admin', 'admin', 'hr', 'manager'])
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt', 'updatedAt']));
+        // A leader may still only delete their own, still-pending submission — but staff can
+        // also delete any submission regardless of status, for cleaning up test/junk/duplicate
+        // entries (approving one already copied its data into the real records first, so
+        // deleting the submission afterward never loses anything).
+        allow delete: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending')
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /districtCommitteeSubmissions/{id} {
+        allow read: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid)
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+        allow create: if isSignedIn() && role() == 'troop_leader'
+          && request.resource.data.submittedByUid == request.auth.uid
+          && request.resource.data.status == 'pending';
+        allow update: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending'
+            && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['submittedByUid', 'status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt']))
+          || (hasAnyRole(['super_admin', 'admin', 'hr', 'manager'])
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt', 'updatedAt']));
+        // A leader may still only delete their own, still-pending submission — but staff can
+        // also delete any submission regardless of status, for cleaning up test/junk/duplicate
+        // entries (approving one already copied its data into the real records first, so
+        // deleting the submission afterward never loses anything).
+        allow delete: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending')
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /trefoilGuildSubmissions/{id} {
+        allow read: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid)
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+        allow create: if isSignedIn() && role() == 'troop_leader'
+          && request.resource.data.submittedByUid == request.auth.uid
+          && request.resource.data.status == 'pending';
+        allow update: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending'
+            && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['submittedByUid', 'status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt']))
+          || (hasAnyRole(['super_admin', 'admin', 'hr', 'manager'])
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt', 'updatedAt']));
+        // A leader may still only delete their own, still-pending submission — but staff can
+        // also delete any submission regardless of status, for cleaning up test/junk/duplicate
+        // entries (approving one already copied its data into the real records first, so
+        // deleting the submission afterward never loses anything).
+        allow delete: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending')
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /oavfSubmissions/{id} {
+        allow read: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid)
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+        allow create: if isSignedIn() && role() == 'troop_leader'
+          && request.resource.data.submittedByUid == request.auth.uid
+          && request.resource.data.status == 'pending';
+        allow update: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending'
+            && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['submittedByUid', 'status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt']))
+          || (hasAnyRole(['super_admin', 'admin', 'hr', 'manager'])
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt', 'updatedAt']));
+        // A leader may still only delete their own, still-pending submission — but staff can
+        // also delete any submission regardless of status, for cleaning up test/junk/duplicate
+        // entries (approving one already copied its data into the real records first, so
+        // deleting the submission afterward never loses anything).
+        allow delete: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending')
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /honoraryMemberSubmissions/{id} {
+        allow read: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid)
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+        allow create: if isSignedIn() && role() == 'troop_leader'
+          && request.resource.data.submittedByUid == request.auth.uid
+          && request.resource.data.status == 'pending';
+        allow update: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending'
+            && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['submittedByUid', 'status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt']))
+          || (hasAnyRole(['super_admin', 'admin', 'hr', 'manager'])
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt', 'updatedAt']));
+        // A leader may still only delete their own, still-pending submission — but staff can
+        // also delete any submission regardless of status, for cleaning up test/junk/duplicate
+        // entries (approving one already copied its data into the real records first, so
+        // deleting the submission afterward never loses anything).
+        allow delete: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending')
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /associateMemberSubmissions/{id} {
+        allow read: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid)
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+        allow create: if isSignedIn() && role() == 'troop_leader'
+          && request.resource.data.submittedByUid == request.auth.uid
+          && request.resource.data.status == 'pending';
+        allow update: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending'
+            && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['submittedByUid', 'status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt']))
+          || (hasAnyRole(['super_admin', 'admin', 'hr', 'manager'])
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt', 'updatedAt']));
+        // A leader may still only delete their own, still-pending submission — but staff can
+        // also delete any submission regardless of status, for cleaning up test/junk/duplicate
+        // entries (approving one already copied its data into the real records first, so
+        // deleting the submission afterward never loses anything).
+        allow delete: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending')
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+      }
+      match /iccgSubmissions/{id} {
+        allow read: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid)
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+        allow create: if isSignedIn() && role() == 'troop_leader'
+          && request.resource.data.submittedByUid == request.auth.uid
+          && request.resource.data.status == 'pending';
+        allow update: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending'
+            && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['submittedByUid', 'status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt']))
+          || (hasAnyRole(['super_admin', 'admin', 'hr', 'manager'])
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'reviewedByUid', 'reviewedByName', 'reviewNotes', 'reviewedAt', 'updatedAt']));
+        // A leader may still only delete their own, still-pending submission — but staff can
+        // also delete any submission regardless of status, for cleaning up test/junk/duplicate
+        // entries (approving one already copied its data into the real records first, so
+        // deleting the submission afterward never loses anything).
+        allow delete: if (isSignedIn() && resource.data.submittedByUid == request.auth.uid
+            && resource.data.status == 'pending')
+          || hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
       }
 
       // Council Budget — approved budget vs. actual-to-date per line item, one doc per

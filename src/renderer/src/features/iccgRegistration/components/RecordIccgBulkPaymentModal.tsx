@@ -5,12 +5,14 @@ import { Button } from '@/shared/components/ui/Button'
 import { FormField, FieldInput } from '@/shared/components/ui/FormField'
 import { ReceiptFieldsSection } from '@/shared/components/receipts/ReceiptFieldsSection'
 import { formatDate } from '@/shared/lib/utils'
+import type { ReceiptKind } from '@/shared/types/receipt.types'
 import { useTroopsStore } from '@/features/troops/store/troops.store'
 import { useRecordIccgBulkPaymentModal } from '../hooks/useRecordIccgBulkPaymentModal'
 
 interface RecordIccgBulkPaymentModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  initialReceiptType?: ReceiptKind
 }
 
 function peso(n: number): string {
@@ -19,7 +21,8 @@ function peso(n: number): string {
 
 export function RecordIccgBulkPaymentModal({
   open,
-  onOpenChange
+  onOpenChange,
+  initialReceiptType
 }: RecordIccgBulkPaymentModalProps) {
   const { t } = useTranslation()
   const allTroops = useTroopsStore((s) => s.troops)
@@ -37,7 +40,7 @@ export function RecordIccgBulkPaymentModal({
     officialReceiptLines,
     receiptFields,
     handleSubmit
-  } = useRecordIccgBulkPaymentModal(open, onOpenChange)
+  } = useRecordIccgBulkPaymentModal(open, onOpenChange, initialReceiptType)
 
   const troops = useMemo(() => allTroops.filter((tr) => tr.isActive), [allTroops])
   const selectedTroop = troops.find((tr) => tr.id === form.troopId) ?? null

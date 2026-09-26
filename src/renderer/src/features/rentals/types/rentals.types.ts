@@ -1,3 +1,5 @@
+import type { ReceiptRecord } from '@/shared/types/receipt.types'
+
 /** Which Council Budget rental-income line a space's bookings roll up into (see
  *  budgetAutoActuals.ts) — separate from SCRD, which always sums every category's rental
  *  income together into one flat "Rental Income" figure regardless of this field. */
@@ -51,4 +53,8 @@ export interface RentalBooking {
    * paymentStatusOf in useRentals.ts. */
   amountPaid?: number
   status: BookingStatus
+  /** The official receipt printed for this booking's payment — kept on the booking itself so
+   *  a later reprint (see PrintBookingReceiptModal) still shows the original cashier's name
+   *  and receipt number, not whoever happens to click Reprint. */
+  receipt?: ReceiptRecord
 }

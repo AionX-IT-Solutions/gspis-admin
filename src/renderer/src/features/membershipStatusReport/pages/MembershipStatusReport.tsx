@@ -9,9 +9,26 @@ import { Modal } from '@/shared/components/ui/Modal'
 import { PageHeader } from '@/shared/components/ui/PageHeader'
 import { FormField, FieldSelect, FieldInput } from '@/shared/components/ui/FormField'
 import { ExportMenu } from '@/shared/components/ui/ExportMenu'
+import { RefreshButton } from '@/shared/components/ui/RefreshButton'
 import { DocumentPreviewModal } from '@/shared/components/ui/DocumentPreviewModal'
 import { useDocumentPreview } from '@/shared/hooks/useDocumentPreview'
 import { useToast } from '@/app/hooks/useToast'
+import { useTroopRegistrationStore } from '@/features/troopRegistration/store/troopRegistration.store'
+import { useTroopsStore } from '@/features/troops/store/troops.store'
+import { useDistrictCommitteeStore } from '@/features/districtCommittee/store/districtCommittee.store'
+import { useDistrictCommitteeRegistrationStore } from '@/features/districtCommittee/store/districtCommitteeRegistration.store'
+import { useBarangayCommitteeStore } from '@/features/barangayCommittee/store/barangayCommittee.store'
+import { useBarangayCommitteeRegistrationStore } from '@/features/barangayCommittee/store/barangayCommitteeRegistration.store'
+import { useTrefoilGuildStore } from '@/features/trefoilGuild/store/trefoilGuild.store'
+import { useTrefoilGuildRegistrationStore } from '@/features/trefoilGuild/store/trefoilGuildRegistration.store'
+import { useOavfStore } from '@/features/oavf/store/oavf.store'
+import { useOavfMemberStore } from '@/features/oavf/store/oavfMember.store'
+import { useHonoraryMemberStore } from '@/features/honoraryMember/store/honoraryMember.store'
+import { useHonoraryMemberRegistrationStore } from '@/features/honoraryMember/store/honoraryMemberRegistration.store'
+import { useAssociateMemberStore } from '@/features/associateMember/store/associateMember.store'
+import { useAssociateMemberRegistrationStore } from '@/features/associateMember/store/associateMemberRegistration.store'
+import { useIccgRegistrationStore } from '@/features/iccgRegistration/store/iccgRegistration.store'
+import { useMembershipGoalsStore } from '../store/membershipGoals.store'
 import { useMembershipStatusReport } from '../hooks/useMembershipStatusReport'
 import { EditGoalsModal } from '../components/EditGoalsModal'
 import {
@@ -50,8 +67,9 @@ const tdLeft: CSSProperties = { ...td, textAlign: 'left', whiteSpace: 'nowrap' }
 const groupTh: CSSProperties = {
   ...th,
   borderBottom: '1px solid var(--border-subtle)',
-  background: 'var(--surface-hover)'
+  background: 'var(--c-thead-bg)'
 }
+const divider: CSSProperties = { borderLeft: '1.5px solid var(--text-muted)' }
 
 const SUB_HEADERS_UNITS = [
   'TW',
@@ -200,6 +218,48 @@ export function MembershipStatusReport() {
     updateGoals
   } = useMembershipStatusReport()
 
+  const hydrateTroopRegistrations = useTroopRegistrationStore((s) => s.hydrate)
+  const hydrateTroops = useTroopsStore((s) => s.hydrate)
+  const hydrateDistrictCommittees = useDistrictCommitteeStore((s) => s.hydrate)
+  const hydrateDistrictCommitteeRegistrations = useDistrictCommitteeRegistrationStore(
+    (s) => s.hydrate
+  )
+  const hydrateBarangayCommittees = useBarangayCommitteeStore((s) => s.hydrate)
+  const hydrateBarangayCommitteeRegistrations = useBarangayCommitteeRegistrationStore(
+    (s) => s.hydrate
+  )
+  const hydrateTrefoilGuilds = useTrefoilGuildStore((s) => s.hydrate)
+  const hydrateTrefoilGuildRegistrations = useTrefoilGuildRegistrationStore((s) => s.hydrate)
+  const hydrateOavf = useOavfStore((s) => s.hydrate)
+  const hydrateOavfMembers = useOavfMemberStore((s) => s.hydrate)
+  const hydrateHonoraryMembers = useHonoraryMemberStore((s) => s.hydrate)
+  const hydrateHonoraryMemberRegistrations = useHonoraryMemberRegistrationStore((s) => s.hydrate)
+  const hydrateAssociateMembers = useAssociateMemberStore((s) => s.hydrate)
+  const hydrateAssociateMemberRegistrations = useAssociateMemberRegistrationStore((s) => s.hydrate)
+  const hydrateIccgRegistrations = useIccgRegistrationStore((s) => s.hydrate)
+  const hydrateMembershipGoals = useMembershipGoalsStore((s) => s.hydrate)
+
+  async function handleRefresh() {
+    await Promise.all([
+      hydrateTroopRegistrations(true),
+      hydrateTroops(true),
+      hydrateDistrictCommittees(true),
+      hydrateDistrictCommitteeRegistrations(true),
+      hydrateBarangayCommittees(true),
+      hydrateBarangayCommitteeRegistrations(true),
+      hydrateTrefoilGuilds(true),
+      hydrateTrefoilGuildRegistrations(true),
+      hydrateOavf(true),
+      hydrateOavfMembers(true),
+      hydrateHonoraryMembers(true),
+      hydrateHonoraryMemberRegistrations(true),
+      hydrateAssociateMembers(true),
+      hydrateAssociateMemberRegistrations(true),
+      hydrateIccgRegistrations(true),
+      hydrateMembershipGoals(true)
+    ])
+  }
+
   const asOf = asOfLabel()
 
   return (
@@ -217,6 +277,7 @@ export function MembershipStatusReport() {
         icon={<ClipboardCheck size={18} />}
         actions={
           <>
+            <RefreshButton onRefresh={handleRefresh} />
             <Button
               variant="secondary"
               size="sm"
@@ -282,28 +343,28 @@ export function MembershipStatusReport() {
                 <th style={{ ...groupTh, textAlign: 'left' }} rowSpan={2}>
                   {t('membershipStatusReport.table.district')}
                 </th>
-                <th style={groupTh} colSpan={SUB_HEADERS_UNITS.length}>
+                <th style={{ ...groupTh, ...divider }} colSpan={SUB_HEADERS_UNITS.length}>
                   {t('membershipStatusReport.table.troopsUnits')}
                 </th>
-                <th style={groupTh} colSpan={SUB_HEADERS_PEOPLE.length}>
+                <th style={{ ...groupTh, ...divider }} colSpan={SUB_HEADERS_PEOPLE.length}>
                   {t('membershipStatusReport.table.girlsAdults')}
                 </th>
-                <th style={groupTh} colSpan={2}>
+                <th style={{ ...groupTh, ...divider }} colSpan={2}>
                   {t('membershipStatusReport.table.totalNo')}
                 </th>
               </tr>
               <tr>
                 {SUB_HEADERS_UNITS.map((h, i) => (
-                  <th key={`u-${i}`} style={th}>
+                  <th key={`u-${i}`} style={i === 0 ? { ...th, ...divider } : th}>
                     {h}
                   </th>
                 ))}
                 {SUB_HEADERS_PEOPLE.map((h, i) => (
-                  <th key={`p-${i}`} style={th}>
+                  <th key={`p-${i}`} style={i === 0 ? { ...th, ...divider } : th}>
                     {h}
                   </th>
                 ))}
-                <th style={th}>{t('membershipStatusReport.table.girls')}</th>
+                <th style={{ ...th, ...divider }}>{t('membershipStatusReport.table.girls')}</th>
                 <th style={th}>{t('membershipStatusReport.table.adults')}</th>
               </tr>
             </thead>
@@ -314,17 +375,17 @@ export function MembershipStatusReport() {
                 return (
                   <tr key={row.district} style={{ fontWeight: isTotal ? 700 : 400 }}>
                     <td style={tdLeft}>{row.district}</td>
-                    {UNIT_KEYS.map((k) => (
-                      <td key={k} style={td}>
+                    {UNIT_KEYS.map((k, i) => (
+                      <td key={k} style={i === 0 ? { ...td, ...divider } : td}>
                         <ReportCell category={k} value={row.units[k]} district={linkDistrict} />
                       </td>
                     ))}
-                    {PEOPLE_KEYS.map((k) => (
-                      <td key={k} style={td}>
+                    {PEOPLE_KEYS.map((k, i) => (
+                      <td key={k} style={i === 0 ? { ...td, ...divider } : td}>
                         <ReportCell category={k} value={row.people[k]} district={linkDistrict} />
                       </td>
                     ))}
-                    <td style={td}>{dash(row.totalGirls)}</td>
+                    <td style={{ ...td, ...divider }}>{dash(row.totalGirls)}</td>
                     <td style={td}>{dash(row.totalAdults)}</td>
                   </tr>
                 )

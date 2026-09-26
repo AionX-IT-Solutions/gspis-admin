@@ -4,7 +4,7 @@ import { signInWithEmailAndPassword, signOut } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { auth, db } from '@/shared/lib/firebase'
 import type { UpdateStatus } from '../../../../shared/ipc-types'
-import type { RoleId } from '../lib/permissions'
+import { isBuiltInRole, type RoleId } from '../lib/permissions'
 
 interface LoginResult {
   ok: boolean
@@ -135,6 +135,16 @@ export const useAppStore = create<AppState>()(
           if (!profile || profile.isActive === false) {
             await signOut(auth)
             return { ok: false, message: 'auth.errors.userDisabled' }
+          }
+
+          // A self-registered troop_leader account (see gspis-app's registerTroopLeader
+          // Cloud Function) shares this same users/{uid} collection but has no place in
+          // the desktop app — every ROLE_HOME/ROLE_LABEL/DEFAULT_ROLE_PERMISSIONS lookup
+          // keyed off its role would come back undefined. Reject it here with a clear
+          // message instead of leaving it half-authenticated.
+          if (!isBuiltInRole(profile.role ?? '')) {
+            await signOut(auth)
+            return { ok: false, message: 'auth.errors.notADesktopAccount' }
           }
 
           set({

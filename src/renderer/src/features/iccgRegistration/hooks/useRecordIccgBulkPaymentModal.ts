@@ -5,14 +5,11 @@ import { usePermissions } from '@/app/hooks/usePermissions'
 import { useAppStore } from '@/app/store/app.store'
 import { todayLocalIso } from '@/shared/lib/utils'
 import { useReceiptFields } from '@/shared/hooks/useReceiptFields'
-import { usePrinterDeviceName } from '@/shared/hooks/usePrinterDeviceName'
-import { printReceipt } from '@/shared/lib/receiptPrint'
-import type { ReceiptBreakdownLine, ReceiptRecord } from '@/shared/types/receipt.types'
+import type { ReceiptBreakdownLine, ReceiptKind, ReceiptRecord } from '@/shared/types/receipt.types'
 import { useTroopsStore } from '@/features/troops/store/troops.store'
 import { useIccgMemberStore } from '../store/iccgMember.store'
 import { useIccgRegistrationStore } from '../store/iccgRegistration.store'
 import type { IccgRegistration } from '../types/iccgRegistration.types'
-import { postBulkPaymentVoucher } from '../lib/iccgVoucher'
 
 // GSP Membership Fee default: ₱20/member, of which ₱5 is Council income (see
 // iccgRegistration.types.ts's emptyFee) — used until a real filed registration suggests
@@ -48,7 +45,8 @@ function findLatestRegistration(
 
 export function useRecordIccgBulkPaymentModal(
   open: boolean,
-  onOpenChange: (open: boolean) => void
+  onOpenChange: (open: boolean) => void,
+  initialReceiptType?: ReceiptKind
 ) {
   const { t } = useTranslation()
   const toast = useToast()
@@ -57,12 +55,10 @@ export function useRecordIccgBulkPaymentModal(
   const canManage = hasPermission('manage:iccgRegistration')
   const members = useIccgMemberStore((s) => s.members)
   const addBulkPayment = useIccgMemberStore((s) => s.addBulkPayment)
-  const attachBulkPaymentVoucher = useIccgMemberStore((s) => s.attachBulkPaymentVoucher)
   const registrations = useIccgRegistrationStore((s) => s.registrations)
   const troops = useTroopsStore((s) => s.troops)
   const [form, setForm] = useState(emptyForm())
-  const receiptFields = useReceiptFields({}, open)
-  const printerDeviceName = usePrinterDeviceName()
+  const receiptFields = useReceiptFields({}, open, initialReceiptType)
 
   useEffect(() => {
     if (open) setForm(emptyForm())
@@ -136,8 +132,12 @@ export function useRecordIccgBulkPaymentModal(
       label: t('iccgRegistration.payment.adultsFeeLabel'),
       amount: adultsTotal
     })
+    // `open` is deliberately included even though it's not read in the body — the rows
+    // otherwise never re-fill after the fields reset on open, whenever a new bulk payment
+    // happens to total the exact same amounts as the previous one (so this effect wouldn't
+    // otherwise re-run).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [girlsTotal, adultsTotal])
+  }, [girlsTotal, adultsTotal, open])
 
   function handleSubmit() {
     if (!canManage) return
@@ -204,31 +204,14 @@ export function useRecordIccgBulkPaymentModal(
       cashierName: currentUser?.fullName ?? 'Cashier'
     }
 
-    const { payments } = addBulkPayment({
+    addBulkPayment({
       lines,
       date: form.date,
       paidByName: form.paidByName.trim(),
       receipt
     })
 
-    // Firestore only lets super_admin/admin/accountant/manager write `vouchers` (not hr, even
-    // though hr can record this payment) — skipped entirely rather than attempted-and-denied
-    // when the signed-in user lacks 'manage:vouchers'.
-    if (payments.length > 0 && hasPermission('manage:vouchers')) {
-      const voucherId = postBulkPaymentVoucher(payments, form.date, form.paidByName.trim(), receipt)
-      if (voucherId) {
-        attachBulkPaymentVoucher(
-          payments.map((p) => p.id),
-          voucherId
-        )
-      }
-    }
-
     toast.success(t('iccgRegistration.payment.toast.recorded'))
-
-    printReceipt(receipt, printerDeviceName).then((result) => {
-      if (!result.ok) toast.error(t('receipts.toast.printFailed'))
-    })
 
     onOpenChange(false)
   }

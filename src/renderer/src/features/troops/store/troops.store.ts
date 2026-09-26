@@ -7,6 +7,9 @@ import {
 } from '@/shared/lib/firestoreSync'
 import { appendAuditLog } from '@/app/store/auditLog.store'
 import { useAppStore } from '@/app/store/app.store'
+import { useIccgMemberStore } from '@/features/iccgRegistration/store/iccgMember.store'
+import { useIccgRegistrationStore } from '@/features/iccgRegistration/store/iccgRegistration.store'
+import { useTroopRegistrationStore } from '@/features/troopRegistration/store/troopRegistration.store'
 import { todayLocalIso } from '@/shared/lib/utils'
 import type { ReceiptRecord } from '@/shared/types/receipt.types'
 import type {
@@ -45,9 +48,9 @@ interface TroopsState {
   // on the Troop itself (see FlatFeePayment — a flat fee has no member to attach to).
   // Every line created this way shares one generated bulkPaymentId, so the Payment tab
   // (features/troops/pages/Troops.tsx) can group them back into the lines of a single
-  // event. Returns the id and the created flat payments so the caller can best-effort post
-  // each flat line to an approved voucher (see features/troops/lib/flatFeeVoucher.ts) —
-  // that's a permission-gated concern the caller checks, not this store.
+  // event, and so SCRD's Cash Receipts Journal / Council Budget auto-actuals can read these
+  // records directly (see features/scrd/lib/registrationCashReceipts.ts) without going
+  // through a voucher.
   addBulkPayment: (input: {
     troopId: string
     memberIds: string[]
@@ -60,15 +63,6 @@ interface TroopsState {
      *  later from any row sharing this transaction's bulkPaymentId. */
     receipt?: ReceiptRecord
   }) => { bulkPaymentId: string; flatPayments: FlatFeePayment[] }
-  // Saves the voucher id postBulkPaymentVoucher() returned back onto every flat fee payment
-  // of this transaction — a plumbing follow-up to addBulkPayment, not a user-facing action,
-  // so it's silent (no audit log entry of its own). All of a transaction's flat lines share
-  // one voucher (see flatFeeVoucher.ts), so they all get the same id here.
-  attachBulkPaymentVoucher: (
-    troopId: string,
-    flatFeePaymentIds: string[],
-    voucherId: string
-  ) => void
   // Corrects a whole transaction's date/paid-by after the fact — the fee amounts themselves
   // are never editable here (they're auto-computed from the troop's filed registration, see
   // useRecordBulkPaymentModal.ts), so date and payer name are the only fields a correction
@@ -76,8 +70,7 @@ interface TroopsState {
   // Payment is one remittance event/one receipt ("isang resibo every transaction"), so
   // editing one of its lines edits all of them, across whichever structure each category
   // actually lives in (ScoutMember.payments for membership, Troop.flatFeePayments for
-  // troop_fee/thinking_day). Returns this transaction's flat fee payments (post-update) so
-  // the caller can rebuild its shared voucher's account lines.
+  // troop_fee/thinking_day).
   updatePaymentGroup: (input: {
     troopId: string
     bulkKey: string
@@ -86,11 +79,19 @@ interface TroopsState {
   }) => { flatPayments: FlatFeePayment[] }
   // Removes every entry sharing `bulkKey` — the whole transaction, not just one of its fee
   // lines or one member's share of it (same "one receipt per transaction" reasoning as
-  // updatePaymentGroup above). Returns the removed flat fee payments so the caller can also
-  // delete their shared linked voucher, avoiding an orphaned income record.
+  // updatePaymentGroup above).
   deletePaymentGroup: (input: { troopId: string; bulkKey: string }) => {
     removedFlatPayments: FlatFeePayment[]
   }
+  // Stamps the printed council-share receipt (see PrintCouncilShareReceiptModal) onto every
+  // 'membership' MemberPayment sharing `bulkKey` — the flat troop_fee/thinking_day lines a
+  // bulk payment might also carry have no council-share concept of their own, so only the
+  // membership lines are touched.
+  setMembershipCouncilShareReceipt: (input: {
+    troopId: string
+    bulkKey: string
+    receipt: ReceiptRecord
+  }) => void
 }
 
 export const useTroopsStore = create<TroopsState>()((set, get) => ({
@@ -137,11 +138,19 @@ export const useTroopsStore = create<TroopsState>()((set, get) => ({
   // already-reconciled prior day's report. Deactivate the troop/member instead (isActive),
   // which keeps that history intact. `force` is the deliberate override for when a hard
   // delete is truly wanted anyway (e.g. test/erroneous data) — the caller is responsible
-  // for warning the user about the Daily Collections impact before setting it.
+  // for warning the user about the Daily Collections impact before setting it. Also cleans
+  // up everything else that references this troop by id — filed Troop Registrations and ICCG
+  // filings/roster — so nothing survives as a dangling record with no parent to view it from
+  // (troopRegistrations' own deleteRegistration already cleans up the voucher it created).
   deleteTroop: (id, force = false) => {
     const troop = get().troops.find((t) => t.id === id)
     const orphanedMembers = get().scoutMembers.filter((m) => m.troopId === id)
-    const hasPayments = orphanedMembers.some((m) => (m.payments?.length ?? 0) > 0)
+    const orphanedIccgMembers = useIccgMemberStore
+      .getState()
+      .members.filter((m) => m.troopId === id)
+    const hasPayments =
+      orphanedMembers.some((m) => (m.payments?.length ?? 0) > 0) ||
+      orphanedIccgMembers.some((m) => (m.payments?.length ?? 0) > 0)
     if (hasPayments && !force) return
     set((s) => ({
       troops: s.troops.filter((t) => t.id !== id),
@@ -149,11 +158,28 @@ export const useTroopsStore = create<TroopsState>()((set, get) => ({
     }))
     deleteDocById('troops', id)
     for (const member of orphanedMembers) deleteDocById('scoutMembers', member.id)
+
+    const orphanedRegistrations = useTroopRegistrationStore
+      .getState()
+      .registrations.filter((r) => r.troopId === id)
+    for (const registration of orphanedRegistrations) {
+      useTroopRegistrationStore.getState().deleteRegistration(registration.id)
+    }
+    const orphanedIccgRegistrations = useIccgRegistrationStore
+      .getState()
+      .registrations.filter((r) => r.troopId === id)
+    for (const registration of orphanedIccgRegistrations) {
+      useIccgRegistrationStore.getState().deleteRegistration(registration.id)
+    }
+    for (const member of orphanedIccgMembers) {
+      useIccgMemberStore.getState().deleteMember(member.id, true)
+    }
+
     appendAuditLog({
       action: 'troop_deleted',
       actorName: actorName(),
       entityType: 'troop',
-      summary: `Troop ${troop?.troopNumber ?? id} and its ${orphanedMembers.length} member(s) deleted.${hasPayments ? ' Force-deleted despite recorded member payments.' : ''}`
+      summary: `Troop ${troop?.troopNumber ?? id} and its ${orphanedMembers.length} member(s), ${orphanedRegistrations.length} registration(s), and ${orphanedIccgRegistrations.length} ICCG filing(s) deleted.${hasPayments ? ' Force-deleted despite recorded member payments.' : ''}`
     })
   },
 
@@ -297,24 +323,6 @@ export const useTroopsStore = create<TroopsState>()((set, get) => ({
     return { bulkPaymentId, flatPayments }
   },
 
-  attachBulkPaymentVoucher: (troopId, flatFeePaymentIds, voucherId) => {
-    const idSet = new Set(flatFeePaymentIds)
-    set((s) => ({
-      troops: s.troops.map((t) =>
-        t.id === troopId
-          ? {
-              ...t,
-              flatFeePayments: (t.flatFeePayments ?? []).map((p) =>
-                idSet.has(p.id) ? { ...p, linkedVoucherId: voucherId } : p
-              )
-            }
-          : t
-      )
-    }))
-    const troop = get().troops.find((t) => t.id === troopId)
-    if (troop) persist('troops', troopId, troop)
-  },
-
   updatePaymentGroup: ({ troopId, bulkKey, date, paidByName }) => {
     const flatPayments: FlatFeePayment[] = []
 
@@ -421,5 +429,45 @@ export const useTroopsStore = create<TroopsState>()((set, get) => ({
     })
 
     return { removedFlatPayments }
+  },
+
+  setMembershipCouncilShareReceipt: ({ troopId, bulkKey, receipt }) => {
+    const affectedIds = new Set(
+      get()
+        .scoutMembers.filter(
+          (m) =>
+            m.troopId === troopId &&
+            (m.payments ?? []).some(
+              (p) => p.category === 'membership' && (p.bulkPaymentId ?? p.id) === bulkKey
+            )
+        )
+        .map((m) => m.id)
+    )
+    if (affectedIds.size === 0) return
+
+    set((s) => ({
+      scoutMembers: s.scoutMembers.map((m) =>
+        affectedIds.has(m.id)
+          ? {
+              ...m,
+              payments: (m.payments ?? []).map((p) =>
+                p.category === 'membership' && (p.bulkPaymentId ?? p.id) === bulkKey
+                  ? { ...p, councilShareReceipt: receipt }
+                  : p
+              )
+            }
+          : m
+      )
+    }))
+    const updatedMembers = get().scoutMembers.filter((m) => affectedIds.has(m.id))
+    for (const member of updatedMembers) persist('scoutMembers', member.id, member)
+
+    const troop = get().troops.find((t) => t.id === troopId)
+    appendAuditLog({
+      action: 'troop_council_share_receipt_printed',
+      actorName: actorName(),
+      entityType: 'scout_member',
+      summary: `Council-share receipt ${receipt.receiptNumber} printed for Troop ${troop?.troopNumber ?? troopId}'s Membership Fee remittance.`
+    })
   }
 }))

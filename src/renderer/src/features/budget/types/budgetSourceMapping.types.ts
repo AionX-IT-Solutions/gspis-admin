@@ -1,4 +1,3 @@
-import type { MemberPaymentCategory } from '@/features/troops/types/troop.types'
 import type { RentalSpaceCategory } from '@/features/rentals/types/rentals.types'
 import type { PayrollEntry } from '@/features/hr/types/hr.types'
 
@@ -6,9 +5,11 @@ import type { PayrollEntry } from '@/features/hr/types/hr.types'
 // line via EditBudgetCategoryModal's "Source" section, replacing budgetAutoActuals.ts's
 // built-in default rule for that line once at least one rule is saved (an empty rule list
 // reverts the line to that built-in default rather than to zero). Income lines can use
-// 'voucher' (Cash Receipt category), 'troopPayment', 'pos', or 'rental'; expense lines can
-// use 'voucher' (matched against a voucher's GL account text instead) or 'payroll'.
-export type BudgetSourceType = 'voucher' | 'troopPayment' | 'pos' | 'rental' | 'payroll'
+// 'voucher' (Cash Receipt category — every registration module's fee, including a Troop's own
+// per-member roster payments, is a CashReceiptCategory checkbox under this one source type; see
+// registrationCashReceipts.ts), 'pos', or 'rental'; expense lines can use 'voucher' (matched
+// against a voucher's GL account text instead) or 'payroll'.
+export type BudgetSourceType = 'voucher' | 'pos' | 'rental' | 'payroll'
 
 export interface BudgetSourceRule {
   id: string
@@ -19,19 +20,13 @@ export interface BudgetSourceRule {
    *  configured in EditBudgetCategoryModal — the modal filters these out on Save so a real
    *  BudgetSourceMapping document never actually carries one. */
   sourceTypes: BudgetSourceType[]
-  /** 'voucher' only. On an income line: one or more Cash Receipt categories (free text, same
-   *  as a voucher's own Account Title — see CashReceiptCategory) whose credited amount counts
-   *  toward this line. On an expense line: one or more GL account names (same free text as a
-   *  voucher's Account Title) whose debited amount counts toward this line — lets a line
-   *  aggregate vouchers whose account text doesn't already match the line's own name
-   *  verbatim, the same way the built-in default (exact-name match) already handles the
-   *  common case. */
+  /** 'voucher' only. On an income line: one or more Cash Receipt categories (checkboxes off
+   *  the closed CashReceiptCategory list) whose credited amount counts toward this line. On an
+   *  expense line: one or more GL account names (free text, same as a voucher's Account Title)
+   *  whose debited amount counts toward this line — lets a line aggregate vouchers whose
+   *  account text doesn't already match the line's own name verbatim, the same way the
+   *  built-in default (exact-name match) already handles the common case. */
   voucherCategories?: string[]
-  /** 'troopPayment' only (income) — individual roster payment categories
-   *  (features/troops). The flat Troop Fee/Thinking Day fee categories are NOT listed here —
-   *  those already arrive as approved vouchers (see postBulkPaymentVoucher in
-   *  features/troops/lib/flatFeeVoucher.ts), so they belong under a 'voucher' rule instead. */
-  troopPaymentCategories?: MemberPaymentCategory[]
   /** 'rental' only (income) — which kind of rental space counts; omitted means every
    *  confirmed/completed booking regardless of space category. */
   rentalSpaceCategory?: RentalSpaceCategory

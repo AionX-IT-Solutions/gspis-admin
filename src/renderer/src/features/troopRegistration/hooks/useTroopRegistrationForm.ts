@@ -10,7 +10,6 @@ import { useTrainingProfilesStore } from '@/features/trainingProfiles/store/trai
 import type { TrainingProfile } from '@/features/trainingProfiles/types/trainingProfiles.types'
 import { todayLocalIso } from '@/shared/lib/utils'
 import { useTroopRegistrationStore } from '../store/troopRegistration.store'
-import { syncRemittanceVoucher } from '../lib/remittanceVoucher'
 import {
   emptyRemittance,
   councilRetainedMembershipShare,
@@ -28,16 +27,17 @@ export interface MemberFormRow extends RegistrationMember {
   rowId: string
 }
 
-// Best-effort guess only — the paper form's age-level checkboxes (Twinkler/Star/Junior/
-// Senior/Cadet) are a different taxonomy than TROOP_LEVELS (Star/Junior/Cadet/Senior/
-// Ambassador Scout) and don't map 1:1. Always independently editable afterward.
-function guessAgeLevel(troopLevel: string): RegistrationAgeLevel {
+// TROOP_LEVELS and RegistrationAgeLevel share the same taxonomy now, but this stays a
+// substring match (not a direct lookup) so an older troop.level value saved before the
+// "Scout" suffix was dropped (e.g. "Star Scout") still guesses correctly. Always
+// independently editable afterward.
+export function guessAgeLevel(troopLevel: string): RegistrationAgeLevel {
   const l = troopLevel.toLowerCase()
+  if (l.includes('twinkler')) return 'Twinkler'
   if (l.includes('star')) return 'Star'
   if (l.includes('junior')) return 'Junior'
-  if (l.includes('cadet')) return 'Senior'
   if (l.includes('senior')) return 'Senior'
-  if (l.includes('ambassador')) return 'Cadet'
+  if (l.includes('cadet')) return 'Cadet'
   return 'Junior'
 }
 
@@ -153,6 +153,11 @@ export function useTroopRegistrationForm() {
   const [ageLevel, setAgeLevel] = useState<RegistrationAgeLevel>('Junior')
   const [leaders, setLeaders] = useState<LeaderFormRow[]>([])
   const [members, setMembers] = useState<MemberFormRow[]>([])
+  // Single shared group name for the whole member list below it — every RegistrationMember
+  // still carries its own `patrol` field (the national form/export groups by it, see
+  // troopRegistrationExport.ts's groupByPatrol), it's just always the same value for every
+  // row now instead of letting the form split members across several named groups.
+  const [patrolName, setPatrolNameState] = useState('Patrol 1')
   const [submittedByName, setSubmittedByName] = useState('')
   const [submittedByDate, setSubmittedByDate] = useState('')
   const [notedByName, setNotedByName] = useState('')
@@ -183,6 +188,7 @@ export function useTroopRegistrationForm() {
       setAgeLevel(existing.ageLevel)
       setLeaders(existing.leaders.map((l) => ({ ...l, rowId: crypto.randomUUID() })))
       setMembers(existing.members.map((m) => ({ ...m, rowId: crypto.randomUUID() })))
+      setPatrolNameState(existing.members[0]?.patrol || 'Patrol 1')
       setSubmittedByName(existing.submittedByName)
       setSubmittedByDate(existing.submittedByDate ?? '')
       setNotedByName(existing.notedByName ?? '')
@@ -208,19 +214,21 @@ export function useTroopRegistrationForm() {
       setAgeLevel(guessAgeLevel(troop.level))
       setLeaders(leadersFromTroop(troop, trainingProfiles))
       const roster = scoutMembers.filter((m) => m.troopId === troop.id && m.isActive)
+      const seededPatrolName = roster[0]?.patrol || 'Patrol 1'
+      setPatrolNameState(seededPatrolName)
       setMembers(
         roster.length > 0
           ? roster.map((m) => ({
               rowId: crypto.randomUUID(),
               scoutMemberId: m.id,
-              patrol: m.patrol || 'Patrol 1',
+              patrol: seededPatrolName,
               fullName: m.fullName,
               birthdate: m.birthdate,
               gradeYear: m.gradeYear,
               regStatus: m.lastRegistrationStatus ?? 'new',
               beneficiary: m.beneficiary
             }))
-          : [emptyMemberRow('Patrol 1')]
+          : [emptyMemberRow(seededPatrolName)]
       )
       setSubmittedByName(troop.leaderName)
       // Council's own standard flat rates — always editable afterward, same as
@@ -261,29 +269,13 @@ export function useTroopRegistrationForm() {
     setLeaders((prev) => prev.map((l) => (l.rowId === rowId ? { ...l, ...patch } : l)))
   }
 
-  // ── Members / patrols ──
-  const patrolGroups = useMemo(() => {
-    const groups = new Map<string, MemberFormRow[]>()
-    for (const member of members) {
-      const list = groups.get(member.patrol) ?? []
-      list.push(member)
-      groups.set(member.patrol, list)
-    }
-    return [...groups.entries()]
-  }, [members])
-
-  function addPatrolGroup() {
-    const n = patrolGroups.length + 1
-    setMembers((prev) => [...prev, emptyMemberRow(`Patrol ${n}`)])
+  // ── Members ── one shared patrol/cluster name for the whole list (see patrolName above).
+  function setPatrolName(name: string) {
+    setPatrolNameState(name)
+    setMembers((prev) => prev.map((m) => ({ ...m, patrol: name })))
   }
-  function removePatrolGroup(patrol: string) {
-    setMembers((prev) => prev.filter((m) => m.patrol !== patrol))
-  }
-  function renamePatrol(oldName: string, newName: string) {
-    setMembers((prev) => prev.map((m) => (m.patrol === oldName ? { ...m, patrol: newName } : m)))
-  }
-  function addMemberToPatrol(patrol: string) {
-    setMembers((prev) => [...prev, emptyMemberRow(patrol)])
+  function addMemberRow() {
+    setMembers((prev) => [...prev, emptyMemberRow(patrolName)])
   }
   function removeMemberRow(rowId: string) {
     setMembers((prev) => prev.filter((m) => m.rowId !== rowId))
@@ -405,20 +397,6 @@ export function useTroopRegistrationForm() {
       toast.success(t('troopRegistration.toast.updated'))
     }
 
-    // Keeps the Council-retained-income Journal Voucher (SCRD Cash Receipts / Council
-    // Budget auto-actuals both read from approved vouchers, not a standalone record) in
-    // sync with this filing. Firestore only lets super_admin/admin/accountant/manager
-    // write `vouchers` — hr can file a registration but not this — so this is skipped
-    // entirely rather than attempted-and-denied when the signed-in user lacks
-    // 'manage:vouchers'; an accountant/manager opening and re-saving the same filing
-    // later completes the link.
-    if (hasPermission('manage:vouchers')) {
-      const linkedVoucherId = syncRemittanceVoucher(fullRegistration, troop)
-      if (linkedVoucherId !== fullRegistration.linkedVoucherId) {
-        updateRegistration(registrationId, { linkedVoucherId })
-      }
-    }
-
     // Registrations live as a tab on the Troops page (features/troops/pages/Troops.tsx),
     // not a standalone route — send the user back to that tab specifically.
     navigate('/troops?tab=registrations')
@@ -442,11 +420,9 @@ export function useTroopRegistrationForm() {
     removeLeaderRow,
     updateLeaderRow,
     members,
-    patrolGroups,
-    addPatrolGroup,
-    removePatrolGroup,
-    renamePatrol,
-    addMemberToPatrol,
+    patrolName,
+    setPatrolName,
+    addMemberRow,
     removeMemberRow,
     updateMemberRow,
     submittedByName,

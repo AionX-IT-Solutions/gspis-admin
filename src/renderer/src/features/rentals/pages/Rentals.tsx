@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Building2, CalendarDays, ImageOff, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Building2, CalendarDays, ImageOff, Pencil, Plus, Printer, Trash2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useAppStore } from '@/app/store/app.store'
 import { Card } from '@/shared/components/ui/Card'
 import { Button } from '@/shared/components/ui/Button'
 import { Badge } from '@/shared/components/ui/Badge'
@@ -14,10 +16,13 @@ import {
 } from '@/shared/components/ui/DataTable'
 import { TableToolbar } from '@/shared/components/ui/TableToolbar'
 import { RefreshButton } from '@/shared/components/ui/RefreshButton'
+import { ReceiptTypePickerModal } from '@/shared/components/receipts/ReceiptTypePickerModal'
+import type { ReceiptKind } from '@/shared/types/receipt.types'
 import { formatCurrency, formatDate } from '@/shared/lib/utils'
 import type { BookingStatus } from '../types/rentals.types'
 import { NewBookingModal } from '../components/NewBookingModal'
 import { RentalSpaceFormModal } from '../components/RentalSpaceFormModal'
+import { PrintBookingReceiptModal } from '../components/PrintBookingReceiptModal'
 import { useRentals, type BookingRow } from '../hooks/useRentals'
 import { useRentalsStore } from '../store/rentals.store'
 import { paymentStatusOf, type PaymentStatus } from '../lib/bookingPricing'
@@ -103,6 +108,13 @@ export function Rentals() {
     handleConfirmDeleteSpace
   } = useRentals()
   const hydrate = useRentalsStore((s) => s.hydrate)
+  const updateBooking = useRentalsStore((s) => s.updateBooking)
+  const currentUser = useAppStore((s) => s.currentUser)
+
+  const [printingBooking, setPrintingBooking] = useState<BookingRow | null>(null)
+  const [bookingReceiptType, setBookingReceiptType] = useState<ReceiptKind>('service_invoice')
+  const [showReceiptTypePicker, setShowReceiptTypePicker] = useState(false)
+  const [pendingPrintBooking, setPendingPrintBooking] = useState<BookingRow | null>(null)
 
   const columns: Column<BookingRow>[] = [
     { key: 'spaceName', header: t('rentals.table.space') },
@@ -190,6 +202,25 @@ export function Rentals() {
               onClick={() => requestStatusChange(r, 'completed')}
             >
               {t('rentals.markCompletedButton')}
+            </Button>
+          )}
+          {canManage && (r.amountPaid ?? 0) > 0 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                if (r.receipt) {
+                  setBookingReceiptType(r.receipt.receiptType)
+                  setPrintingBooking(r)
+                } else {
+                  setPendingPrintBooking(r)
+                  setShowReceiptTypePicker(true)
+                }
+              }}
+              title={r.receipt ? t('receipts.reprintButton') : t('receipts.printButton')}
+              style={{ padding: 4 }}
+            >
+              <Printer size={12} />
             </Button>
           )}
           {canManage && (
@@ -397,6 +428,25 @@ export function Rentals() {
         form={bookingForm}
         setForm={setBookingForm}
         onSave={handleSaveBooking}
+      />
+      <PrintBookingReceiptModal
+        booking={printingBooking}
+        defaultCashierName={currentUser?.fullName ?? ''}
+        onClose={() => setPrintingBooking(null)}
+        onPrinted={(receipt) => {
+          if (printingBooking) updateBooking(printingBooking.id, { receipt })
+        }}
+        initialReceiptType={bookingReceiptType}
+      />
+      <ReceiptTypePickerModal
+        open={showReceiptTypePicker}
+        onOpenChange={setShowReceiptTypePicker}
+        onSelect={(type) => {
+          setBookingReceiptType(type)
+          setShowReceiptTypePicker(false)
+          setPrintingBooking(pendingPrintBooking)
+          setPendingPrintBooking(null)
+        }}
       />
       <RentalSpaceFormModal
         open={showSpaceForm}

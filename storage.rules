@@ -50,6 +50,13 @@ service firebase.storage {
       allow read, write: if hasAnyRole(['super_admin', 'admin', 'accountant']);
     }
 
+    // Scanned/attached copies of Troops & Membership's own Daily Cash Collection Report
+    // (Membership Reports) — same role set as the `membershipDailyCollectionReports`
+    // Firestore collection.
+    match /membershipDailyCollectionAttachments/{date}/{fileName} {
+      allow read, write: if hasAnyRole(['super_admin', 'admin', 'hr', 'manager']);
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }
